@@ -162,6 +162,7 @@ func (s *Server) publish(msg []byte) {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Llongfile)
 	address := "localhost:4242"
 	if len(os.Args) > 1 {
 		address = os.Args[1]

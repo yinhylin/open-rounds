@@ -195,6 +195,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Llongfile)
 	// Load Configs
 	var cfg Config
 	cfg_file, file_err := os.ReadFile("config.toml")
