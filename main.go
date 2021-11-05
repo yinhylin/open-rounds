@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"rounds/foobar"
+	"rounds/object"
 	"rounds/pb"
 	"rounds/server"
 	"time"
@@ -34,19 +35,17 @@ type Drawable interface {
 }
 
 type Player struct {
-	Coords
-	ID     string
-	Image  *ebiten.Image
-	Events chan *pb.ClientEvent
-}
-
-type OtherPlayer struct {
-	Coords
+	object.Entity
 	ID    string
 	Image *ebiten.Image
 }
 
-func (p *OtherPlayer) Draw(screen *ebiten.Image) {
+type LocalPlayer struct {
+	Player
+	Events chan *pb.ClientEvent
+}
+
+func (p *Player) Draw(screen *ebiten.Image) {
 	options := &ebiten.DrawImageOptions{}
 	options.GeoM.Translate(p.X, p.Y)
 	screen.DrawImage(p.Image, options)
@@ -75,7 +74,7 @@ type Config struct {
 	Game   GameConfig
 }
 
-func (p *Player) OnKeysPressed(keys []ebiten.Key) {
+func (p *LocalPlayer) OnKeysPressed(keys []ebiten.Key) {
 	speed := float64(2)
 	if ebiten.IsKeyPressed(ebiten.KeyShift) {
 		speed *= 1.5
@@ -111,13 +110,17 @@ func (p *Player) OnKeysPressed(keys []ebiten.Key) {
 	}
 }
 
-func NewPlayer() *Player {
+func NewLocalPlayer() *LocalPlayer {
 	image := ebiten.NewImage(16, 16)
 	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.White)
-	player := &Player{
-		ID:     ksuid.New().String(),
-		Image:  image,
-		Coords: Coords{32, 32},
+	player := &LocalPlayer{
+		Player: Player{
+			ID:    ksuid.New().String(),
+			Image: image,
+			Entity: object.Entity{
+				Coords: object.Coords{X: 32, Y: 32},
+			},
+		},
 		Events: make(chan *pb.ClientEvent, 1024),
 	}
 	player.Events <- &pb.ClientEvent{
@@ -136,7 +139,7 @@ func NewPlayer() *Player {
 	return player
 }
 
-func NewOtherPlayer(ID string, X, Y float64) *OtherPlayer {
+func NewOtherPlayer(ID string, X, Y float64) *Player {
 	image := ebiten.NewImage(16, 16)
 	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.RGBA{
 		255,
@@ -144,26 +147,22 @@ func NewOtherPlayer(ID string, X, Y float64) *OtherPlayer {
 		0,
 		255,
 	})
-	return &OtherPlayer{
-		ID:     ID,
-		Image:  image,
-		Coords: Coords{X, Y},
+	return &Player{
+		ID:    ID,
+		Image: image,
+		Entity: object.Entity{
+			Coords: object.Coords{X: X, Y: Y},
+		},
 	}
-}
-
-func (p *Player) Draw(screen *ebiten.Image) {
-	options := &ebiten.DrawImageOptions{}
-	options.GeoM.Translate(p.X, p.Y)
-	screen.DrawImage(p.Image, options)
 }
 
 type Game struct {
 	drawables []Drawable
-	player    *Player
+	player    *LocalPlayer
 	config    *Config
 
 	serverEvents chan *pb.ServerEvent
-	otherPlayers map[string]*OtherPlayer
+	otherPlayers map[string]*Player
 }
 
 func (g *Game) Update() error {
@@ -188,10 +187,7 @@ func (g *Game) Update() error {
 				delete(g.otherPlayers, event.PlayerId)
 			case *pb.ServerEvent_Move:
 				move := event.GetMove()
-				g.otherPlayers[event.PlayerId].Coords = Coords{
-					X: move.X,
-					Y: move.Y,
-				}
+				g.otherPlayers[event.PlayerId].Coords = object.Coords{X: move.X, Y: move.Y}
 			}
 		default:
 			log.Println("should never block")
@@ -247,10 +243,7 @@ func main() {
 	ebiten.SetWindowSize(resolution_cfg.X, resolution_cfg.Y)
 	ebiten.SetWindowTitle("Open ROUNDS")
 
-	// TODO: spin up server if it's not spun up yet
-	player := NewPlayer()
-
-	// yolo testing for now
+	player := NewLocalPlayer()
 	ctx := context.Background()
 	c, _, err := websocket.Dial(ctx, "ws://localhost:4242", nil)
 	if err != nil {
@@ -270,7 +263,7 @@ func main() {
 	game := &Game{
 		player:       player,
 		drawables:    []Drawable{},
-		otherPlayers: make(map[string]*OtherPlayer),
+		otherPlayers: make(map[string]*Player),
 		serverEvents: make(chan *pb.ServerEvent, 1024),
 	}
 
