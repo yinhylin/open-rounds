@@ -3,19 +3,26 @@ syntax = "proto3";
 option go_package = "./pb";
 
 message Move {
-  string playerID = 1;
-  double x = 2;
-  double y = 3;
+  double x = 1;
+  double y = 2;
 }
 
+message AddPlayer {}
+
+message RemovePlayer {}
+
 message ClientEvent {
+  string player_uuid = 1;
   oneof event {
-    Move move = 1;
+    Move move = 2;
   }
 }
 
 message ServerEvent {
+  string player_id = 1;
   oneof event {
-    Move move = 1;
+    Move move = 2;
+    AddPlayer add_player = 3;
+    RemovePlayer remove_player = 4;
   }
 }

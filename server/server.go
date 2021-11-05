@@ -110,6 +110,8 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 			switch clientEvent.Event.(type) {
 			case *pb.ClientEvent_Move:
 				serverEvent = &pb.ServerEvent{
+					// TODO: Send player numbers to clients, not UUIDs.
+					PlayerId: clientEvent.PlayerUuid,
 					Event: &pb.ServerEvent_Move{
 						Move: clientEvent.GetMove(),
 					},

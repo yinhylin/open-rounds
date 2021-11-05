@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"rounds/pb"
-	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -79,6 +78,8 @@ func (p *Player) OnKeysPressed(keys []ebiten.Key) {
 		speed *= 1.5
 	}
 
+	oldCoords := p.Coords
+
 	for _, key := range keys {
 		switch key {
 		case ebiten.KeyA:
@@ -94,14 +95,16 @@ func (p *Player) OnKeysPressed(keys []ebiten.Key) {
 		}
 	}
 
-	p.Events <- &pb.ClientEvent{
-		Event: &pb.ClientEvent_Move{
-			Move: &pb.Move{
-				PlayerID: p.ID,
-				X:        p.X,
-				Y:        p.Y,
+	if oldCoords != p.Coords {
+		p.Events <- &pb.ClientEvent{
+			PlayerUuid: p.ID,
+			Event: &pb.ClientEvent_Move{
+				Move: &pb.Move{
+					X: p.X,
+					Y: p.Y,
+				},
 			},
-		},
+		}
 	}
 }
 
@@ -116,7 +119,7 @@ func NewPlayer() *Player {
 	}
 }
 
-func NewOtherPlayer(X, Y float64) *OtherPlayer {
+func NewOtherPlayer(ID string, X, Y float64) *OtherPlayer {
 	image := ebiten.NewImage(16, 16)
 	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.RGBA{
 		255,
@@ -125,7 +128,7 @@ func NewOtherPlayer(X, Y float64) *OtherPlayer {
 		255,
 	})
 	return &OtherPlayer{
-		ID:     ksuid.New().String(),
+		ID:     ID,
 		Image:  image,
 		Coords: Coords{X, Y},
 	}
@@ -142,23 +145,33 @@ type Game struct {
 	player    *Player
 	config    *Config
 
-	// handled off thread. should probably be entities
+	serverEvents chan *pb.ServerEvent
 	otherPlayers map[string]*OtherPlayer
-	mu           sync.Mutex
-}
-
-func (g *Game) TryAddOtherPlayer(ID string, o *OtherPlayer) {
-	// TODO: Need AddPlayer and RemovePlayer ServerEvent so not modifying every
-	// frame.
-	g.mu.Lock()
-	g.otherPlayers[ID] = o
-	g.mu.Unlock()
 }
 
 func (g *Game) Update() error {
 	var keys []ebiten.Key
 	keys = inpututil.AppendPressedKeys(keys)
 	g.player.OnKeysPressed(inpututil.AppendPressedKeys(keys))
+
+	// Drain server events.
+	for len(g.serverEvents) > 0 {
+		select {
+		case event := <-g.serverEvents:
+			switch event.Event.(type) {
+			case *pb.ServerEvent_Move:
+				move := event.GetMove()
+				if event.PlayerId == g.player.ID {
+					continue
+				}
+				g.otherPlayers[event.PlayerId] = NewOtherPlayer(event.PlayerId, move.X, move.Y)
+				log.Println(move.String())
+			}
+		default:
+			log.Println("should never block")
+			break
+		}
+	}
 	return nil
 }
 
@@ -172,13 +185,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	x, y := ebiten.CursorPosition()
 	ebitenutil.DrawLine(screen, g.player.X+8, g.player.Y+8, float64(x), float64(y), color.RGBA{255, 0, 0, 255})
 
-	// lol
-	g.mu.Lock()
-	log.Println(len(g.otherPlayers))
 	for _, otherPlayer := range g.otherPlayers {
 		otherPlayer.Draw(screen)
 	}
-	g.mu.Unlock()
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -211,11 +220,9 @@ func main() {
 	ebiten.SetWindowTitle("Open ROUNDS")
 
 	// TODO: spin up server if it's not spun up yet
-
 	player := NewPlayer()
 
 	// yolo testing for now
-	// beacon player location every 10ms. should do this roughly on demand but fuck yeah
 	ctx := context.Background()
 	c, _, err := websocket.Dial(ctx, "ws://localhost:4242", nil)
 	if err != nil {
@@ -227,9 +234,10 @@ func main() {
 		player:       player,
 		drawables:    []Drawable{},
 		otherPlayers: make(map[string]*OtherPlayer),
+		serverEvents: make(chan *pb.ServerEvent, 1024),
 	}
 
-	// TODO: read incoming messages
+	// reader
 	go func() {
 		for {
 			_, reader, err := c.Reader(ctx)
@@ -252,19 +260,12 @@ func main() {
 				// TODO: close connection / reconnect
 				log.Fatal(err)
 			}
-			log.Println(serverEvent.String())
-
-			switch serverEvent.Event.(type) {
-			case *pb.ServerEvent_Move:
-				move := serverEvent.GetMove()
-				if move.PlayerID == player.ID {
-					continue
-				}
-				game.TryAddOtherPlayer(move.PlayerID, NewOtherPlayer(move.X, move.Y))
-			}
+			game.serverEvents <- &serverEvent
 		}
 	}()
 
+	// the writer
+	// https://www.youtube.com/watch?v=H-ru2glqXAg
 	go func() {
 		for event := range player.Events {
 			bytes, err := proto.Marshal(event)
