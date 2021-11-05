@@ -7,6 +7,8 @@ message Move {
   double y = 2;
 }
 
+message Connect {}
+
 message AddPlayer {}
 
 message RemovePlayer {}
@@ -14,7 +16,8 @@ message RemovePlayer {}
 message ClientEvent {
   string player_uuid = 1;
   oneof event {
-    Move move = 2;
+    Connect connect = 2;
+    Move move = 3;
   }
 }
 

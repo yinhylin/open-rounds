@@ -111,12 +111,26 @@ func (p *Player) OnKeysPressed(keys []ebiten.Key) {
 func NewPlayer() *Player {
 	image := ebiten.NewImage(16, 16)
 	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.White)
-	return &Player{
+	player := &Player{
 		ID:     ksuid.New().String(),
 		Image:  image,
 		Coords: Coords{32, 32},
 		Events: make(chan *pb.ClientEvent, 1024),
 	}
+	player.Events <- &pb.ClientEvent{
+		PlayerUuid: player.ID,
+		Event:      &pb.ClientEvent_Connect{},
+	}
+	player.Events <- &pb.ClientEvent{
+		PlayerUuid: player.ID,
+		Event: &pb.ClientEvent_Move{
+			Move: &pb.Move{
+				X: player.X,
+				Y: player.Y,
+			},
+		},
+	}
+	return player
 }
 
 func NewOtherPlayer(ID string, X, Y float64) *OtherPlayer {
@@ -158,14 +172,23 @@ func (g *Game) Update() error {
 	for len(g.serverEvents) > 0 {
 		select {
 		case event := <-g.serverEvents:
+			playerID := event.PlayerId
+			if playerID == g.player.ID {
+				// TODO: Could not send to the player /shruggie
+				continue
+			}
+
 			switch event.Event.(type) {
+			case *pb.ServerEvent_AddPlayer:
+				g.otherPlayers[event.PlayerId] = NewOtherPlayer(event.PlayerId, 32, 32)
+			case *pb.ServerEvent_RemovePlayer:
+				delete(g.otherPlayers, event.PlayerId)
 			case *pb.ServerEvent_Move:
 				move := event.GetMove()
-				if event.PlayerId == g.player.ID {
-					continue
+				g.otherPlayers[event.PlayerId].Coords = Coords{
+					X: move.X,
+					Y: move.Y,
 				}
-				g.otherPlayers[event.PlayerId] = NewOtherPlayer(event.PlayerId, move.X, move.Y)
-				log.Println(move.String())
 			}
 		default:
 			log.Println("should never block")
@@ -182,12 +205,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for _, drawable := range g.drawables {
 		drawable.Draw(screen)
 	}
-	x, y := ebiten.CursorPosition()
-	ebitenutil.DrawLine(screen, g.player.X+8, g.player.Y+8, float64(x), float64(y), color.RGBA{255, 0, 0, 255})
 
 	for _, otherPlayer := range g.otherPlayers {
 		otherPlayer.Draw(screen)
 	}
+
+	x, y := ebiten.CursorPosition()
+	ebitenutil.DrawLine(screen, g.player.X+8, g.player.Y+8, float64(x), float64(y), color.RGBA{255, 0, 0, 255})
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
