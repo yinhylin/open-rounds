@@ -30,21 +30,22 @@ type Config struct {
 	Game   GameConfig
 }
 
+var Cfg Config
+
 func ReadToml(fileName string) Config {
-	var cfg Config
 	cfg_file, file_err := os.ReadFile(fileName)
 	if file_err != nil {
 		panic(file_err)
 	}
 	log.Printf("config file: %s", cfg_file)
 
-	toml_err := toml.Unmarshal([]byte(cfg_file), &cfg)
+	toml_err := toml.Unmarshal([]byte(cfg_file), &Cfg)
 	if toml_err != nil {
 		panic(toml_err)
 	}
 
-	log.Printf("config: %v", cfg)
-	log.Printf("config.UI: %v", cfg.Ui)
+	log.Printf("config: %v", Cfg)
+	log.Printf("config.UI: %v", Cfg.Ui)
 
-	return cfg
+	return Cfg
 }

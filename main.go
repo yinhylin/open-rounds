@@ -68,7 +68,6 @@ func (p *Player) Draw(screen *ebiten.Image) {
 type Game struct {
 	drawables []Drawable
 	player    *Player
-	config    *confutils.Config
 }
 
 func (g *Game) Update() error {
@@ -95,9 +94,9 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func main() {
 	// Load Configs
-	cfg := confutils.ReadToml("config.toml")
+	confutils.ReadToml("config.toml")
 
-	resolution_cfg := cfg.Ui.Resolution
+	resolution_cfg := confutils.Cfg.Ui.Resolution
 
 	log.Printf("x: %v, y: %v", resolution_cfg.X, resolution_cfg.Y)
 
