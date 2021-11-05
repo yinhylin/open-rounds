@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"rounds/foobar"
 	"rounds/pb"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -303,6 +304,8 @@ func main() {
 			}
 		}
 	}()
+
+	log.Println(foobar.Foobar())
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
