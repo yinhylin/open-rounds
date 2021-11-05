@@ -8,6 +8,8 @@ import (
 	"os"
 	"rounds/foobar"
 	"rounds/pb"
+	"rounds/server"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -252,7 +254,16 @@ func main() {
 	ctx := context.Background()
 	c, _, err := websocket.Dial(ctx, "ws://localhost:4242", nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Encountered err: %v. Trying to spin up server manually\n", err)
+		// Try to spin up the server if we fail to connect.
+		go server.Run()
+
+		// TODO: Should have a good way of testing if the server is up.
+		time.Sleep(50 * time.Millisecond)
+		c, _, err = websocket.Dial(ctx, "ws://localhost:4242", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	defer c.Close(websocket.StatusInternalError, "")
 

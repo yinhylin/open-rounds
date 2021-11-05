@@ -7,9 +7,9 @@ go build
 # running
 
 ```
-# Server (needed right now)
-go run ./server
-
-# Client
+# Client (spins up server if it can't connect)
 go run .
+
+# Server on its own
+go run ./run_server
 ```

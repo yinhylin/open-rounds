@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -183,7 +183,7 @@ func (s *Server) publish(event *pb.ServerEvent) {
 	}
 }
 
-func main() {
+func Run() {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 	address := "localhost:4242"
 	if len(os.Args) > 1 {
