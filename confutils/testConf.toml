@@ -3,14 +3,14 @@
 
 # Stores Player Configs
 [Player]
-speed = 100.0
-jumpHeight = 100.0
+Speed = 1
+JumpHeight = 1
 
 # Stores UI Configs
 [UI.Resolution]
-x = 1280
-y = 620
+X = 1
+Y = 1
 
 # Stores Game Configs
 [Game]
-bar = "foo"
+bar = "test"

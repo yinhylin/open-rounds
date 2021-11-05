@@ -1,15 +1,13 @@
 package confutils
 
 import (
-	"log"
 	"os"
 
 	"github.com/pelletier/go-toml/v2"
 )
 
 type PlayerConfig struct {
-	speed      float32
-	jumpHeight float32
+	Speed, JumpHeight int
 }
 
 type GameConfig struct {
@@ -37,15 +35,11 @@ func ReadToml(fileName string) Config {
 	if file_err != nil {
 		panic(file_err)
 	}
-	log.Printf("config file: %s", cfg_file)
 
 	toml_err := toml.Unmarshal([]byte(cfg_file), &Cfg)
 	if toml_err != nil {
 		panic(toml_err)
 	}
-
-	log.Printf("config: %v", Cfg)
-	log.Printf("config.UI: %v", Cfg.Ui)
 
 	return Cfg
 }
