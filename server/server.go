@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"rounds/object"
 	"rounds/pb"
 	"sync"
 	"time"
@@ -28,6 +29,7 @@ type Server struct {
 	subscribers map[*subscriber]struct{}
 	mu          sync.Mutex
 	serveMux    http.ServeMux
+	players     map[string]*object.Entity
 }
 
 func NewServer() *Server {
