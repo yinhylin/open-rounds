@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"rounds/foobar"
 	"rounds/object"
 	"rounds/pb"
 	"rounds/server"
@@ -309,7 +308,6 @@ func main() {
 		}
 	}()
 
-	log.Println(foobar.Foobar())
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
