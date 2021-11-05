@@ -1,0 +1,16 @@
+# use beeeeeg numbers so they're easier to tweek. 
+# We can scale them elsewhere to keep them inside a reasonable range while giving us reasonable granularity here for balancing.
+
+# Stores Player Configs
+[Player]
+speed = 100
+jumpHeight = 100
+
+# Stores UI Configs
+[UI.Resolution]
+x = 1280
+y = 620
+
+# Stores Game Configs
+[Game]
+bar = "foo"
