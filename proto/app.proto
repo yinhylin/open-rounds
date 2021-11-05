@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+message Player { string id = 1; }
+
+message Move {
+  Player player = 1;
+  double x = 2;
+  double y = 3;
+}
+
+message TestMessage { string message = 1; }
+
+message ClientEvent {
+  Player player = 1;
+  oneof event { Move move = 2; }
+}
