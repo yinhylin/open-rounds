@@ -95,6 +95,7 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 				return
 			}
 
+			s.removeSubscriber(sub)
 			s.publish(&pb.ServerEvent{
 				PlayerId: sub.PlayerID,
 				Event:    &pb.ServerEvent_RemovePlayer{},
