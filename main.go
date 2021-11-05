@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"image/color"
+	"io/ioutil"
 	"log"
 	"os"
 	"rounds/pb"
-	"time"
+	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -33,7 +33,21 @@ type Drawable interface {
 
 type Player struct {
 	Coords
+	ID     string
+	Image  *ebiten.Image
+	Events chan *pb.ClientEvent
+}
+
+type OtherPlayer struct {
+	Coords
+	ID    string
 	Image *ebiten.Image
+}
+
+func (p *OtherPlayer) Draw(screen *ebiten.Image) {
+	options := &ebiten.DrawImageOptions{}
+	options.GeoM.Translate(p.X, p.Y)
+	screen.DrawImage(p.Image, options)
 }
 
 type PlayerConfig struct {
@@ -79,14 +93,41 @@ func (p *Player) OnKeysPressed(keys []ebiten.Key) {
 			log.Fatal("quit")
 		}
 	}
+
+	p.Events <- &pb.ClientEvent{
+		Event: &pb.ClientEvent_Move{
+			Move: &pb.Move{
+				PlayerID: p.ID,
+				X:        p.X,
+				Y:        p.Y,
+			},
+		},
+	}
 }
 
 func NewPlayer() *Player {
 	image := ebiten.NewImage(16, 16)
 	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.White)
 	return &Player{
+		ID:     ksuid.New().String(),
 		Image:  image,
 		Coords: Coords{32, 32},
+		Events: make(chan *pb.ClientEvent, 1024),
+	}
+}
+
+func NewOtherPlayer(X, Y float64) *OtherPlayer {
+	image := ebiten.NewImage(16, 16)
+	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.RGBA{
+		255,
+		255,
+		0,
+		255,
+	})
+	return &OtherPlayer{
+		ID:     ksuid.New().String(),
+		Image:  image,
+		Coords: Coords{X, Y},
 	}
 }
 
@@ -100,6 +141,18 @@ type Game struct {
 	drawables []Drawable
 	player    *Player
 	config    *Config
+
+	// handled off thread. should probably be entities
+	otherPlayers map[string]*OtherPlayer
+	mu           sync.Mutex
+}
+
+func (g *Game) TryAddOtherPlayer(ID string, o *OtherPlayer) {
+	// TODO: Need AddPlayer and RemovePlayer ServerEvent so not modifying every
+	// frame.
+	g.mu.Lock()
+	g.otherPlayers[ID] = o
+	g.mu.Unlock()
 }
 
 func (g *Game) Update() error {
@@ -118,6 +171,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	x, y := ebiten.CursorPosition()
 	ebitenutil.DrawLine(screen, g.player.X+8, g.player.Y+8, float64(x), float64(y), color.RGBA{255, 0, 0, 255})
+
+	// lol
+	g.mu.Lock()
+	log.Println(len(g.otherPlayers))
+	for _, otherPlayer := range g.otherPlayers {
+		otherPlayer.Draw(screen)
+	}
+	g.mu.Unlock()
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -151,8 +212,7 @@ func main() {
 
 	// TODO: spin up server if it's not spun up yet
 
-	playerID := ksuid.New()
-	fmt.Println(playerID)
+	player := NewPlayer()
 
 	// yolo testing for now
 	// beacon player location every 10ms. should do this roughly on demand but fuck yeah
@@ -163,30 +223,61 @@ func main() {
 	}
 	defer c.Close(websocket.StatusInternalError, "")
 
+	game := &Game{
+		player:       player,
+		drawables:    []Drawable{},
+		otherPlayers: make(map[string]*OtherPlayer),
+	}
+
 	// TODO: read incoming messages
 	go func() {
 		for {
-			// TODO: send actual coordinates
-			clientEvent := &pb.ClientEvent{
-				Event: &pb.ClientEvent_Move{
-					Move: &pb.Move{
-						PlayerID: playerID.String(),
-						X:        float64(32),
-						Y:        float64(32),
-					},
-				},
+			_, reader, err := c.Reader(ctx)
+			if err != nil {
+				log.Fatal(err)
 			}
-			bytes, err := proto.Marshal(clientEvent)
+
+			b, err := ioutil.ReadAll(reader)
+			if err != nil {
+				// TODO: close connection / reconnect
+				log.Fatal(err)
+			}
+			if len(b) <= 0 {
+				continue
+			}
+
+			var serverEvent pb.ServerEvent
+			err = proto.Unmarshal(b, &serverEvent)
+			if err != nil {
+				// TODO: close connection / reconnect
+				log.Fatal(err)
+			}
+			log.Println(serverEvent.String())
+
+			switch serverEvent.Event.(type) {
+			case *pb.ServerEvent_Move:
+				move := serverEvent.GetMove()
+				if move.PlayerID == player.ID {
+					continue
+				}
+				game.TryAddOtherPlayer(move.PlayerID, NewOtherPlayer(move.X, move.Y))
+			}
+		}
+	}()
+
+	go func() {
+		for event := range player.Events {
+			bytes, err := proto.Marshal(event)
+			// TODO: handle these more gracefully
 			if err != nil {
 				log.Fatal(err)
 			}
 			if err := c.Write(ctx, websocket.MessageBinary, bytes); err != nil {
 				log.Fatal(err)
 			}
-			time.Sleep(10 * time.Millisecond)
 		}
 	}()
-	if err := ebiten.RunGame(&Game{player: NewPlayer(), drawables: []Drawable{}}); err != nil {
+	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
 }

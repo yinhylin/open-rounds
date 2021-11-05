@@ -105,6 +105,26 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 				return
 			}
 
+			// TODO: we should do movement vectors and validation
+			var serverEvent *pb.ServerEvent
+			switch clientEvent.Event.(type) {
+			case *pb.ClientEvent_Move:
+				serverEvent = &pb.ServerEvent{
+					Event: &pb.ServerEvent_Move{
+						Move: clientEvent.GetMove(),
+					},
+				}
+			}
+
+			if serverEvent != nil {
+				bytes, err := proto.Marshal(serverEvent)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				s.publish(bytes)
+			}
+
 			// TODO: better handling of server events in a separate area.
 			log.Println(clientEvent.String())
 
@@ -170,8 +190,7 @@ func main() {
 		log.Printf("terminating: %v", sig)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	if err := s.Shutdown(ctx); err != nil {
 		log.Fatal(err)
 	}
