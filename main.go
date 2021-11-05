@@ -1,14 +1,13 @@
 package main
 
 import (
+	"confutils"
 	"image/color"
 	"log"
-	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/pelletier/go-toml/v2"
 )
 
 type Coords struct {
@@ -27,29 +26,6 @@ type Drawable interface {
 type Player struct {
 	Coords
 	Image *ebiten.Image
-}
-
-type PlayerConfig struct {
-	speed      float32
-	jumpHeight float32
-}
-
-type GameConfig struct {
-	Bar string
-}
-
-type ResolutionConfig struct {
-	X, Y int
-}
-
-type UIConfig struct {
-	Resolution ResolutionConfig
-}
-
-type Config struct {
-	Player PlayerConfig
-	Ui     UIConfig
-	Game   GameConfig
 }
 
 func (p *Player) OnKeysPressed(keys []ebiten.Key) {
@@ -92,7 +68,7 @@ func (p *Player) Draw(screen *ebiten.Image) {
 type Game struct {
 	drawables []Drawable
 	player    *Player
-	config    *Config
+	config    *confutils.Config
 }
 
 func (g *Game) Update() error {
@@ -119,21 +95,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func main() {
 	// Load Configs
-	var cfg Config
-	cfg_file, file_err := os.ReadFile("config.toml")
-	if file_err != nil {
-		panic(file_err)
-	}
-	log.Printf("config file: %s", cfg_file)
-
-	toml_err := toml.Unmarshal([]byte(cfg_file), &cfg)
-	if toml_err != nil {
-		panic(toml_err)
-	}
-
-	log.Printf("config: %v", cfg)
-
-	log.Printf("config.UI: %v", cfg.Ui)
+	cfg := confutils.ReadToml("config.toml")
 
 	resolution_cfg := cfg.Ui.Resolution
 
