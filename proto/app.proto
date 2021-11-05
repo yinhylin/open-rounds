@@ -9,9 +9,13 @@ message Move {
 }
 
 message ClientEvent {
-  oneof event { Move move = 1; }
+  oneof event {
+    Move move = 1;
+  }
 }
 
 message ServerEvent {
-  oneof event { Move move = 1; }
+  oneof event {
+    Move move = 1;
+  }
 }
