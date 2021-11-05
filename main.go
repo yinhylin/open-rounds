@@ -1,14 +1,21 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"image/color"
 	"log"
 	"os"
+	"rounds/pb"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/segmentio/ksuid"
+	"google.golang.org/protobuf/proto"
+	"nhooyr.io/websocket"
 )
 
 type Coords struct {
@@ -141,6 +148,44 @@ func main() {
 
 	ebiten.SetWindowSize(resolution_cfg.X, resolution_cfg.Y)
 	ebiten.SetWindowTitle("Open ROUNDS")
+
+	// TODO: spin up server if it's not spun up yet
+
+	playerID := ksuid.New()
+	fmt.Println(playerID)
+
+	// yolo testing for now
+	// beacon player location every 10ms. should do this roughly on demand but fuck yeah
+	ctx := context.Background()
+	c, _, err := websocket.Dial(ctx, "ws://localhost:4242", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer c.Close(websocket.StatusInternalError, "")
+
+	// TODO: read incoming messages
+	go func() {
+		for {
+			// TODO: send actual coordinates
+			clientEvent := &pb.ClientEvent{
+				Event: &pb.ClientEvent_Move{
+					Move: &pb.Move{
+						PlayerID: playerID.String(),
+						X:        float64(32),
+						Y:        float64(32),
+					},
+				},
+			}
+			bytes, err := proto.Marshal(clientEvent)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err := c.Write(ctx, websocket.MessageBinary, bytes); err != nil {
+				log.Fatal(err)
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	}()
 	if err := ebiten.RunGame(&Game{player: NewPlayer(), drawables: []Drawable{}}); err != nil {
 		log.Fatal(err)
 	}
