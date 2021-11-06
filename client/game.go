@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"image/color"
 	"io/ioutil"
 	"log"
@@ -61,12 +62,8 @@ func NewGame(player *LocalPlayer) *Game {
 	}
 }
 
-func (g *Game) Update() error {
-	var keys []ebiten.Key
-	keys = inpututil.AppendPressedKeys(keys)
-	g.player.OnKeysPressed(inpututil.AppendPressedKeys(keys))
-
-	// Drain and apply server events.
+// handleServerEvents drains and applies server events every tick.
+func (g *Game) handleServerEvents() error {
 	for len(g.serverEvents) > 0 {
 		select {
 		case event := <-g.serverEvents:
@@ -83,14 +80,24 @@ func (g *Game) Update() error {
 				delete(g.otherPlayers, event.PlayerId)
 			case *pb.ServerEvent_Move:
 				move := event.GetMove()
+				if playerID == g.player.ID {
+					// TODO: Could not send to the player /shruggie
+					continue
+				}
 				g.otherPlayers[event.PlayerId].Coords = object.Coords{X: move.X, Y: move.Y}
 			}
 		default:
-			log.Println("should never block")
-			break
+			return errors.New("should never block")
 		}
 	}
 	return nil
+}
+
+func (g *Game) Update() error {
+	var keys []ebiten.Key
+	keys = inpututil.AppendPressedKeys(keys)
+	g.player.OnKeysPressed(inpututil.AppendPressedKeys(keys))
+	return g.handleServerEvents()
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -100,16 +107,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		202,
 		255,
 	})
-	g.player.Draw(screen)
+	// Draw things (bullets? walls?)
 	for _, drawable := range g.drawables {
 		drawable.Draw(screen)
 	}
 
+	// Draw the player.
+	g.player.Draw(screen)
+
+	// Draw the other players with name tags.
 	for _, otherPlayer := range g.otherPlayers {
 		ebitenutil.DebugPrintAt(screen, otherPlayer.ID, int(otherPlayer.X)-(len(otherPlayer.ID)*5/2), int(otherPlayer.Y)-16)
 		otherPlayer.Draw(screen)
 	}
 
+	// Draw a line to the cursor.
 	x, y := ebiten.CursorPosition()
 	ebitenutil.DrawLine(screen, g.player.X+8, g.player.Y+8, float64(x), float64(y), color.RGBA{255, 0, 0, 255})
 }
