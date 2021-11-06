@@ -111,7 +111,12 @@ func (p *LocalPlayer) OnKeysPressed(keys []ebiten.Key) {
 
 func NewLocalPlayer() *LocalPlayer {
 	image := ebiten.NewImage(16, 16)
-	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.White)
+	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.RGBA{
+		218,
+		212,
+		94,
+		255,
+	})
 	player := &LocalPlayer{
 		Player: Player{
 			ID:    ksuid.New().String(),
@@ -141,9 +146,9 @@ func NewLocalPlayer() *LocalPlayer {
 func NewOtherPlayer(ID string, X, Y float64) *Player {
 	image := ebiten.NewImage(16, 16)
 	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.RGBA{
-		255,
-		255,
-		0,
+		208,
+		70,
+		72,
 		255,
 	})
 	return &Player{
@@ -197,8 +202,12 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(screen, "foobar")
-
+	screen.Fill(color.RGBA{
+		109,
+		194,
+		202,
+		255,
+	})
 	g.player.Draw(screen)
 	for _, drawable := range g.drawables {
 		drawable.Draw(screen)
