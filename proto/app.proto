@@ -2,17 +2,38 @@ syntax = "proto3";
 
 option go_package = "./pb";
 
-message Player { string id = 1; }
-
 message Move {
-  Player player = 1;
-  double x = 2;
-  double y = 3;
+  double x = 1;
+  double y = 2;
 }
 
-message TestMessage { string message = 1; }
+message Connect {}
+
+message AddPlayer {}
+
+message RemovePlayer {}
+
+message KeyDown {}
+
+message KeyUp {}
 
 message ClientEvent {
-  Player player = 1;
-  oneof event { Move move = 2; }
+  string player_uuid = 1;
+  oneof event {
+    Connect connect = 2;
+    Move move = 3;
+    KeyDown key_down = 4;
+    KeyUp key_up = 5;
+  }
+}
+
+message ServerEvent {
+  string player_id = 1;
+  oneof event {
+    Move move = 2;
+    AddPlayer add_player = 3;
+    RemovePlayer remove_player = 4;
+    KeyDown key_down = 5;
+    KeyUp key_up = 6;
+  }
 }

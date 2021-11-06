@@ -20,67 +20,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Player struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-}
-
-func (x *Player) Reset() {
-	*x = Player{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *Player) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Player) ProtoMessage() {}
-
-func (x *Player) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Player.ProtoReflect.Descriptor instead.
-func (*Player) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Player) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
 type Move struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Player *Player `protobuf:"bytes,1,opt,name=player,proto3" json:"player,omitempty"`
-	X      float32 `protobuf:"fixed32,2,opt,name=x,proto3" json:"x,omitempty"`
-	Y      float32 `protobuf:"fixed32,3,opt,name=y,proto3" json:"y,omitempty"`
+	X float64 `protobuf:"fixed64,1,opt,name=x,proto3" json:"x,omitempty"`
+	Y float64 `protobuf:"fixed64,2,opt,name=y,proto3" json:"y,omitempty"`
 }
 
 func (x *Move) Reset() {
 	*x = Move{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[1]
+		mi := &file_proto_app_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -93,7 +45,7 @@ func (x *Move) String() string {
 func (*Move) ProtoMessage() {}
 
 func (x *Move) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[1]
+	mi := &file_proto_app_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -106,28 +58,211 @@ func (x *Move) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Move.ProtoReflect.Descriptor instead.
 func (*Move) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{1}
+	return file_proto_app_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Move) GetPlayer() *Player {
-	if x != nil {
-		return x.Player
-	}
-	return nil
-}
-
-func (x *Move) GetX() float32 {
+func (x *Move) GetX() float64 {
 	if x != nil {
 		return x.X
 	}
 	return 0
 }
 
-func (x *Move) GetY() float32 {
+func (x *Move) GetY() float64 {
 	if x != nil {
 		return x.Y
 	}
 	return 0
+}
+
+type Connect struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *Connect) Reset() {
+	*x = Connect{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_app_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Connect) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Connect) ProtoMessage() {}
+
+func (x *Connect) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_app_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Connect.ProtoReflect.Descriptor instead.
+func (*Connect) Descriptor() ([]byte, []int) {
+	return file_proto_app_proto_rawDescGZIP(), []int{1}
+}
+
+type AddPlayer struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *AddPlayer) Reset() {
+	*x = AddPlayer{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_app_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AddPlayer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddPlayer) ProtoMessage() {}
+
+func (x *AddPlayer) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_app_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddPlayer.ProtoReflect.Descriptor instead.
+func (*AddPlayer) Descriptor() ([]byte, []int) {
+	return file_proto_app_proto_rawDescGZIP(), []int{2}
+}
+
+type RemovePlayer struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *RemovePlayer) Reset() {
+	*x = RemovePlayer{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_app_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RemovePlayer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemovePlayer) ProtoMessage() {}
+
+func (x *RemovePlayer) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_app_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemovePlayer.ProtoReflect.Descriptor instead.
+func (*RemovePlayer) Descriptor() ([]byte, []int) {
+	return file_proto_app_proto_rawDescGZIP(), []int{3}
+}
+
+type KeyDown struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *KeyDown) Reset() {
+	*x = KeyDown{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_app_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *KeyDown) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KeyDown) ProtoMessage() {}
+
+func (x *KeyDown) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_app_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KeyDown.ProtoReflect.Descriptor instead.
+func (*KeyDown) Descriptor() ([]byte, []int) {
+	return file_proto_app_proto_rawDescGZIP(), []int{4}
+}
+
+type KeyUp struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *KeyUp) Reset() {
+	*x = KeyUp{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_app_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *KeyUp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KeyUp) ProtoMessage() {}
+
+func (x *KeyUp) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_app_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KeyUp.ProtoReflect.Descriptor instead.
+func (*KeyUp) Descriptor() ([]byte, []int) {
+	return file_proto_app_proto_rawDescGZIP(), []int{5}
 }
 
 type ClientEvent struct {
@@ -135,16 +270,19 @@ type ClientEvent struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Player *Player `protobuf:"bytes,1,opt,name=player,proto3" json:"player,omitempty"`
+	PlayerUuid string `protobuf:"bytes,1,opt,name=player_uuid,json=playerUuid,proto3" json:"player_uuid,omitempty"`
 	// Types that are assignable to Event:
+	//	*ClientEvent_Connect
 	//	*ClientEvent_Move
+	//	*ClientEvent_KeyDown
+	//	*ClientEvent_KeyUp
 	Event isClientEvent_Event `protobuf_oneof:"event"`
 }
 
 func (x *ClientEvent) Reset() {
 	*x = ClientEvent{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[2]
+		mi := &file_proto_app_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -157,7 +295,7 @@ func (x *ClientEvent) String() string {
 func (*ClientEvent) ProtoMessage() {}
 
 func (x *ClientEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[2]
+	mi := &file_proto_app_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -170,19 +308,26 @@ func (x *ClientEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientEvent.ProtoReflect.Descriptor instead.
 func (*ClientEvent) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{2}
+	return file_proto_app_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *ClientEvent) GetPlayer() *Player {
+func (x *ClientEvent) GetPlayerUuid() string {
 	if x != nil {
-		return x.Player
+		return x.PlayerUuid
 	}
-	return nil
+	return ""
 }
 
 func (m *ClientEvent) GetEvent() isClientEvent_Event {
 	if m != nil {
 		return m.Event
+	}
+	return nil
+}
+
+func (x *ClientEvent) GetConnect() *Connect {
+	if x, ok := x.GetEvent().(*ClientEvent_Connect); ok {
+		return x.Connect
 	}
 	return nil
 }
@@ -194,33 +339,218 @@ func (x *ClientEvent) GetMove() *Move {
 	return nil
 }
 
+func (x *ClientEvent) GetKeyDown() *KeyDown {
+	if x, ok := x.GetEvent().(*ClientEvent_KeyDown); ok {
+		return x.KeyDown
+	}
+	return nil
+}
+
+func (x *ClientEvent) GetKeyUp() *KeyUp {
+	if x, ok := x.GetEvent().(*ClientEvent_KeyUp); ok {
+		return x.KeyUp
+	}
+	return nil
+}
+
 type isClientEvent_Event interface {
 	isClientEvent_Event()
 }
 
+type ClientEvent_Connect struct {
+	Connect *Connect `protobuf:"bytes,2,opt,name=connect,proto3,oneof"`
+}
+
 type ClientEvent_Move struct {
+	Move *Move `protobuf:"bytes,3,opt,name=move,proto3,oneof"`
+}
+
+type ClientEvent_KeyDown struct {
+	KeyDown *KeyDown `protobuf:"bytes,4,opt,name=key_down,json=keyDown,proto3,oneof"`
+}
+
+type ClientEvent_KeyUp struct {
+	KeyUp *KeyUp `protobuf:"bytes,5,opt,name=key_up,json=keyUp,proto3,oneof"`
+}
+
+func (*ClientEvent_Connect) isClientEvent_Event() {}
+
+func (*ClientEvent_Move) isClientEvent_Event() {}
+
+func (*ClientEvent_KeyDown) isClientEvent_Event() {}
+
+func (*ClientEvent_KeyUp) isClientEvent_Event() {}
+
+type ServerEvent struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	PlayerId string `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	// Types that are assignable to Event:
+	//	*ServerEvent_Move
+	//	*ServerEvent_AddPlayer
+	//	*ServerEvent_RemovePlayer
+	//	*ServerEvent_KeyDown
+	//	*ServerEvent_KeyUp
+	Event isServerEvent_Event `protobuf_oneof:"event"`
+}
+
+func (x *ServerEvent) Reset() {
+	*x = ServerEvent{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_app_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ServerEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerEvent) ProtoMessage() {}
+
+func (x *ServerEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_app_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerEvent.ProtoReflect.Descriptor instead.
+func (*ServerEvent) Descriptor() ([]byte, []int) {
+	return file_proto_app_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ServerEvent) GetPlayerId() string {
+	if x != nil {
+		return x.PlayerId
+	}
+	return ""
+}
+
+func (m *ServerEvent) GetEvent() isServerEvent_Event {
+	if m != nil {
+		return m.Event
+	}
+	return nil
+}
+
+func (x *ServerEvent) GetMove() *Move {
+	if x, ok := x.GetEvent().(*ServerEvent_Move); ok {
+		return x.Move
+	}
+	return nil
+}
+
+func (x *ServerEvent) GetAddPlayer() *AddPlayer {
+	if x, ok := x.GetEvent().(*ServerEvent_AddPlayer); ok {
+		return x.AddPlayer
+	}
+	return nil
+}
+
+func (x *ServerEvent) GetRemovePlayer() *RemovePlayer {
+	if x, ok := x.GetEvent().(*ServerEvent_RemovePlayer); ok {
+		return x.RemovePlayer
+	}
+	return nil
+}
+
+func (x *ServerEvent) GetKeyDown() *KeyDown {
+	if x, ok := x.GetEvent().(*ServerEvent_KeyDown); ok {
+		return x.KeyDown
+	}
+	return nil
+}
+
+func (x *ServerEvent) GetKeyUp() *KeyUp {
+	if x, ok := x.GetEvent().(*ServerEvent_KeyUp); ok {
+		return x.KeyUp
+	}
+	return nil
+}
+
+type isServerEvent_Event interface {
+	isServerEvent_Event()
+}
+
+type ServerEvent_Move struct {
 	Move *Move `protobuf:"bytes,2,opt,name=move,proto3,oneof"`
 }
 
-func (*ClientEvent_Move) isClientEvent_Event() {}
+type ServerEvent_AddPlayer struct {
+	AddPlayer *AddPlayer `protobuf:"bytes,3,opt,name=add_player,json=addPlayer,proto3,oneof"`
+}
+
+type ServerEvent_RemovePlayer struct {
+	RemovePlayer *RemovePlayer `protobuf:"bytes,4,opt,name=remove_player,json=removePlayer,proto3,oneof"`
+}
+
+type ServerEvent_KeyDown struct {
+	KeyDown *KeyDown `protobuf:"bytes,5,opt,name=key_down,json=keyDown,proto3,oneof"`
+}
+
+type ServerEvent_KeyUp struct {
+	KeyUp *KeyUp `protobuf:"bytes,6,opt,name=key_up,json=keyUp,proto3,oneof"`
+}
+
+func (*ServerEvent_Move) isServerEvent_Event() {}
+
+func (*ServerEvent_AddPlayer) isServerEvent_Event() {}
+
+func (*ServerEvent_RemovePlayer) isServerEvent_Event() {}
+
+func (*ServerEvent_KeyDown) isServerEvent_Event() {}
+
+func (*ServerEvent_KeyUp) isServerEvent_Event() {}
 
 var File_proto_app_proto protoreflect.FileDescriptor
 
 var file_proto_app_proto_rawDesc = []byte{
 	0x0a, 0x0f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x70, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x22, 0x18, 0x0a, 0x06, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x43, 0x0a, 0x04, 0x4d,
-	0x6f, 0x76, 0x65, 0x12, 0x1f, 0x0a, 0x06, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x07, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x52, 0x06, 0x70, 0x6c,
-	0x61, 0x79, 0x65, 0x72, 0x12, 0x0c, 0x0a, 0x01, 0x78, 0x18, 0x02, 0x20, 0x01, 0x28, 0x02, 0x52,
-	0x01, 0x78, 0x12, 0x0c, 0x0a, 0x01, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x02, 0x52, 0x01, 0x79,
-	0x22, 0x54, 0x0a, 0x0b, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12,
-	0x1f, 0x0a, 0x06, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x07, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x52, 0x06, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72,
-	0x12, 0x1b, 0x0a, 0x04, 0x6d, 0x6f, 0x76, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x05,
-	0x2e, 0x4d, 0x6f, 0x76, 0x65, 0x48, 0x00, 0x52, 0x04, 0x6d, 0x6f, 0x76, 0x65, 0x42, 0x07, 0x0a,
-	0x05, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x06, 0x5a, 0x04, 0x2e, 0x2f, 0x70, 0x62, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6f, 0x22, 0x22, 0x0a, 0x04, 0x4d, 0x6f, 0x76, 0x65, 0x12, 0x0c, 0x0a, 0x01, 0x78, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x01, 0x52, 0x01, 0x78, 0x12, 0x0c, 0x0a, 0x01, 0x79, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x01, 0x52, 0x01, 0x79, 0x22, 0x09, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74,
+	0x22, 0x0b, 0x0a, 0x09, 0x41, 0x64, 0x64, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x22, 0x0e, 0x0a,
+	0x0c, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x22, 0x09, 0x0a,
+	0x07, 0x4b, 0x65, 0x79, 0x44, 0x6f, 0x77, 0x6e, 0x22, 0x07, 0x0a, 0x05, 0x4b, 0x65, 0x79, 0x55,
+	0x70, 0x22, 0xc2, 0x01, 0x0a, 0x0b, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x45, 0x76, 0x65, 0x6e,
+	0x74, 0x12, 0x1f, 0x0a, 0x0b, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x5f, 0x75, 0x75, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x55, 0x75,
+	0x69, 0x64, 0x12, 0x24, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x08, 0x2e, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x48, 0x00, 0x52,
+	0x07, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12, 0x1b, 0x0a, 0x04, 0x6d, 0x6f, 0x76, 0x65,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x05, 0x2e, 0x4d, 0x6f, 0x76, 0x65, 0x48, 0x00, 0x52,
+	0x04, 0x6d, 0x6f, 0x76, 0x65, 0x12, 0x25, 0x0a, 0x08, 0x6b, 0x65, 0x79, 0x5f, 0x64, 0x6f, 0x77,
+	0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x08, 0x2e, 0x4b, 0x65, 0x79, 0x44, 0x6f, 0x77,
+	0x6e, 0x48, 0x00, 0x52, 0x07, 0x6b, 0x65, 0x79, 0x44, 0x6f, 0x77, 0x6e, 0x12, 0x1f, 0x0a, 0x06,
+	0x6b, 0x65, 0x79, 0x5f, 0x75, 0x70, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x06, 0x2e, 0x4b,
+	0x65, 0x79, 0x55, 0x70, 0x48, 0x00, 0x52, 0x05, 0x6b, 0x65, 0x79, 0x55, 0x70, 0x42, 0x07, 0x0a,
+	0x05, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x22, 0xfb, 0x01, 0x0a, 0x0b, 0x53, 0x65, 0x72, 0x76, 0x65,
+	0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x6c, 0x61, 0x79, 0x65,
+	0x72, 0x49, 0x64, 0x12, 0x1b, 0x0a, 0x04, 0x6d, 0x6f, 0x76, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x05, 0x2e, 0x4d, 0x6f, 0x76, 0x65, 0x48, 0x00, 0x52, 0x04, 0x6d, 0x6f, 0x76, 0x65,
+	0x12, 0x2b, 0x0a, 0x0a, 0x61, 0x64, 0x64, 0x5f, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x0a, 0x2e, 0x41, 0x64, 0x64, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72,
+	0x48, 0x00, 0x52, 0x09, 0x61, 0x64, 0x64, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x34, 0x0a,
+	0x0d, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x5f, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x50, 0x6c, 0x61,
+	0x79, 0x65, 0x72, 0x48, 0x00, 0x52, 0x0c, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x50, 0x6c, 0x61,
+	0x79, 0x65, 0x72, 0x12, 0x25, 0x0a, 0x08, 0x6b, 0x65, 0x79, 0x5f, 0x64, 0x6f, 0x77, 0x6e, 0x18,
+	0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x08, 0x2e, 0x4b, 0x65, 0x79, 0x44, 0x6f, 0x77, 0x6e, 0x48,
+	0x00, 0x52, 0x07, 0x6b, 0x65, 0x79, 0x44, 0x6f, 0x77, 0x6e, 0x12, 0x1f, 0x0a, 0x06, 0x6b, 0x65,
+	0x79, 0x5f, 0x75, 0x70, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x06, 0x2e, 0x4b, 0x65, 0x79,
+	0x55, 0x70, 0x48, 0x00, 0x52, 0x05, 0x6b, 0x65, 0x79, 0x55, 0x70, 0x42, 0x07, 0x0a, 0x05, 0x65,
+	0x76, 0x65, 0x6e, 0x74, 0x42, 0x06, 0x5a, 0x04, 0x2e, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -235,21 +565,32 @@ func file_proto_app_proto_rawDescGZIP() []byte {
 	return file_proto_app_proto_rawDescData
 }
 
-var file_proto_app_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_proto_app_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_proto_app_proto_goTypes = []interface{}{
-	(*Player)(nil),      // 0: Player
-	(*Move)(nil),        // 1: Move
-	(*ClientEvent)(nil), // 2: ClientEvent
+	(*Move)(nil),         // 0: Move
+	(*Connect)(nil),      // 1: Connect
+	(*AddPlayer)(nil),    // 2: AddPlayer
+	(*RemovePlayer)(nil), // 3: RemovePlayer
+	(*KeyDown)(nil),      // 4: KeyDown
+	(*KeyUp)(nil),        // 5: KeyUp
+	(*ClientEvent)(nil),  // 6: ClientEvent
+	(*ServerEvent)(nil),  // 7: ServerEvent
 }
 var file_proto_app_proto_depIdxs = []int32{
-	0, // 0: Move.player:type_name -> Player
-	0, // 1: ClientEvent.player:type_name -> Player
-	1, // 2: ClientEvent.move:type_name -> Move
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	1, // 0: ClientEvent.connect:type_name -> Connect
+	0, // 1: ClientEvent.move:type_name -> Move
+	4, // 2: ClientEvent.key_down:type_name -> KeyDown
+	5, // 3: ClientEvent.key_up:type_name -> KeyUp
+	0, // 4: ServerEvent.move:type_name -> Move
+	2, // 5: ServerEvent.add_player:type_name -> AddPlayer
+	3, // 6: ServerEvent.remove_player:type_name -> RemovePlayer
+	4, // 7: ServerEvent.key_down:type_name -> KeyDown
+	5, // 8: ServerEvent.key_up:type_name -> KeyUp
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	9, // [9:9] is the sub-list for extension type_name
+	9, // [9:9] is the sub-list for extension extendee
+	0, // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_proto_app_proto_init() }
@@ -259,18 +600,6 @@ func file_proto_app_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_proto_app_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Player); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_app_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Move); i {
 			case 0:
 				return &v.state
@@ -282,7 +611,67 @@ func file_proto_app_proto_init() {
 				return nil
 			}
 		}
+		file_proto_app_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Connect); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 		file_proto_app_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AddPlayer); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_app_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RemovePlayer); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_app_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*KeyDown); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_app_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*KeyUp); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_app_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ClientEvent); i {
 			case 0:
 				return &v.state
@@ -294,9 +683,31 @@ func file_proto_app_proto_init() {
 				return nil
 			}
 		}
+		file_proto_app_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ServerEvent); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
-	file_proto_app_proto_msgTypes[2].OneofWrappers = []interface{}{
+	file_proto_app_proto_msgTypes[6].OneofWrappers = []interface{}{
+		(*ClientEvent_Connect)(nil),
 		(*ClientEvent_Move)(nil),
+		(*ClientEvent_KeyDown)(nil),
+		(*ClientEvent_KeyUp)(nil),
+	}
+	file_proto_app_proto_msgTypes[7].OneofWrappers = []interface{}{
+		(*ServerEvent_Move)(nil),
+		(*ServerEvent_AddPlayer)(nil),
+		(*ServerEvent_RemovePlayer)(nil),
+		(*ServerEvent_KeyDown)(nil),
+		(*ServerEvent_KeyUp)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -304,7 +715,7 @@ func file_proto_app_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_app_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

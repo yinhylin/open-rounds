@@ -1,108 +1,52 @@
 package main
 
 import (
-	"confutils"
-	"image/color"
+	"context"
 	"log"
+	"rounds/client"
+	"rounds/server"
+	"rounds/utils"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"nhooyr.io/websocket"
 )
 
-type Coords struct {
-	X, Y float64
-}
-
-func (c *Coords) Coordinates() Coords {
-	return *c
-}
-
-type Drawable interface {
-	Coordinates() Coords
-	Draw(screen *ebiten.Image)
-}
-
-type Player struct {
-	Coords
-	Image *ebiten.Image
-}
-
-func (p *Player) OnKeysPressed(keys []ebiten.Key) {
-	speed := float64(2)
-	if ebiten.IsKeyPressed(ebiten.KeyShift) {
-		speed *= 1.5
-	}
-
-	for _, key := range keys {
-		switch key {
-		case ebiten.KeyA:
-			p.Coords.X -= speed
-		case ebiten.KeyD:
-			p.Coords.X += speed
-		case ebiten.KeyW:
-			p.Coords.Y -= speed
-		case ebiten.KeyS:
-			p.Coords.Y += speed
-		case ebiten.KeyQ, ebiten.KeyEscape:
-			log.Fatal("quit")
-		}
-	}
-}
-
-func NewPlayer() *Player {
-	image := ebiten.NewImage(16, 16)
-	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.White)
-	return &Player{
-		Image:  image,
-		Coords: Coords{32, 32},
-	}
-}
-
-func (p *Player) Draw(screen *ebiten.Image) {
-	options := &ebiten.DrawImageOptions{}
-	options.GeoM.Translate(p.X, p.Y)
-	screen.DrawImage(p.Image, options)
-}
-
-type Game struct {
-	drawables []Drawable
-	player    *Player
-}
-
-func (g *Game) Update() error {
-	var keys []ebiten.Key
-	keys = inpututil.AppendPressedKeys(keys)
-	g.player.OnKeysPressed(inpututil.AppendPressedKeys(keys))
-	return nil
-}
-
-func (g *Game) Draw(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(screen, "foobar")
-
-	g.player.Draw(screen)
-	for _, drawable := range g.drawables {
-		drawable.Draw(screen)
-	}
-	x, y := ebiten.CursorPosition()
-	ebitenutil.DrawLine(screen, g.player.X+8, g.player.Y+8, float64(x), float64(y), color.RGBA{255, 0, 0, 255})
-}
-
-func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return outsideWidth / 2, outsideHeight / 2
-}
-
 func main() {
+	log.SetFlags(log.LstdFlags | log.Llongfile)
 	// Load Configs
-	confutils.ReadToml("config.toml")
+	utils.ReadToml("config.toml")
 
-	resolution_cfg := confutils.Cfg.Ui.Resolution
+	resolution_cfg := utils.Cfg.Ui.Resolution
 
 	log.Printf("x: %v, y: %v", resolution_cfg.X, resolution_cfg.Y)
 
 	ebiten.SetWindowSize(resolution_cfg.X, resolution_cfg.Y)
 	ebiten.SetWindowTitle("Open ROUNDS")
-	if err := ebiten.RunGame(&Game{player: NewPlayer(), drawables: []Drawable{}}); err != nil {
+
+	player := client.NewLocalPlayer()
+	ctx := context.Background()
+	c, _, err := websocket.Dial(ctx, "ws://localhost:4242", nil)
+	if err != nil {
+		log.Printf("Encountered err: %v. Trying to spin up server manually\n", err)
+		// Try to spin up the server if we fail to connect.
+		go server.Run()
+
+		// TODO: Should have a good way of testing if the server is up.
+		time.Sleep(50 * time.Millisecond)
+		c, _, err = websocket.Dial(ctx, "ws://localhost:4242", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	defer c.Close(websocket.StatusInternalError, "")
+
+	game := client.NewGame(player)
+
+	go game.ReadMessages(ctx, c)
+	go player.WriteMessages(ctx, c)
+
+	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
 }

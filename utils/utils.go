@@ -1,4 +1,4 @@
-package confutils
+package utils
 
 import (
 	"os"
