@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"rounds/object"
 	"rounds/pb"
 	"sync"
 	"time"
@@ -25,17 +24,50 @@ type subscriber struct {
 	c        *websocket.Conn
 }
 
+type event struct {
+	*pb.ClientEvent
+	*subscriber
+}
+
 type Server struct {
 	subscribers map[*subscriber]struct{}
 	mu          sync.Mutex
 	serveMux    http.ServeMux
-	players     map[string]*object.Entity
+	events      chan *event
 }
 
 func NewServer() *Server {
 	s := &Server{
 		subscribers: make(map[*subscriber]struct{}),
+		events:      make(chan *event, 1024),
 	}
+
+	go func() {
+		for event := range s.events {
+			// TODO: we should do movement vectors and validation
+			// TODO: better handling of server events in a separate area.
+			var serverEvent *pb.ServerEvent
+			switch event.Event.(type) {
+			case *pb.ClientEvent_Move:
+				serverEvent = &pb.ServerEvent{
+					// TODO: Send player numbers to clients, not UUIDs.
+					PlayerId: event.PlayerUuid,
+					Event: &pb.ServerEvent_Move{
+						Move: event.GetMove(),
+					},
+				}
+
+			case *pb.ClientEvent_Connect:
+				event.subscriber.PlayerID = event.PlayerUuid
+				serverEvent = &pb.ServerEvent{
+					PlayerId: event.PlayerUuid,
+					Event:    &pb.ServerEvent_AddPlayer{},
+				}
+			}
+			s.publish(serverEvent)
+		}
+	}()
+
 	s.serveMux.HandleFunc("/", s.onConnection)
 	return s
 }
@@ -128,29 +160,9 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 				return
 			}
 
-			// TODO: we should do movement vectors and validation
-			// TODO: better handling of server events in a separate area.
-			var serverEvent *pb.ServerEvent
-			switch clientEvent.Event.(type) {
-			case *pb.ClientEvent_Move:
-				serverEvent = &pb.ServerEvent{
-					// TODO: Send player numbers to clients, not UUIDs.
-					PlayerId: clientEvent.PlayerUuid,
-					Event: &pb.ServerEvent_Move{
-						Move: clientEvent.GetMove(),
-					},
-				}
-
-			case *pb.ClientEvent_Connect:
-				sub.PlayerID = clientEvent.PlayerUuid
-				serverEvent = &pb.ServerEvent{
-					PlayerId: clientEvent.PlayerUuid,
-					Event:    &pb.ServerEvent_AddPlayer{},
-				}
-			}
-
-			if serverEvent != nil {
-				s.publish(serverEvent)
+			s.events <- &event{
+				&clientEvent,
+				sub,
 			}
 		}
 	}()
