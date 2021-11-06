@@ -226,6 +226,49 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return outsideWidth / 2, outsideHeight / 2
 }
 
+// ReadMessages reads the server messages so the game can update accordingly.
+func (g *Game) ReadMessages(ctx context.Context, c *websocket.Conn) {
+	for {
+		messageType, reader, err := c.Reader(ctx)
+		if messageType != websocket.MessageBinary {
+			log.Fatal(messageType)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		b, err := ioutil.ReadAll(reader)
+		if err != nil {
+			// TODO: close connection / reconnect
+			log.Fatal(err)
+		}
+		if len(b) <= 0 {
+			continue
+		}
+
+		var serverEvent pb.ServerEvent
+		err = proto.Unmarshal(b, &serverEvent)
+		if err != nil {
+			// TODO: close connection / reconnect
+			log.Fatal(err)
+		}
+		g.serverEvents <- &serverEvent
+	}
+}
+
+// WriteMessages takes the player input and writes it to the server.
+func (p *LocalPlayer) WriteMessages(ctx context.Context, c *websocket.Conn) {
+	for event := range p.Events {
+		bytes, err := proto.Marshal(event)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := c.Write(ctx, websocket.MessageBinary, bytes); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 	// Load Configs
@@ -276,47 +319,8 @@ func main() {
 		serverEvents: make(chan *pb.ServerEvent, 1024),
 	}
 
-	// reader
-	go func() {
-		for {
-			_, reader, err := c.Reader(ctx)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			b, err := ioutil.ReadAll(reader)
-			if err != nil {
-				// TODO: close connection / reconnect
-				log.Fatal(err)
-			}
-			if len(b) <= 0 {
-				continue
-			}
-
-			var serverEvent pb.ServerEvent
-			err = proto.Unmarshal(b, &serverEvent)
-			if err != nil {
-				// TODO: close connection / reconnect
-				log.Fatal(err)
-			}
-			game.serverEvents <- &serverEvent
-		}
-	}()
-
-	// the writer
-	// https://www.youtube.com/watch?v=H-ru2glqXAg
-	go func() {
-		for event := range player.Events {
-			bytes, err := proto.Marshal(event)
-			// TODO: handle these more gracefully
-			if err != nil {
-				log.Fatal(err)
-			}
-			if err := c.Write(ctx, websocket.MessageBinary, bytes); err != nil {
-				log.Fatal(err)
-			}
-		}
-	}()
+	go game.ReadMessages(ctx, c)
+	go player.WriteMessages(ctx, c)
 
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)

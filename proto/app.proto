@@ -13,11 +13,17 @@ message AddPlayer {}
 
 message RemovePlayer {}
 
+message KeyDown {}
+
+message KeyUp {}
+
 message ClientEvent {
   string player_uuid = 1;
   oneof event {
     Connect connect = 2;
     Move move = 3;
+    KeyDown key_down = 4;
+    KeyUp key_up = 5;
   }
 }
 
@@ -27,5 +33,7 @@ message ServerEvent {
     Move move = 2;
     AddPlayer add_player = 3;
     RemovePlayer remove_player = 4;
+    KeyDown key_down = 5;
+    KeyUp key_up = 6;
   }
 }
