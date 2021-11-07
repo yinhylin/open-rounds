@@ -29,25 +29,22 @@ type MathConfig struct {
 
 type Config struct {
 	Player PlayerConfig
-	Ui     UIConfig
+	UI     UIConfig
 	Game   GameConfig
 	Math   MathConfig
 }
 
-var Cfg Config
-
-func ReadToml(fileName string) Config {
-	cfg_file, file_err := os.ReadFile(fileName)
-	if file_err != nil {
-		panic(file_err)
+func ReadTOML(fileName string) (*Config, error) {
+	file, err := os.ReadFile(fileName)
+	if err != nil {
+		return nil, err
 	}
 
-	toml_err := toml.Unmarshal([]byte(cfg_file), &Cfg)
-	if toml_err != nil {
-		panic(toml_err)
+	var config Config
+	if err := toml.Unmarshal([]byte(file), &config); err != nil {
+		return nil, err
 	}
-
-	return Cfg
+	return &config, nil
 }
 
 func AlmostEqual(a, b, threshold float64) bool {

@@ -14,14 +14,15 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
-	// Load Configs
-	utils.ReadToml("config.toml")
 
-	resolution_cfg := utils.Cfg.Ui.Resolution
+	cfg, err := utils.ReadTOML("config.toml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	resolutionConfig := cfg.UI.Resolution
+	log.Printf("%+v", resolutionConfig)
 
-	log.Printf("x: %v, y: %v", resolution_cfg.X, resolution_cfg.Y)
-
-	ebiten.SetWindowSize(resolution_cfg.X, resolution_cfg.Y)
+	ebiten.SetWindowSize(resolutionConfig.X, resolutionConfig.Y)
 	ebiten.SetWindowTitle("Open ROUNDS")
 
 	player := client.NewLocalPlayer()
