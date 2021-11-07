@@ -85,9 +85,7 @@ func (g *Game) Update() error {
 
 func debugString() string {
 	return strings.Join([]string{
-		fmt.Sprintf("Version: %s", strings.TrimSpace(Version)),
-		fmt.Sprintf("TPS:     %0.2f", ebiten.CurrentTPS()),
-		fmt.Sprintf("FPS:     %0.2f", ebiten.CurrentFPS()),
+		fmt.Sprintf("Version: %s, TPS: %0.02f, FPS: %0.02f", strings.TrimSpace(Version), ebiten.CurrentTPS(), ebiten.CurrentFPS()),
 	}, "\n")
 }
 
