@@ -80,10 +80,6 @@ func (g *Game) handleServerEvents() error {
 				delete(g.otherPlayers, event.PlayerId)
 			case *pb.ServerEvent_Move:
 				move := event.GetMove()
-				if playerID == g.player.ID {
-					// TODO: Could not send to the player /shruggie
-					continue
-				}
 				g.otherPlayers[event.PlayerId].Coords = object.Coords{X: move.X, Y: move.Y}
 			}
 		default:
