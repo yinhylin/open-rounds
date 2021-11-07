@@ -1,13 +1,14 @@
 package utils
 
 import (
+	"math"
 	"os"
 
 	"github.com/pelletier/go-toml/v2"
 )
 
 type PlayerConfig struct {
-	Speed, JumpHeight int
+	Speed, JumpHeight float64
 }
 
 type GameConfig struct {
@@ -22,10 +23,15 @@ type UIConfig struct {
 	Resolution ResolutionConfig
 }
 
+type MathConfig struct {
+	Float64EqualityThreshold float64
+}
+
 type Config struct {
 	Player PlayerConfig
 	Ui     UIConfig
 	Game   GameConfig
+	Math   MathConfig
 }
 
 var Cfg Config
@@ -42,4 +48,8 @@ func ReadToml(fileName string) Config {
 	}
 
 	return Cfg
+}
+
+func AlmostEqual(a, b, threshold float64) bool {
+	return math.Abs(a-b) <= threshold
 }

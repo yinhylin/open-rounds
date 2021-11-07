@@ -14,3 +14,6 @@ y = 620
 # Stores Game Configs
 [Game]
 bar = "foo"
+
+[Math]
+Float64EqualityThreshold = 1e-9

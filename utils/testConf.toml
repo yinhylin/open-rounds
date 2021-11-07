@@ -3,8 +3,8 @@
 
 # Stores Player Configs
 [Player]
-Speed = 1
-JumpHeight = 1
+Speed = 1.0
+JumpHeight = 1.0 
 
 # Stores UI Configs
 [UI.Resolution]
@@ -14,3 +14,6 @@ Y = 1
 # Stores Game Configs
 [Game]
 bar = "test"
+
+[Math]
+Float64EqualityThreshold = 1e-9
