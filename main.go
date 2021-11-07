@@ -23,6 +23,11 @@ func main() {
 		return
 	}
 
+	assets, err := client.LoadAssets()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	cfg, err := utils.ReadTOML("config.toml")
 	if err != nil {
 		log.Fatal(err)
@@ -33,8 +38,8 @@ func main() {
 	ebiten.SetWindowSize(resolutionConfig.X, resolutionConfig.Y)
 	ebiten.SetWindowTitle("Open ROUNDS")
 
-	player := client.NewLocalPlayer()
-	game := client.NewGame(player)
+	player := client.NewLocalPlayer(assets.Image("player"))
+	game := client.NewGame(player, assets)
 
 	ctx := context.Background()
 	c, _, err := websocket.Dial(ctx, "ws://localhost:4242", nil)

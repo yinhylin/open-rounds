@@ -22,6 +22,7 @@ type Drawable interface {
 }
 
 type Game struct {
+	*Assets
 	drawables []Drawable
 	player    *LocalPlayer
 
@@ -29,8 +30,9 @@ type Game struct {
 	otherPlayers map[string]*Player
 }
 
-func NewGame(player *LocalPlayer) *Game {
+func NewGame(player *LocalPlayer, assets *Assets) *Game {
 	return &Game{
+		Assets:       assets,
 		player:       player,
 		drawables:    []Drawable{},
 		otherPlayers: make(map[string]*Player),
@@ -51,7 +53,7 @@ func (g *Game) handleServerEvents() error {
 
 			switch event.Event.(type) {
 			case *pb.ServerEvent_AddPlayer:
-				g.otherPlayers[event.PlayerId] = NewOtherPlayer(event.PlayerId, 32, 32)
+				g.otherPlayers[event.PlayerId] = NewOtherPlayer(event.PlayerId, 32, 32, g.Image("enemy"))
 			case *pb.ServerEvent_RemovePlayer:
 				delete(g.otherPlayers, event.PlayerId)
 			case *pb.ServerEvent_Move:

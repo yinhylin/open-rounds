@@ -2,13 +2,11 @@ package client
 
 import (
 	"context"
-	"image/color"
 	"log"
 	"rounds/object"
 	"rounds/pb"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/segmentio/ksuid"
 	"google.golang.org/protobuf/proto"
 	"nhooyr.io/websocket"
@@ -67,14 +65,7 @@ func (p *LocalPlayer) OnKeysPressed(keys []ebiten.Key) {
 	}
 }
 
-func NewLocalPlayer() *LocalPlayer {
-	image := ebiten.NewImage(16, 16)
-	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.RGBA{
-		218,
-		212,
-		94,
-		255,
-	})
+func NewLocalPlayer(image *ebiten.Image) *LocalPlayer {
 	player := &LocalPlayer{
 		Player: Player{
 			ID:    ksuid.New().String(),
@@ -101,14 +92,7 @@ func NewLocalPlayer() *LocalPlayer {
 	return player
 }
 
-func NewOtherPlayer(ID string, X, Y float64) *Player {
-	image := ebiten.NewImage(16, 16)
-	ebitenutil.DrawRect(image, 0, 0, 16, 16, color.RGBA{
-		208,
-		70,
-		72,
-		255,
-	})
+func NewOtherPlayer(ID string, X, Y float64, image *ebiten.Image) *Player {
 	return &Player{
 		ID:    ID,
 		Image: image,
