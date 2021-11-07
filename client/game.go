@@ -3,11 +3,13 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"image/color"
 	"io/ioutil"
 	"log"
 	"rounds/object"
 	"rounds/pb"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -26,10 +28,9 @@ type Drawable interface {
 
 type Game struct {
 	*Assets
-	drawables  []Drawable
-	updatables []Updatable
-	player     *LocalPlayer
-
+	drawables    []Drawable
+	updatables   []Updatable
+	player       *LocalPlayer
 	serverEvents chan *pb.ServerEvent
 	otherPlayers map[string]*Player
 }
@@ -82,6 +83,14 @@ func (g *Game) Update() error {
 	return nil
 }
 
+func debugString() string {
+	return strings.Join([]string{
+		fmt.Sprintf("Version: %s", strings.TrimSpace(Version)),
+		fmt.Sprintf("TPS:     %0.2f", ebiten.CurrentTPS()),
+		fmt.Sprintf("FPS:     %0.2f", ebiten.CurrentFPS()),
+	}, "\n")
+}
+
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{
 		164,
@@ -101,6 +110,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Draw a line to the cursor.
 	x, y := ebiten.CursorPosition()
+	ebitenutil.DebugPrint(screen, debugString())
 	ebitenutil.DrawLine(screen, g.player.X+8, g.player.Y+8, float64(x), float64(y), color.RGBA{255, 0, 0, 255})
 }
 

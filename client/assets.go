@@ -19,6 +19,9 @@ const (
 //go:embed assets/*
 var assets embed.FS
 
+//go:embed assets/version.txt
+var Version string
+
 type Assets struct {
 	images map[string]*ebiten.Image
 }

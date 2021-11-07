@@ -2,9 +2,11 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"rounds/object"
 	"rounds/pb"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -26,11 +28,18 @@ type LocalPlayer struct {
 	keys   []ebiten.Key
 }
 
+func (p *Player) debugString() string {
+	return strings.Join([]string{
+		fmt.Sprintf("ID:  %s", p.ID),
+		fmt.Sprintf("x,y: %0.0f,%0.0f", p.X, p.Y),
+	}, "\n")
+}
+
 func (p *Player) Draw(screen *ebiten.Image) {
 	options := &ebiten.DrawImageOptions{}
 	options.GeoM.Translate(p.X, p.Y)
 	screen.DrawImage(p.Image, options)
-	ebitenutil.DebugPrintAt(screen, p.ID, int(p.X)-(len(p.ID)*5/2), int(p.Y)-16)
+	ebitenutil.DebugPrintAt(screen, p.debugString(), int(p.X), int(p.Y)+16)
 }
 
 func (p *LocalPlayer) Update() {
