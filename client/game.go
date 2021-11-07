@@ -11,10 +11,13 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"google.golang.org/protobuf/proto"
 	"nhooyr.io/websocket"
 )
+
+type Updatable interface {
+	Update()
+}
 
 type Drawable interface {
 	Coordinates() object.Coords
@@ -23,8 +26,9 @@ type Drawable interface {
 
 type Game struct {
 	*Assets
-	drawables []Drawable
-	player    *LocalPlayer
+	drawables  []Drawable
+	updatables []Updatable
+	player     *LocalPlayer
 
 	serverEvents chan *pb.ServerEvent
 	otherPlayers map[string]*Player
@@ -34,7 +38,8 @@ func NewGame(player *LocalPlayer, assets *Assets) *Game {
 	return &Game{
 		Assets:       assets,
 		player:       player,
-		drawables:    []Drawable{},
+		drawables:    []Drawable{player},
+		updatables:   []Updatable{player},
 		otherPlayers: make(map[string]*Player),
 		serverEvents: make(chan *pb.ServerEvent, 1024),
 	}
@@ -68,10 +73,14 @@ func (g *Game) handleServerEvents() error {
 }
 
 func (g *Game) Update() error {
-	var keys []ebiten.Key
-	keys = inpututil.AppendPressedKeys(keys)
-	g.player.OnKeysPressed(inpututil.AppendPressedKeys(keys))
-	return g.handleServerEvents()
+	err := g.handleServerEvents()
+	if err != nil {
+		return err
+	}
+	for _, updatable := range g.updatables {
+		updatable.Update()
+	}
+	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -85,9 +94,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for _, drawable := range g.drawables {
 		drawable.Draw(screen)
 	}
-
-	// Draw the player.
-	g.player.Draw(screen)
 
 	// Draw the other players with name tags.
 	for _, otherPlayer := range g.otherPlayers {

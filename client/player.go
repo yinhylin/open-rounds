@@ -8,6 +8,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/segmentio/ksuid"
 	"google.golang.org/protobuf/proto"
 	"nhooyr.io/websocket"
@@ -22,6 +23,7 @@ type Player struct {
 type LocalPlayer struct {
 	Player
 	Events chan *pb.ClientEvent
+	keys   []ebiten.Key
 }
 
 func (p *Player) Draw(screen *ebiten.Image) {
@@ -31,7 +33,11 @@ func (p *Player) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, p.ID, int(p.X)-(len(p.ID)*5/2), int(p.Y)-16)
 }
 
-func (p *LocalPlayer) OnKeysPressed(keys []ebiten.Key) {
+func (p *LocalPlayer) Update() {
+	p.onKeysPressed(inpututil.AppendPressedKeys(p.keys))
+}
+
+func (p *LocalPlayer) onKeysPressed(keys []ebiten.Key) {
 	speed := float64(2)
 	if ebiten.IsKeyPressed(ebiten.KeyShift) {
 		speed *= 1.5
