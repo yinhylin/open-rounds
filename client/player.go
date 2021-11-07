@@ -7,6 +7,7 @@ import (
 	"rounds/pb"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/segmentio/ksuid"
 	"google.golang.org/protobuf/proto"
 	"nhooyr.io/websocket"
@@ -27,6 +28,7 @@ func (p *Player) Draw(screen *ebiten.Image) {
 	options := &ebiten.DrawImageOptions{}
 	options.GeoM.Translate(p.X, p.Y)
 	screen.DrawImage(p.Image, options)
+	ebitenutil.DebugPrintAt(screen, p.ID, int(p.X)-(len(p.ID)*5/2), int(p.Y)-16)
 }
 
 func (p *LocalPlayer) OnKeysPressed(keys []ebiten.Key) {

@@ -91,7 +91,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Draw the other players with name tags.
 	for _, otherPlayer := range g.otherPlayers {
-		ebitenutil.DebugPrintAt(screen, otherPlayer.ID, int(otherPlayer.X)-(len(otherPlayer.ID)*5/2), int(otherPlayer.Y)-16)
 		otherPlayer.Draw(screen)
 	}
 

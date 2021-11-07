@@ -105,7 +105,6 @@ func (s *Server) onConnection(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close(websocket.StatusInternalError, "")
 
-	log.Println("connection")
 	if err := s.handleConnection(r.Context(), c); err != nil {
 		log.Println(err)
 		return
