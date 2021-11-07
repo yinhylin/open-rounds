@@ -11,5 +11,5 @@ go build
 go run .
 
 # Server on its own
-go run ./run_server
+go run . server
 ```

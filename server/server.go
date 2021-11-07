@@ -198,15 +198,15 @@ func (s *Server) publish(event *pb.ServerEvent) {
 	}
 }
 
-func Run() {
+func Run(args []string) error {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 	address := "localhost:4242"
-	if len(os.Args) > 1 {
-		address = os.Args[1]
+	if len(args) > 1 {
+		address = args[1]
 	}
 	l, err := net.Listen("tcp", address)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	log.Printf("Listening on http://%v", l.Addr())
 	server := NewServer()
@@ -232,6 +232,7 @@ func Run() {
 
 	ctx := context.Background()
 	if err := s.Shutdown(ctx); err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
