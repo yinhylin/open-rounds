@@ -7,8 +7,8 @@ import (
 	"image/color"
 	"io/ioutil"
 	"log"
-	"rounds/object"
 	"rounds/pb"
+	"rounds/world"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -22,7 +22,7 @@ type Updatable interface {
 }
 
 type Drawable interface {
-	Coordinates() object.Coords
+	Coordinates() world.Coords
 	Draw(screen *ebiten.Image)
 }
 
@@ -51,7 +51,7 @@ func (g *Game) handleServerEvents() error {
 	for len(g.serverEvents) > 0 {
 		select {
 		case event := <-g.serverEvents:
-			playerID := event.PlayerId
+			playerID := event.Id
 			if playerID == g.player.ID {
 				// TODO: Could not send to the player /shruggie
 				continue
@@ -59,12 +59,12 @@ func (g *Game) handleServerEvents() error {
 
 			switch event.Event.(type) {
 			case *pb.ServerEvent_AddPlayer:
-				g.otherPlayers[event.PlayerId] = NewOtherPlayer(event.PlayerId, 32, 32, g.Image("enemy"))
+				g.otherPlayers[event.Id] = NewOtherPlayer(event.Id, 32, 32, g.Image("enemy"))
 			case *pb.ServerEvent_RemovePlayer:
-				delete(g.otherPlayers, event.PlayerId)
-			case *pb.ServerEvent_Move:
-				move := event.GetMove()
-				g.otherPlayers[event.PlayerId].Coords = object.Coords{X: move.X, Y: move.Y}
+				delete(g.otherPlayers, event.Id)
+			case *pb.ServerEvent_SetPosition:
+				position := event.GetSetPosition()
+				g.otherPlayers[event.Id].Coords = world.Coords{X: position.Position.Dx, Y: position.Position.Dy}
 			}
 		default:
 			return errors.New("should never block")

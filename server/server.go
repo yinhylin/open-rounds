@@ -51,17 +51,22 @@ func NewServer() *Server {
 			case *pb.ClientEvent_Move:
 				serverEvent = &pb.ServerEvent{
 					// TODO: Send player numbers to clients, not UUIDs.
-					PlayerId: event.PlayerUuid,
-					Event: &pb.ServerEvent_Move{
-						Move: event.GetMove(),
+					Id: event.Id,
+					Event: &pb.ServerEvent_SetPosition{
+						SetPosition: &pb.SetPosition{
+							Position: &pb.Vector{
+								Dx: event.GetMove().X,
+								Dy: event.GetMove().Y,
+							},
+						},
 					},
 				}
 
 			case *pb.ClientEvent_Connect:
-				event.subscriber.PlayerID = event.PlayerUuid
+				event.subscriber.PlayerID = event.Id
 				serverEvent = &pb.ServerEvent{
-					PlayerId: event.PlayerUuid,
-					Event:    &pb.ServerEvent_AddPlayer{},
+					Id:    event.Id,
+					Event: &pb.ServerEvent_AddPlayer{},
 				}
 			}
 			s.publish(serverEvent)
@@ -80,8 +85,8 @@ func (s *Server) addSubscriber(sub *subscriber) {
 			continue
 		}
 		sub.Messages <- toBytesOrDie(&pb.ServerEvent{
-			PlayerId: other.PlayerID,
-			Event:    &pb.ServerEvent_AddPlayer{},
+			Id:    other.PlayerID,
+			Event: &pb.ServerEvent_AddPlayer{},
 		})
 	}
 	s.mu.Unlock()
@@ -130,8 +135,8 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 
 			s.removeSubscriber(sub)
 			s.publish(&pb.ServerEvent{
-				PlayerId: sub.PlayerID,
-				Event:    &pb.ServerEvent_RemovePlayer{},
+				Id:    sub.PlayerID,
+				Event: &pb.ServerEvent_RemovePlayer{},
 			})
 		}()
 

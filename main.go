@@ -51,6 +51,7 @@ func main() {
 			if err := server.Run([]string{}); err != nil {
 				log.Fatal(err)
 			}
+			log.Fatal("server shutdown")
 		}()
 
 		// TODO: Should have a good way of testing if the server is up.

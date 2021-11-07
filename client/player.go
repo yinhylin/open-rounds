@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"rounds/object"
 	"rounds/pb"
+	"rounds/world"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -17,7 +17,7 @@ import (
 )
 
 type Player struct {
-	object.Entity
+	world.Entity
 	ID    string
 	Image *ebiten.Image
 }
@@ -71,7 +71,7 @@ func (p *LocalPlayer) onKeysPressed(keys []ebiten.Key) {
 
 	if oldCoords != p.Coords {
 		p.Events <- &pb.ClientEvent{
-			PlayerUuid: p.ID,
+			Id: p.ID,
 			Event: &pb.ClientEvent_Move{
 				Move: &pb.Move{
 					X: p.X,
@@ -87,18 +87,18 @@ func NewLocalPlayer(image *ebiten.Image) *LocalPlayer {
 		Player: Player{
 			ID:    ksuid.New().String(),
 			Image: image,
-			Entity: object.Entity{
-				Coords: object.Coords{X: 32, Y: 32},
+			Entity: world.Entity{
+				Coords: world.Coords{X: 32, Y: 32},
 			},
 		},
 		Events: make(chan *pb.ClientEvent, 1024),
 	}
 	player.Events <- &pb.ClientEvent{
-		PlayerUuid: player.ID,
-		Event:      &pb.ClientEvent_Connect{},
+		Id:    player.ID,
+		Event: &pb.ClientEvent_Connect{},
 	}
 	player.Events <- &pb.ClientEvent{
-		PlayerUuid: player.ID,
+		Id: player.ID,
 		Event: &pb.ClientEvent_Move{
 			Move: &pb.Move{
 				X: player.X,
@@ -113,8 +113,8 @@ func NewOtherPlayer(ID string, X, Y float64, image *ebiten.Image) *Player {
 	return &Player{
 		ID:    ID,
 		Image: image,
-		Entity: object.Entity{
-			Coords: object.Coords{X: X, Y: Y},
+		Entity: world.Entity{
+			Coords: world.Coords{X: X, Y: Y},
 		},
 	}
 }

@@ -7,6 +7,15 @@ message Move {
   double y = 2;
 }
 
+message Vector {
+  double dx = 1;
+  double dy = 2;
+}
+
+message SetPosition {
+  Vector position = 1;
+}
+
 message Connect {}
 
 message AddPlayer {}
@@ -18,7 +27,7 @@ message KeyDown {}
 message KeyUp {}
 
 message ClientEvent {
-  string player_uuid = 1;
+  string id = 1;
   oneof event {
     Connect connect = 2;
     Move move = 3;
@@ -28,12 +37,13 @@ message ClientEvent {
 }
 
 message ServerEvent {
-  string player_id = 1;
+  string id = 1;
   oneof event {
     Move move = 2;
     AddPlayer add_player = 3;
     RemovePlayer remove_player = 4;
     KeyDown key_down = 5;
     KeyUp key_up = 6;
+    SetPosition set_position = 7;
   }
 }
