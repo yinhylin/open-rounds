@@ -3,36 +3,21 @@ package main
 import (
 	"context"
 	"log"
-	"os"
 	"rounds/client"
 	"rounds/server"
+	"rounds/utils"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/pelletier/go-toml/v2"
 	"nhooyr.io/websocket"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 	// Load Configs
-	var cfg client.Config
-	cfg_file, file_err := os.ReadFile("config.toml")
-	if file_err != nil {
-		panic(file_err)
-	}
-	log.Printf("config file: %s", cfg_file)
+	utils.ReadToml("config.toml")
 
-	toml_err := toml.Unmarshal([]byte(cfg_file), &cfg)
-	if toml_err != nil {
-		panic(toml_err)
-	}
-
-	log.Printf("config: %v", cfg)
-
-	log.Printf("config.UI: %v", cfg.Ui)
-
-	resolution_cfg := cfg.Ui.Resolution
+	resolution_cfg := utils.Cfg.Ui.Resolution
 
 	log.Printf("x: %v, y: %v", resolution_cfg.X, resolution_cfg.Y)
 
