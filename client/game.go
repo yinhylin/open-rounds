@@ -73,8 +73,7 @@ func (g *Game) handleServerEvents() error {
 }
 
 func (g *Game) Update() error {
-	err := g.handleServerEvents()
-	if err != nil {
+	if err := g.handleServerEvents(); err != nil {
 		return err
 	}
 	for _, updatable := range g.updatables {
