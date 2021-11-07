@@ -21,33 +21,9 @@ type Drawable interface {
 	Draw(screen *ebiten.Image)
 }
 
-type PlayerConfig struct {
-	speed      float32
-	jumpHeight float32
-}
-
-type GameConfig struct {
-	Bar string
-}
-
-type ResolutionConfig struct {
-	X, Y int
-}
-
-type UIConfig struct {
-	Resolution ResolutionConfig
-}
-
-type Config struct {
-	Player PlayerConfig
-	Ui     UIConfig
-	Game   GameConfig
-}
-
 type Game struct {
 	drawables []Drawable
 	player    *LocalPlayer
-	config    *Config
 
 	serverEvents chan *pb.ServerEvent
 	otherPlayers map[string]*Player
