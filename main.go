@@ -34,6 +34,8 @@ func main() {
 	ebiten.SetWindowTitle("Open ROUNDS")
 
 	player := client.NewLocalPlayer()
+	game := client.NewGame(player)
+
 	ctx := context.Background()
 	c, _, err := websocket.Dial(ctx, "ws://localhost:4242", nil)
 	if err != nil {
@@ -54,8 +56,6 @@ func main() {
 		}
 	}
 	defer c.Close(websocket.StatusInternalError, "")
-
-	game := client.NewGame(player)
 
 	go game.ReadMessages(ctx, c)
 	go player.WriteMessages(ctx, c)
