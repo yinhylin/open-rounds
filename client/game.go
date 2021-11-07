@@ -109,7 +109,7 @@ func (g *Game) ReadMessages(ctx context.Context, c *websocket.Conn) {
 	for {
 		messageType, reader, err := c.Reader(ctx)
 		if messageType != websocket.MessageBinary {
-			log.Fatal(messageType)
+			continue
 		}
 		if err != nil {
 			log.Fatal(err)
