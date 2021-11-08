@@ -66,10 +66,8 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 			return nil, fmt.Errorf("non-existent entity %s", e.Id)
 		}
 
-		for _, action := range e.GetActions().GetActions() {
-			entity.OnAction(action)
-		}
-
+		entity.OnActions(e.GetActions().GetActions())
+		// TODO: Probably don't pump these out every game frame.
 		return &pb.ServerEvent{
 			Id: e.Id,
 			Event: &pb.ServerEvent_EntityState{

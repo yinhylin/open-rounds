@@ -24,19 +24,20 @@ func (e *Entity) Update() {
 	e.Y += e.Velocity.Y
 }
 
-func (e *Entity) OnAction(action *pb.Action) {
+func (e *Entity) OnActions(actions []*pb.Action) {
 	const speed = 4
-	switch action.Action {
-	case pb.Action_MOVE_UP:
-		e.Velocity.Y = -speed
-	case pb.Action_MOVE_DOWN:
-		e.Velocity.Y = speed
-	case pb.Action_MOVE_LEFT:
-		e.Velocity.X = -speed
-	case pb.Action_MOVE_RIGHT:
-		e.Velocity.X = speed
-	case pb.Action_NONE:
-		e.Velocity.X = 0
-		e.Velocity.Y = 0
+	var velocity Vector
+	for _, action := range actions {
+		switch action.Action {
+		case pb.Action_MOVE_UP:
+			velocity.Y -= speed
+		case pb.Action_MOVE_DOWN:
+			velocity.Y += speed
+		case pb.Action_MOVE_LEFT:
+			velocity.X -= speed
+		case pb.Action_MOVE_RIGHT:
+			velocity.X += speed
+		}
 	}
+	e.Velocity = velocity
 }

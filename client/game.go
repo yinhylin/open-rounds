@@ -143,7 +143,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(image, options)
 	})
 
-	// Draw a line to the cursor.jkkhj
+	// Draw a line to the cursor.
 	x, y := ebiten.CursorPosition()
 	ebitenutil.DebugPrint(screen, debugString())
 	ebitenutil.DrawLine(screen, g.player.X+8, g.player.Y+8, float64(x), float64(y), color.RGBA{255, 0, 0, 255})
@@ -192,10 +192,7 @@ func (g *Game) handleKeysPressed() {
 			},
 		},
 	}
-
-	for _, action := range actions {
-		g.player.OnAction(action)
-	}
+	g.player.OnActions(actions)
 }
 
 // ReadMessages reads the server messages so the game can update accordingly.
