@@ -85,8 +85,8 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		entity.OnActions(actions)
 
 		var events []pb.Action_Event
-		for _, event := range events {
-			events = append(events, event)
+		for _, action := range actions {
+			events = append(events, action.Action)
 		}
 		sort.Slice(events, func(i, j int) bool {
 			return events[i] < events[j]
