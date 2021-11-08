@@ -141,6 +141,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		options := &ebiten.DrawImageOptions{}
 		options.GeoM.Translate(e.X, e.Y)
 		screen.DrawImage(image, options)
+		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.X, e.Y)
+		ebitenutil.DebugPrintAt(screen, debugString, int(e.X), int(e.Y)+16)
 	})
 
 	// Draw a line to the cursor.
@@ -174,8 +176,6 @@ func (g *Game) handleKeysPressed() {
 			actions = append(actions, &pb.Action{
 				Action: pb.Action_MOVE_DOWN,
 			})
-		case ebiten.KeyQ, ebiten.KeyEscape:
-			log.Fatal("quit")
 		}
 	}
 
