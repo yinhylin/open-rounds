@@ -6,7 +6,6 @@ import (
 	"os"
 	"rounds/client"
 	"rounds/server"
-	"rounds/utils"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -15,7 +14,6 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
-
 	if len(os.Args) > 1 && os.Args[1] == "server" {
 		if err := server.Run(os.Args[1:]); err != nil {
 			log.Fatal(err)
@@ -28,14 +26,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cfg, err := utils.ReadTOML("config.toml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	resolutionConfig := cfg.UI.Resolution
-	log.Printf("%+v", resolutionConfig)
-
-	ebiten.SetWindowSize(resolutionConfig.X, resolutionConfig.Y)
+	ebiten.SetWindowSize(1280, 620)
 	ebiten.SetWindowTitle("Open ROUNDS")
 
 	player := client.NewLocalPlayer(assets.Image("player"))

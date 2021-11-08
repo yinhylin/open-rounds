@@ -156,7 +156,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) onConnection(w http.ResponseWriter, r *http.Request) {
-	c, err := websocket.Accept(w, r, nil)
+	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+		OriginPatterns: []string{
+			// TODO: dev only lol
+			"localhost:8080",
+		},
+	})
 	if err != nil {
 		log.Println(err)
 		return
