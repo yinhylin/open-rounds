@@ -64,7 +64,7 @@ func main() {
 	defer c.Close(websocket.StatusInternalError, "")
 
 	go game.ReadMessages(ctx, c)
-	go player.WriteMessages(ctx, c)
+	go game.WriteMessages(ctx, c)
 
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)

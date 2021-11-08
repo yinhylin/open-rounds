@@ -13,6 +13,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"google.golang.org/protobuf/proto"
 	"nhooyr.io/websocket"
 )
@@ -28,21 +29,30 @@ type Drawable interface {
 
 type Game struct {
 	*Assets
+	state        *world.World
 	drawables    []Drawable
-	updatables   []Updatable
 	player       *LocalPlayer
 	serverEvents chan *pb.ServerEvent
-	otherPlayers map[string]*Player
+	clientEvents chan *pb.ClientEvent
 }
 
 func NewGame(player *LocalPlayer, assets *Assets) *Game {
+	state := world.NewWorld()
+	state.AddEntity(player.ID, &player.Entity)
+
+	clientEvents := make(chan *pb.ClientEvent, 1024)
+	clientEvents <- &pb.ClientEvent{
+		Id:    player.ID,
+		Event: &pb.ClientEvent_Connect{},
+	}
+
 	return &Game{
 		Assets:       assets,
+		state:        state,
 		player:       player,
-		drawables:    []Drawable{player},
-		updatables:   []Updatable{player},
-		otherPlayers: make(map[string]*Player),
+		drawables:    []Drawable{},
 		serverEvents: make(chan *pb.ServerEvent, 1024),
+		clientEvents: clientEvents,
 	}
 }
 
@@ -51,20 +61,41 @@ func (g *Game) handleServerEvents() error {
 	for len(g.serverEvents) > 0 {
 		select {
 		case event := <-g.serverEvents:
-			playerID := event.Id
-			if playerID == g.player.ID {
-				// TODO: Could not send to the player /shruggie
-				continue
-			}
-
 			switch event.Event.(type) {
 			case *pb.ServerEvent_AddPlayer:
-				g.otherPlayers[event.Id] = NewOtherPlayer(event.Id, 32, 32, g.Image("enemy"))
+				if event.Id != g.player.ID {
+					g.state.AddEntity(event.Id, &world.Entity{})
+				}
+
 			case *pb.ServerEvent_RemovePlayer:
-				delete(g.otherPlayers, event.Id)
+				g.state.RemoveEntity(event.Id)
+
 			case *pb.ServerEvent_SetPosition:
 				position := event.GetSetPosition()
-				g.otherPlayers[event.Id].Coords = world.Coords{X: position.Position.Dx, Y: position.Position.Dy}
+				entity := g.state.Entity(event.Id)
+				if entity == nil {
+					log.Fatalf("invalid entity %s", event.Id)
+				}
+				entity.Coords = world.Coords{
+					X: position.Position.X,
+					Y: position.Position.Y,
+				}
+
+			case *pb.ServerEvent_EntityState:
+				state := event.GetEntityState()
+				entity := g.state.Entity(event.Id)
+				if entity == nil {
+					log.Fatalf("invalid entity %s", event.Id)
+				}
+
+				entity.Coords = world.Coords{
+					X: state.Position.X,
+					Y: state.Position.Y,
+				}
+				entity.Velocity = world.Vector{
+					X: state.Velocity.X,
+					Y: state.Velocity.Y,
+				}
 			}
 		default:
 			return errors.New("should never block")
@@ -77,9 +108,8 @@ func (g *Game) Update() error {
 	if err := g.handleServerEvents(); err != nil {
 		return err
 	}
-	for _, updatable := range g.updatables {
-		updatable.Update()
-	}
+	g.handleKeysPressed()
+	g.state.Update()
 	return nil
 }
 
@@ -101,19 +131,71 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		drawable.Draw(screen)
 	}
 
-	// Draw the other players with name tags.
-	for _, otherPlayer := range g.otherPlayers {
-		otherPlayer.Draw(screen)
-	}
+	g.state.ForEachEntity(func(ID string, e *world.Entity) {
+		// lol
+		image := g.Image("enemy")
+		if ID == g.player.ID {
+			image = g.Image("player")
+		}
 
-	// Draw a line to the cursor.
+		options := &ebiten.DrawImageOptions{}
+		options.GeoM.Translate(e.X, e.Y)
+		screen.DrawImage(image, options)
+	})
+
+	// Draw a line to the cursor.jkkhj
 	x, y := ebiten.CursorPosition()
 	ebitenutil.DebugPrint(screen, debugString())
 	ebitenutil.DrawLine(screen, g.player.X+8, g.player.Y+8, float64(x), float64(y), color.RGBA{255, 0, 0, 255})
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return outsideWidth / 2, outsideHeight / 2
+	return outsideWidth, outsideHeight
+}
+
+func (g *Game) handleKeysPressed() {
+	var actions []*pb.Action
+	var keys []ebiten.Key
+	for _, key := range inpututil.AppendPressedKeys(keys) {
+		switch key {
+		case ebiten.KeyA:
+			actions = append(actions, &pb.Action{
+				Action: pb.Action_MOVE_LEFT,
+			})
+		case ebiten.KeyD:
+			actions = append(actions, &pb.Action{
+				Action: pb.Action_MOVE_RIGHT,
+			})
+		case ebiten.KeyW:
+			actions = append(actions, &pb.Action{
+				Action: pb.Action_MOVE_UP,
+			})
+		case ebiten.KeyS:
+			actions = append(actions, &pb.Action{
+				Action: pb.Action_MOVE_DOWN,
+			})
+		case ebiten.KeyQ, ebiten.KeyEscape:
+			log.Fatal("quit")
+		}
+	}
+
+	if actions == nil {
+		actions = append(actions, &pb.Action{
+			Action: pb.Action_NONE,
+		})
+	}
+	g.clientEvents <- &pb.ClientEvent{
+		Id: g.player.ID,
+		Event: &pb.ClientEvent_Actions{
+			Actions: &pb.Actions{
+				Actions: actions,
+			},
+		},
+	}
+
+	for _, action := range actions {
+		g.player.OnAction(action)
+	}
 }
 
 // ReadMessages reads the server messages so the game can update accordingly.
@@ -143,5 +225,18 @@ func (g *Game) ReadMessages(ctx context.Context, c *websocket.Conn) {
 			log.Fatal(err)
 		}
 		g.serverEvents <- &serverEvent
+	}
+}
+
+// WriteMessages takes the game acitons and sends it to the server.
+func (g *Game) WriteMessages(ctx context.Context, c *websocket.Conn) {
+	for event := range g.clientEvents {
+		bytes, err := proto.Marshal(event)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := c.Write(ctx, websocket.MessageBinary, bytes); err != nil {
+			log.Fatal(err)
+		}
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"rounds/pb"
+	"rounds/world"
 	"sync"
 	"time"
 
@@ -34,42 +35,22 @@ type Server struct {
 	mu          sync.Mutex
 	serveMux    http.ServeMux
 	events      chan *event
+	state       *world.World
 }
 
 func NewServer() *Server {
 	s := &Server{
 		subscribers: make(map[*subscriber]struct{}),
 		events:      make(chan *event, 1024),
+		state:       world.NewWorld(),
 	}
 
 	go func() {
-		for event := range s.events {
-			// TODO: we should do movement vectors and validation
-			// TODO: better handling of server events in a separate area.
-			var serverEvent *pb.ServerEvent
-			switch event.Event.(type) {
-			case *pb.ClientEvent_Move:
-				serverEvent = &pb.ServerEvent{
-					// TODO: Send player numbers to clients, not UUIDs.
-					Id: event.Id,
-					Event: &pb.ServerEvent_SetPosition{
-						SetPosition: &pb.SetPosition{
-							Position: &pb.Vector{
-								Dx: event.GetMove().X,
-								Dy: event.GetMove().Y,
-							},
-						},
-					},
-				}
-
-			case *pb.ClientEvent_Connect:
-				event.subscriber.PlayerID = event.Id
-				serverEvent = &pb.ServerEvent{
-					Id:    event.Id,
-					Event: &pb.ServerEvent_AddPlayer{},
-				}
-			}
-			s.publish(serverEvent)
+		// Tick roughly 60 times per second.
+		// TODO: Catch up ticks if we're too slow to process a tick.
+		// Should probably be OK.
+		for range time.Tick(16 * time.Millisecond) {
+			s.onTick()
 		}
 	}()
 
@@ -77,18 +58,92 @@ func NewServer() *Server {
 	return s
 }
 
-func (s *Server) addSubscriber(sub *subscriber) {
-	s.mu.Lock()
-	s.subscribers[sub] = struct{}{}
-	for other := range s.subscribers {
-		if other.PlayerID == "" {
+func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
+	switch e.Event.(type) {
+	case *pb.ClientEvent_Actions:
+		entity := s.state.Entity(e.Id)
+		if entity == nil {
+			return nil, fmt.Errorf("non-existent entity %s", e.Id)
+		}
+
+		for _, action := range e.GetActions().GetActions() {
+			entity.OnAction(action)
+		}
+
+		return &pb.ServerEvent{
+			Id: e.Id,
+			Event: &pb.ServerEvent_EntityState{
+				EntityState: &pb.State{
+					Position: &pb.Vector{
+						X: entity.X,
+						Y: entity.Y,
+					},
+					Velocity: &pb.Vector{
+						X: entity.Velocity.X,
+						Y: entity.Velocity.Y,
+					},
+				},
+			},
+		}, nil
+
+	case *pb.ClientEvent_Connect:
+		e.subscriber.PlayerID = e.Id
+		s.state.AddEntity(e.Id, &world.Entity{})
+		return &pb.ServerEvent{
+			Id:    e.Id,
+			Event: &pb.ServerEvent_AddPlayer{},
+		}, nil
+	}
+	return nil, nil
+}
+
+func (s *Server) onTick() {
+	s.state.Update()
+	var serverEvents []*pb.ServerEvent
+
+	for len(s.events) > 0 {
+		event := <-s.events
+		serverEvent, err := s.onEvent(event)
+		if err != nil {
+			log.Println(err)
 			continue
 		}
+		if serverEvent != nil {
+			serverEvents = append(serverEvents, serverEvent)
+		}
+	}
+
+	for _, event := range serverEvents {
+		s.publish(event)
+	}
+}
+
+func (s *Server) addSubscriber(sub *subscriber) {
+	s.state.ForEachEntity(func(ID string, entity *world.Entity) {
 		sub.Messages <- toBytesOrDie(&pb.ServerEvent{
-			Id:    other.PlayerID,
+			Id:    ID,
 			Event: &pb.ServerEvent_AddPlayer{},
 		})
-	}
+
+		sub.Messages <- toBytesOrDie(&pb.ServerEvent{
+			Id: ID,
+			Event: &pb.ServerEvent_EntityState{
+				EntityState: &pb.State{
+					Position: &pb.Vector{
+						X: entity.X,
+						Y: entity.Y,
+					},
+					Velocity: &pb.Vector{
+						X: entity.Velocity.X,
+						Y: entity.Velocity.Y,
+					},
+				},
+			},
+		})
+	})
+
+	s.mu.Lock()
+	s.subscribers[sub] = struct{}{}
 	s.mu.Unlock()
 }
 

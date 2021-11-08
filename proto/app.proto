@@ -2,14 +2,29 @@ syntax = "proto3";
 
 option go_package = "./pb";
 
-message Move {
+message Vector {
   double x = 1;
   double y = 2;
 }
 
-message Vector {
-  double dx = 1;
-  double dy = 2;
+message Action {
+  enum Event {
+    NONE = 0;
+    MOVE_UP = 1;
+    MOVE_DOWN = 2;
+    MOVE_LEFT = 3;
+    MOVE_RIGHT = 4;
+  }
+  Event action = 1;
+}
+
+message State {
+  Vector velocity = 1;
+  Vector position = 2;
+}
+
+message Actions {
+  repeated Action actions = 1;
 }
 
 message SetPosition {
@@ -22,28 +37,20 @@ message AddPlayer {}
 
 message RemovePlayer {}
 
-message KeyDown {}
-
-message KeyUp {}
-
 message ClientEvent {
   string id = 1;
   oneof event {
     Connect connect = 2;
-    Move move = 3;
-    KeyDown key_down = 4;
-    KeyUp key_up = 5;
+    Actions actions = 3;
   }
 }
 
 message ServerEvent {
   string id = 1;
   oneof event {
-    Move move = 2;
     AddPlayer add_player = 3;
     RemovePlayer remove_player = 4;
-    KeyDown key_down = 5;
-    KeyUp key_up = 6;
-    SetPosition set_position = 7;
+    SetPosition set_position = 5;
+    State entity_state = 6;
   }
 }
