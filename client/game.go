@@ -14,6 +14,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/segmentio/ksuid"
 	"google.golang.org/protobuf/proto"
 	"nhooyr.io/websocket"
 )
@@ -31,18 +32,21 @@ type Game struct {
 	*Assets
 	state        *world.World
 	drawables    []Drawable
-	player       *LocalPlayer
+	player       *world.Entity
+	playerID     string
 	serverEvents chan *pb.ServerEvent
 	clientEvents chan *pb.ClientEvent
 }
 
-func NewGame(player *LocalPlayer, assets *Assets) *Game {
+func NewGame(assets *Assets) *Game {
 	state := world.NewWorld()
-	state.AddEntity(player.ID, &player.Entity)
+	player := &world.Entity{}
+	playerID := ksuid.New().String()
+	state.AddEntity(playerID, player)
 
 	clientEvents := make(chan *pb.ClientEvent, 1024)
 	clientEvents <- &pb.ClientEvent{
-		Id:    player.ID,
+		Id:    playerID,
 		Event: &pb.ClientEvent_Connect{},
 	}
 
@@ -50,6 +54,7 @@ func NewGame(player *LocalPlayer, assets *Assets) *Game {
 		Assets:       assets,
 		state:        state,
 		player:       player,
+		playerID:     playerID,
 		drawables:    []Drawable{},
 		serverEvents: make(chan *pb.ServerEvent, 1024),
 		clientEvents: clientEvents,
@@ -63,7 +68,7 @@ func (g *Game) handleServerEvents() error {
 		case event := <-g.serverEvents:
 			switch event.Event.(type) {
 			case *pb.ServerEvent_AddPlayer:
-				if event.Id != g.player.ID {
+				if event.Id != g.playerID {
 					g.state.AddEntity(event.Id, &world.Entity{})
 				}
 
@@ -74,7 +79,7 @@ func (g *Game) handleServerEvents() error {
 				position := event.GetSetPosition()
 				entity := g.state.Entity(event.Id)
 				if entity == nil {
-					log.Fatalf("invalid entity %s", event.Id)
+					continue
 				}
 				entity.Coords = world.Coords{
 					X: position.Position.X,
@@ -85,7 +90,7 @@ func (g *Game) handleServerEvents() error {
 				state := event.GetEntityState()
 				entity := g.state.Entity(event.Id)
 				if entity == nil {
-					log.Fatalf("invalid entity %s", event.Id)
+					continue
 				}
 
 				entity.Coords = world.Coords{
@@ -134,7 +139,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.state.ForEachEntity(func(ID string, e *world.Entity) {
 		// lol
 		image := g.Image("enemy")
-		if ID == g.player.ID {
+		if ID == g.playerID {
 			image = g.Image("player")
 		}
 
@@ -185,7 +190,7 @@ func (g *Game) handleKeysPressed() {
 		})
 	}
 	g.clientEvents <- &pb.ClientEvent{
-		Id: g.player.ID,
+		Id: g.playerID,
 		Event: &pb.ClientEvent_Actions{
 			Actions: &pb.Actions{
 				Actions: actions,

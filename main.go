@@ -29,8 +29,7 @@ func main() {
 	ebiten.SetWindowSize(1280, 620)
 	ebiten.SetWindowTitle("Open ROUNDS")
 
-	player := client.NewLocalPlayer(assets.Image("player"))
-	game := client.NewGame(player, assets)
+	game := client.NewGame(assets)
 
 	ctx := context.Background()
 	c, _, err := websocket.Dial(ctx, "ws://localhost:4242", nil)
