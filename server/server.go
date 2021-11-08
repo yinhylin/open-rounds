@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"rounds/pb"
 	"rounds/world"
+	"sort"
 	"sync"
 	"time"
 
@@ -31,18 +32,32 @@ type event struct {
 }
 
 type Server struct {
-	subscribers map[*subscriber]struct{}
-	mu          sync.Mutex
-	serveMux    http.ServeMux
-	events      chan *event
-	state       *world.World
+	subscribers          map[*subscriber]struct{}
+	mu                   sync.Mutex
+	serveMux             http.ServeMux
+	events               chan *event
+	state                *world.World
+	previousEntityEvents map[string][]pb.Action_Event
+}
+
+func eventsEqual(a, b []pb.Action_Event) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func NewServer() *Server {
 	s := &Server{
-		subscribers: make(map[*subscriber]struct{}),
-		events:      make(chan *event, 1024),
-		state:       world.NewWorld(),
+		subscribers:          make(map[*subscriber]struct{}),
+		events:               make(chan *event, 1024),
+		previousEntityEvents: make(map[string][]pb.Action_Event),
+		state:                world.NewWorld(),
 	}
 
 	go func() {
@@ -66,8 +81,23 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 			return nil, fmt.Errorf("non-existent entity %s", e.Id)
 		}
 
-		entity.OnActions(e.GetActions().GetActions())
-		// TODO: Probably don't pump these out every game frame.
+		actions := e.GetActions().Actions
+		entity.OnActions(actions)
+
+		var events []pb.Action_Event
+		for _, event := range events {
+			events = append(events, event)
+		}
+		sort.Slice(events, func(i, j int) bool {
+			return events[i] < events[j]
+		})
+
+		existingEvents := s.previousEntityEvents[e.Id]
+		if eventsEqual(existingEvents, events) {
+			return nil, nil
+		}
+		s.previousEntityEvents[e.Id] = events
+
 		return &pb.ServerEvent{
 			Id: e.Id,
 			Event: &pb.ServerEvent_EntityState{
