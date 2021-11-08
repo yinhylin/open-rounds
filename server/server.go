@@ -158,7 +158,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) onConnection(w http.ResponseWriter, r *http.Request) {
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns: []string{
-			// TODO: dev only lol
+			"tayrawr.com",
+			"44.241.110.166",
+			"44.241.110.166:6969",
 			"localhost:8080",
 		},
 	})
@@ -196,6 +198,7 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 				Id:    sub.PlayerID,
 				Event: &pb.ServerEvent_RemovePlayer{},
 			})
+			s.state.RemoveEntity(sub.PlayerID)
 		}()
 
 		for {

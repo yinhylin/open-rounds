@@ -1,5 +1,6 @@
 # Binaries for programs and plugins
 rounds
+run_server/run_server
 *.exe
 *.exe~
 *.dll
