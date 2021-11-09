@@ -47,7 +47,7 @@ func (l *LerpState) Current() world.Coords {
 }
 
 func (l *LerpState) Advance() {
-	l.iteration = math.Min(l.iteration+0.25, 1.00)
+	l.iteration = math.Min(l.iteration+0.2, 1.00)
 }
 
 type Game struct {
@@ -113,7 +113,6 @@ func (g *Game) handleServerEvents() error {
 					Y: position.Position.Y,
 				}
 				currentLerp := g.lerps[event.Id]
-				log.Printf("%+v vs %+v\n", currentLerp, target)
 				if currentLerp == nil || currentLerp.target != target {
 					source := entity.Coords
 					if currentLerp != nil {
@@ -137,7 +136,6 @@ func (g *Game) handleServerEvents() error {
 					Y: state.Position.Y,
 				}
 				currentLerp := g.lerps[event.Id]
-				log.Printf("%+v vs %+v\n", currentLerp, target)
 				if currentLerp == nil || currentLerp.target != target {
 					source := entity.Coords
 					if currentLerp != nil {
