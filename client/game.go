@@ -163,20 +163,23 @@ func (g *Game) handleServerEvents() error {
 }
 
 func (g *Game) Update() error {
+	oldCoords := g.player.Coords
 	if err := g.handleServerEvents(); err != nil {
 		return err
 	}
 	g.handleKeysPressed()
 	g.state.Update()
-	g.clientEvents <- &pb.ClientEvent{
-		Id: g.playerID,
-		Event: &pb.ClientEvent_SetPosition{
-			SetPosition: &pb.SetPosition{
-				Position: &pb.Vector{
-					X: g.player.X,
-					Y: g.player.Y,
-				},
-			}},
+	if g.player.Coords != oldCoords {
+		g.clientEvents <- &pb.ClientEvent{
+			Id: g.playerID,
+			Event: &pb.ClientEvent_SetPosition{
+				SetPosition: &pb.SetPosition{
+					Position: &pb.Vector{
+						X: g.player.X,
+						Y: g.player.Y,
+					},
+				}},
+		}
 	}
 	return nil
 }
