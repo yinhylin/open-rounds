@@ -199,6 +199,7 @@ func (s *Server) onConnection(w http.ResponseWriter, r *http.Request) {
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns: []string{
 			"tayrawr.com",
+			"tayrawr.com:6969",
 			"44.241.110.166",
 			"44.241.110.166:6969",
 			"localhost:8080",
