@@ -207,17 +207,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 
 		options := &ebiten.DrawImageOptions{}
+		var coords world.Coords
 		if lerp := g.lerps[ID]; lerp != nil {
 			lerp.Advance()
-			coords := lerp.Current()
+			coords = lerp.Current()
 			options.GeoM.Translate(coords.X, coords.Y)
 		} else {
-
+			coords = e.Coords
 			options.GeoM.Translate(e.X, e.Y)
 		}
 		screen.DrawImage(image, options)
 		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.X, e.Y)
-		ebitenutil.DebugPrintAt(screen, debugString, int(e.X), int(e.Y)+16)
+		ebitenutil.DebugPrintAt(screen, debugString, int(coords.X), int(coords.Y)+16)
 	})
 
 	// Draw a line to the cursor.
