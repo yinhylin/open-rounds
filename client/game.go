@@ -7,7 +7,6 @@ import (
 	"image/color"
 	"io/ioutil"
 	"log"
-	"math"
 	"rounds/pb"
 	"rounds/world"
 	"strings"
@@ -29,28 +28,12 @@ type Drawable interface {
 	Draw(screen *ebiten.Image)
 }
 
-type lerp struct {
-	target    world.Coords
-	source    world.Coords
-	iteration float64
-}
-
-func (l *lerp) next() world.Coords {
-	l.iteration = math.Min(l.iteration+0.25, 1.00)
-	c := world.Coords{
-		X: l.source.X + (l.target.X-l.source.X)*l.iteration,
-		Y: l.source.Y + (l.target.Y-l.source.Y)*l.iteration,
-	}
-	return c
-}
-
 type Game struct {
 	*Assets
 	state        *world.World
 	drawables    []Drawable
 	player       *world.Entity
 	playerID     string
-	lerps        map[string]lerp
 	serverEvents chan *pb.ServerEvent
 	clientEvents chan *pb.ClientEvent
 }
@@ -72,7 +55,6 @@ func NewGame(assets *Assets) *Game {
 		state:        state,
 		player:       player,
 		playerID:     playerID,
-		lerps:        make(map[string]lerp),
 		drawables:    []Drawable{},
 		serverEvents: make(chan *pb.ServerEvent, 1024),
 		clientEvents: clientEvents,
@@ -102,19 +84,10 @@ func (g *Game) handleServerEvents() error {
 				if entity == nil {
 					continue
 				}
-				g.lerps[event.Id] = lerp{
-					target: world.Coords{
-						X: position.Position.X,
-						Y: position.Position.Y,
-					},
-					source: entity.Coords,
+				entity.Coords = world.Coords{
+					X: position.Position.X,
+					Y: position.Position.Y,
 				}
-				/*
-					entity.Coords = world.Coords{
-						X: position.Position.X,
-						Y: position.Position.Y,
-					}
-				*/
 
 			case *pb.ServerEvent_EntityState:
 				state := event.GetEntityState()
@@ -123,20 +96,10 @@ func (g *Game) handleServerEvents() error {
 					continue
 				}
 
-				g.lerps[event.Id] = lerp{
-					target: world.Coords{
-						X: state.Position.X,
-						Y: state.Position.Y,
-					},
-					source: entity.Coords,
+				entity.Coords = world.Coords{
+					X: state.Position.X,
+					Y: state.Position.Y,
 				}
-
-				/*
-					entity.Coords = world.Coords{
-						X: state.Position.X,
-						Y: state.Position.Y,
-					}
-				*/
 				entity.Velocity = world.Vector{
 					X: state.Velocity.X,
 					Y: state.Velocity.Y,
@@ -187,25 +150,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	g.state.ForEachEntity(func(ID string, e *world.Entity) {
-		// loooool
+		// lol
 		image := g.Image("enemy")
 		if ID == g.playerID {
 			image = g.Image("player")
 		}
 
 		options := &ebiten.DrawImageOptions{}
-		l, ok := g.lerps[ID]
-		if ok {
-			coords := l.next()
-			options.GeoM.Translate(coords.X, coords.Y)
-			e.Coords = world.Coords{
-				X: coords.X,
-				Y: coords.Y,
-			}
-		} else {
-			options.GeoM.Translate(e.X, e.Y)
-		}
-
+		options.GeoM.Translate(e.X, e.Y)
 		screen.DrawImage(image, options)
 		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.X, e.Y)
 		ebitenutil.DebugPrintAt(screen, debugString, int(e.X), int(e.Y)+16)
