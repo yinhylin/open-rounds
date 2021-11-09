@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"io/ioutil"
 	"log"
+	"math"
 	"rounds/pb"
 	"rounds/world"
 	"strings"
@@ -28,12 +29,34 @@ type Drawable interface {
 	Draw(screen *ebiten.Image)
 }
 
+func lerp(v0, v1, t float64) float64 {
+	return (1-t)*v0 + t*v1
+}
+
+type LerpState struct {
+	source    world.Coords
+	target    world.Coords
+	iteration float64
+}
+
+func (l *LerpState) Current() world.Coords {
+	return world.Coords{
+		X: lerp(l.source.X, l.target.X, l.iteration),
+		Y: lerp(l.source.Y, l.target.Y, l.iteration),
+	}
+}
+
+func (l *LerpState) Advance() {
+	l.iteration = math.Min(l.iteration+0.25, 1.00)
+}
+
 type Game struct {
 	*Assets
 	state        *world.World
 	drawables    []Drawable
 	player       *world.Entity
 	playerID     string
+	lerps        map[string]*LerpState
 	serverEvents chan *pb.ServerEvent
 	clientEvents chan *pb.ClientEvent
 }
@@ -56,6 +79,7 @@ func NewGame(assets *Assets) *Game {
 		player:       player,
 		playerID:     playerID,
 		drawables:    []Drawable{},
+		lerps:        make(map[string]*LerpState),
 		serverEvents: make(chan *pb.ServerEvent, 1024),
 		clientEvents: clientEvents,
 	}
@@ -84,10 +108,23 @@ func (g *Game) handleServerEvents() error {
 				if entity == nil {
 					continue
 				}
-				entity.Coords = world.Coords{
+				target := world.Coords{
 					X: position.Position.X,
 					Y: position.Position.Y,
 				}
+				currentLerp := g.lerps[event.Id]
+				log.Printf("%+v vs %+v\n", currentLerp, target)
+				if currentLerp == nil || currentLerp.target != target {
+					source := entity.Coords
+					if currentLerp != nil {
+						source = currentLerp.Current()
+					}
+					g.lerps[event.Id] = &LerpState{
+						source: source,
+						target: target,
+					}
+				}
+				entity.Coords = target
 
 			case *pb.ServerEvent_EntityState:
 				state := event.GetEntityState()
@@ -95,11 +132,24 @@ func (g *Game) handleServerEvents() error {
 				if entity == nil {
 					continue
 				}
-
-				entity.Coords = world.Coords{
+				target := world.Coords{
 					X: state.Position.X,
 					Y: state.Position.Y,
 				}
+				currentLerp := g.lerps[event.Id]
+				log.Printf("%+v vs %+v\n", currentLerp, target)
+				if currentLerp == nil || currentLerp.target != target {
+					source := entity.Coords
+					if currentLerp != nil {
+						source = currentLerp.Current()
+					}
+					g.lerps[event.Id] = &LerpState{
+						source: source,
+						target: target,
+					}
+				}
+				entity.Coords = target
+
 				entity.Velocity = world.Vector{
 					X: state.Velocity.X,
 					Y: state.Velocity.Y,
@@ -157,7 +207,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 
 		options := &ebiten.DrawImageOptions{}
-		options.GeoM.Translate(e.X, e.Y)
+		if lerp := g.lerps[ID]; lerp != nil {
+			lerp.Advance()
+			coords := lerp.Current()
+			options.GeoM.Translate(coords.X, coords.Y)
+		} else {
+
+			options.GeoM.Translate(e.X, e.Y)
+		}
 		screen.DrawImage(image, options)
 		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.X, e.Y)
 		ebitenutil.DebugPrintAt(screen, debugString, int(e.X), int(e.Y)+16)

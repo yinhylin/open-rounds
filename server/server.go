@@ -92,10 +92,12 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 			return events[i] < events[j]
 		})
 
-		existingEvents := s.previousEntityEvents[e.Id]
-		if eventsEqual(existingEvents, events) {
-			return nil, nil
-		}
+		/*
+			existingEvents := s.previousEntityEvents[e.Id]
+			if eventsEqual(existingEvents, events) {
+				return nil, nil
+			}
+		*/
 		s.previousEntityEvents[e.Id] = events
 
 		return &pb.ServerEvent{
