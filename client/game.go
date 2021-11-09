@@ -66,6 +66,9 @@ func (g *Game) handleServerEvents() error {
 	for len(g.serverEvents) > 0 {
 		select {
 		case event := <-g.serverEvents:
+			if event.Id == g.playerID {
+				continue
+			}
 			switch event.Event.(type) {
 			case *pb.ServerEvent_AddPlayer:
 				if event.Id != g.playerID {
@@ -115,6 +118,16 @@ func (g *Game) Update() error {
 	}
 	g.handleKeysPressed()
 	g.state.Update()
+	g.clientEvents <- &pb.ClientEvent{
+		Id: g.playerID,
+		Event: &pb.ClientEvent_SetPosition{
+			SetPosition: &pb.SetPosition{
+				Position: &pb.Vector{
+					X: g.player.X,
+					Y: g.player.Y,
+				},
+			}},
+	}
 	return nil
 }
 

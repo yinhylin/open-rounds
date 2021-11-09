@@ -114,6 +114,14 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 			},
 		}, nil
 
+	case *pb.ClientEvent_SetPosition:
+		position := e.GetSetPosition().Position
+		entity := s.state.Entity(e.Id)
+		entity.Coords = world.Coords{
+			X: position.X,
+			Y: position.Y,
+		}
+
 	case *pb.ClientEvent_Connect:
 		e.subscriber.PlayerID = e.Id
 		s.state.AddEntity(e.Id, &world.Entity{})

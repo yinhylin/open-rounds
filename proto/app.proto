@@ -42,6 +42,7 @@ message ClientEvent {
   oneof event {
     Connect connect = 2;
     Actions actions = 3;
+    SetPosition set_position = 4;
   }
 }
 
