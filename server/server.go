@@ -122,6 +122,23 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 			Y: position.Y,
 		}
 
+		// TODO: Validate.
+		return &pb.ServerEvent{
+			Id: e.Id,
+			Event: &pb.ServerEvent_EntityState{
+				EntityState: &pb.State{
+					Position: &pb.Vector{
+						X: entity.X,
+						Y: entity.Y,
+					},
+					Velocity: &pb.Vector{
+						X: entity.Velocity.X,
+						Y: entity.Velocity.Y,
+					},
+				},
+			},
+		}, nil
+
 	case *pb.ClientEvent_Connect:
 		e.subscriber.PlayerID = e.Id
 		s.state.AddEntity(e.Id, &world.Entity{})
