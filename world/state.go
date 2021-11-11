@@ -1,7 +1,6 @@
 package world
 
 import (
-	"log"
 	"rounds/pb"
 )
 
@@ -161,7 +160,9 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) {
 	}
 
 	if s.currentTick < tick {
-		log.Fatal(tick, s.currentTick)
+		// need to buffer this xD
+		// log.Fatal(tick, s.currentTick)
+		return
 	}
 
 	for i, state := range s.states {
