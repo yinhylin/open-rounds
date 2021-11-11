@@ -11,7 +11,6 @@ import (
 	"os/signal"
 	"rounds/pb"
 	"rounds/world"
-	"sort"
 	"sync"
 	"time"
 
@@ -32,33 +31,25 @@ type event struct {
 }
 
 type Server struct {
-	subscribers          map[*subscriber]struct{}
-	mu                   sync.Mutex
-	serveMux             http.ServeMux
-	events               chan *event
-	state                *world.World
-	previousEntityEvents map[string][]pb.Action_Event
-}
-
-func eventsEqual(a, b []pb.Action_Event) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
+	subscribers map[*subscriber]struct{}
+	mu          sync.Mutex
+	serveMux    http.ServeMux
+	events      chan *event
+	state       *world.StateBuffer
 }
 
 func NewServer() *Server {
 	s := &Server{
-		subscribers:          make(map[*subscriber]struct{}),
-		events:               make(chan *event, 1024),
-		previousEntityEvents: make(map[string][]pb.Action_Event),
-		state:                world.NewWorld(),
+		subscribers: make(map[*subscriber]struct{}),
+		events:      make(chan *event, 1024),
+		state:       world.NewStateBuffer(32),
 	}
+
+	s.state.Add(&world.State{
+		Simulated: false,
+		Entities:  make(map[string]world.Entity),
+		Tick:      0,
+	})
 
 	go func() {
 		// Tick roughly 60 times per second.
@@ -76,67 +67,42 @@ func NewServer() *Server {
 func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 	switch e.Event.(type) {
 	case *pb.ClientEvent_Actions:
-		entity := s.state.Entity(e.Id)
-		if entity == nil {
-			return nil, fmt.Errorf("non-existent entity %s", e.Id)
-		}
-
-		actions := e.GetActions().Actions
-		entity.OnActions(actions)
-
-		var events []pb.Action_Event
-		for _, action := range actions {
-			events = append(events, action.Action)
-		}
-		sort.Slice(events, func(i, j int) bool {
-			return events[i] < events[j]
+		s.state.ApplyActions(&world.ActionsUpdate{
+			Tick:    e.Tick,
+			Actions: world.ActionsFromProto(e.GetActions()),
 		})
 
-		/*
-			existingEvents := s.previousEntityEvents[e.Id]
-			if eventsEqual(existingEvents, events) {
-				return nil, nil
-			}
-		*/
-		s.previousEntityEvents[e.Id] = events
-
 		return &pb.ServerEvent{
-			Id: e.Id,
-			Event: &pb.ServerEvent_EntityState{
-				EntityState: &pb.State{
-					Position: &pb.Vector{
-						X: entity.X,
-						Y: entity.Y,
-					},
-					Velocity: &pb.Vector{
-						X: entity.Velocity.X,
-						Y: entity.Velocity.Y,
-					},
+			Tick: e.Tick,
+			Event: &pb.ServerEvent_EntityEvents{
+				EntityEvents: &pb.EntityEvents{
+					Id:      e.Id,
+					Actions: e.GetActions(),
 				},
 			},
 		}, nil
 
-	case *pb.ClientEvent_SetPosition:
-		position := e.GetSetPosition().Position
-		entity := s.state.Entity(e.Id)
-		entity.Coords = world.Coords{
-			X: position.X,
-			Y: position.Y,
-		}
-
 	case *pb.ClientEvent_Connect:
 		e.subscriber.PlayerID = e.Id
-		s.state.AddEntity(e.Id, &world.Entity{})
+		s.state.AddEntity(&world.AddEntity{
+			ID: e.Id,
+		})
 		return &pb.ServerEvent{
-			Id:    e.Id,
-			Event: &pb.ServerEvent_AddPlayer{},
+			Tick: s.state.CurrentTick(),
+			Event: &pb.ServerEvent_AddEntity{
+				AddEntity: &pb.AddEntity{
+					Entity: &pb.Entity{
+						Id: e.Id,
+					},
+				},
+			},
 		}, nil
 	}
 	return nil, nil
 }
 
 func (s *Server) onTick() {
-	s.state.Update()
+	s.state.Next()
 	var serverEvents []*pb.ServerEvent
 
 	for len(s.events) > 0 {
@@ -157,27 +123,15 @@ func (s *Server) onTick() {
 }
 
 func (s *Server) addSubscriber(sub *subscriber) {
+	states := &pb.States{}
 	s.state.ForEachEntity(func(ID string, entity *world.Entity) {
-		sub.Messages <- toBytesOrDie(&pb.ServerEvent{
-			Id:    ID,
-			Event: &pb.ServerEvent_AddPlayer{},
-		})
-
-		sub.Messages <- toBytesOrDie(&pb.ServerEvent{
-			Id: ID,
-			Event: &pb.ServerEvent_EntityState{
-				EntityState: &pb.State{
-					Position: &pb.Vector{
-						X: entity.X,
-						Y: entity.Y,
-					},
-					Velocity: &pb.Vector{
-						X: entity.Velocity.X,
-						Y: entity.Velocity.Y,
-					},
-				},
-			},
-		})
+		states.States = append(states.States, entity.ToProto())
+	})
+	sub.Messages <- toBytesOrDie(&pb.ServerEvent{
+		Tick: s.state.CurrentTick(),
+		Event: &pb.ServerEvent_States{
+			States: states,
+		},
 	})
 
 	s.mu.Lock()
@@ -233,13 +187,17 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 			if sub.PlayerID == "" {
 				return
 			}
-
 			s.removeSubscriber(sub)
 			s.publish(&pb.ServerEvent{
-				Id:    sub.PlayerID,
-				Event: &pb.ServerEvent_RemovePlayer{},
+				Event: &pb.ServerEvent_RemoveEntity{
+					RemoveEntity: &pb.RemoveEntity{
+						Id: sub.PlayerID,
+					},
+				},
 			})
-			s.state.RemoveEntity(sub.PlayerID)
+			s.state.RemoveEntity(&world.RemoveEntity{
+				ID: sub.PlayerID,
+			})
 		}()
 
 		for {

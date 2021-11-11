@@ -7,7 +7,6 @@ import (
 	"image/color"
 	"io/ioutil"
 	"log"
-	"math"
 	"rounds/pb"
 	"rounds/world"
 	"strings"
@@ -24,48 +23,18 @@ type Updatable interface {
 	Update()
 }
 
-type Drawable interface {
-	Coordinates() world.Coords
-	Draw(screen *ebiten.Image)
-}
-
-func lerp(v0, v1, t float64) float64 {
-	return (1-t)*v0 + t*v1
-}
-
-type LerpState struct {
-	source    world.Coords
-	target    world.Coords
-	iteration float64
-}
-
-func (l *LerpState) Current() world.Coords {
-	return world.Coords{
-		X: lerp(l.source.X, l.target.X, l.iteration),
-		Y: lerp(l.source.Y, l.target.Y, l.iteration),
-	}
-}
-
-func (l *LerpState) Advance() {
-	l.iteration = math.Min(l.iteration+0.2, 1.00)
-}
-
 type Game struct {
 	*Assets
-	state        *world.World
-	drawables    []Drawable
+	state        *world.StateBuffer
 	player       *world.Entity
 	playerID     string
-	lerps        map[string]*LerpState
 	serverEvents chan *pb.ServerEvent
 	clientEvents chan *pb.ClientEvent
 }
 
 func NewGame(assets *Assets) *Game {
-	state := world.NewWorld()
 	player := &world.Entity{}
 	playerID := ksuid.New().String()
-	state.AddEntity(playerID, player)
 
 	clientEvents := make(chan *pb.ClientEvent, 1024)
 	clientEvents <- &pb.ClientEvent{
@@ -75,11 +44,9 @@ func NewGame(assets *Assets) *Game {
 
 	return &Game{
 		Assets:       assets,
-		state:        state,
+		state:        world.NewStateBuffer(32),
 		player:       player,
 		playerID:     playerID,
-		drawables:    []Drawable{},
-		lerps:        make(map[string]*LerpState),
 		serverEvents: make(chan *pb.ServerEvent, 1024),
 		clientEvents: clientEvents,
 	}
@@ -90,68 +57,38 @@ func (g *Game) handleServerEvents() error {
 	for len(g.serverEvents) > 0 {
 		select {
 		case event := <-g.serverEvents:
-			if event.Id == g.playerID {
-				continue
-			}
 			switch event.Event.(type) {
-			case *pb.ServerEvent_AddPlayer:
-				if event.Id != g.playerID {
-					g.state.AddEntity(event.Id, &world.Entity{})
-				}
+			case *pb.ServerEvent_AddEntity:
+				g.state.AddEntity(&world.AddEntity{
+					Tick: event.Tick,
+					ID:   event.GetAddEntity().Entity.Id,
+				})
 
-			case *pb.ServerEvent_RemovePlayer:
-				g.state.RemoveEntity(event.Id)
+			case *pb.ServerEvent_RemoveEntity:
+				g.state.RemoveEntity(&world.RemoveEntity{
+					Tick: event.Tick,
+					ID:   event.GetRemoveEntity().Id,
+				})
 
-			case *pb.ServerEvent_SetPosition:
-				position := event.GetSetPosition()
-				entity := g.state.Entity(event.Id)
-				if entity == nil {
-					continue
-				}
-				target := world.Coords{
-					X: position.Position.X,
-					Y: position.Position.Y,
-				}
-				currentLerp := g.lerps[event.Id]
-				if currentLerp == nil || currentLerp.target != target {
-					source := entity.Coords
-					if currentLerp != nil {
-						source = currentLerp.Current()
-					}
-					g.lerps[event.Id] = &LerpState{
-						source: source,
-						target: target,
-					}
-				}
-				entity.Coords = target
+			case *pb.ServerEvent_EntityEvents:
+				msg := event.GetEntityEvents()
+				g.state.ApplyActions(&world.ActionsUpdate{
+					Tick:    event.Tick,
+					ID:      msg.Id,
+					Actions: world.ActionsFromProto(msg.Actions),
+				})
 
-			case *pb.ServerEvent_EntityState:
-				state := event.GetEntityState()
-				entity := g.state.Entity(event.Id)
-				if entity == nil {
-					continue
+			case *pb.ServerEvent_States:
+				msg := event.GetStates()
+				state := &world.State{
+					Simulated: false,
+					Entities:  make(map[string]world.Entity),
+					Tick:      event.Tick,
 				}
-				target := world.Coords{
-					X: state.Position.X,
-					Y: state.Position.Y,
+				for _, entity := range msg.States {
+					state.Entities[entity.Id] = *world.EntityFromProto(entity)
 				}
-				currentLerp := g.lerps[event.Id]
-				if currentLerp == nil || currentLerp.target != target {
-					source := entity.Coords
-					if currentLerp != nil {
-						source = currentLerp.Current()
-					}
-					g.lerps[event.Id] = &LerpState{
-						source: source,
-						target: target,
-					}
-				}
-				entity.Coords = target
-
-				entity.Velocity = world.Vector{
-					X: state.Velocity.X,
-					Y: state.Velocity.Y,
-				}
+				g.state.Add(state)
 			}
 		default:
 			return errors.New("should never block")
@@ -165,17 +102,7 @@ func (g *Game) Update() error {
 		return err
 	}
 	g.handleKeysPressed()
-	g.state.Update()
-	g.clientEvents <- &pb.ClientEvent{
-		Id: g.playerID,
-		Event: &pb.ClientEvent_SetPosition{
-			SetPosition: &pb.SetPosition{
-				Position: &pb.Vector{
-					X: g.player.X,
-					Y: g.player.Y,
-				},
-			}},
-	}
+	g.state.Next()
 	return nil
 }
 
@@ -192,9 +119,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		191,
 		255,
 	})
-	// Draw things (bullets? walls?)
-	for _, drawable := range g.drawables {
-		drawable.Draw(screen)
+
+	if g.state.Current() == nil {
+		screen.Fill(color.RGBA{
+			0,
+			0,
+			0,
+			255,
+		})
+		ebitenutil.DebugPrint(screen, "connecting...")
+		return
 	}
 
 	g.state.ForEachEntity(func(ID string, e *world.Entity) {
@@ -205,24 +139,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 
 		options := &ebiten.DrawImageOptions{}
-		var coords world.Coords
-		if lerp := g.lerps[ID]; lerp != nil {
-			lerp.Advance()
-			coords = lerp.Current()
-			options.GeoM.Translate(coords.X, coords.Y)
-		} else {
-			coords = e.Coords
-			options.GeoM.Translate(e.X, e.Y)
-		}
+		options.GeoM.Translate(e.Coords.X, e.Coords.Y)
 		screen.DrawImage(image, options)
-		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.X, e.Y)
-		ebitenutil.DebugPrintAt(screen, debugString, int(coords.X), int(coords.Y)+16)
+		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.Coords.X, e.Coords.Y)
+		ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+16)
 	})
 
-	// Draw a line to the cursor.
-	x, y := ebiten.CursorPosition()
 	ebitenutil.DebugPrint(screen, debugString())
-	ebitenutil.DrawLine(screen, g.player.X+8, g.player.Y+8, float64(x), float64(y), color.RGBA{255, 0, 0, 255})
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -230,43 +153,34 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func (g *Game) handleKeysPressed() {
-	var actions []*pb.Action
-	var keys []ebiten.Key
-	for _, key := range inpututil.AppendPressedKeys(keys) {
+	actions := make(map[pb.Actions_Event]struct{})
+	for _, key := range inpututil.AppendPressedKeys(nil) {
 		switch key {
 		case ebiten.KeyA:
-			actions = append(actions, &pb.Action{
-				Action: pb.Action_MOVE_LEFT,
-			})
+			actions[pb.Actions_MOVE_LEFT] = struct{}{}
 		case ebiten.KeyD:
-			actions = append(actions, &pb.Action{
-				Action: pb.Action_MOVE_RIGHT,
-			})
+			actions[pb.Actions_MOVE_RIGHT] = struct{}{}
 		case ebiten.KeyW:
-			actions = append(actions, &pb.Action{
-				Action: pb.Action_MOVE_UP,
-			})
+			actions[pb.Actions_MOVE_UP] = struct{}{}
 		case ebiten.KeyS:
-			actions = append(actions, &pb.Action{
-				Action: pb.Action_MOVE_DOWN,
-			})
+			actions[pb.Actions_MOVE_DOWN] = struct{}{}
 		}
 	}
 
-	if actions == nil {
-		actions = append(actions, &pb.Action{
-			Action: pb.Action_NONE,
-		})
-	}
+	tick := g.state.CurrentTick()
 	g.clientEvents <- &pb.ClientEvent{
 		Id: g.playerID,
 		Event: &pb.ClientEvent_Actions{
-			Actions: &pb.Actions{
-				Actions: actions,
-			},
+			Actions: world.ActionsToProto(actions),
 		},
+		Tick: tick,
 	}
-	g.player.OnActions(actions)
+
+	g.state.ApplySimulatedActions(&world.ActionsUpdate{
+		ID:      g.playerID,
+		Actions: actions,
+		Tick:    tick,
+	})
 }
 
 // ReadMessages reads the server messages so the game can update accordingly.
