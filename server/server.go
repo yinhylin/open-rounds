@@ -68,6 +68,7 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 	switch e.Event.(type) {
 	case *pb.ClientEvent_Actions:
 		s.state.ApplyActions(&world.ActionsUpdate{
+			ID:      e.Id,
 			Tick:    e.Tick,
 			Actions: world.ActionsFromProto(e.GetActions()),
 		})
@@ -125,6 +126,7 @@ func (s *Server) onTick() {
 func (s *Server) addSubscriber(sub *subscriber) {
 	states := &pb.States{}
 	s.state.ForEachEntity(func(ID string, entity *world.Entity) {
+		log.Printf("%+v\n", entity)
 		states.States = append(states.States, entity.ToProto())
 	})
 	sub.Messages <- toBytesOrDie(&pb.ServerEvent{
