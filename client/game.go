@@ -101,6 +101,9 @@ func (g *Game) Update() error {
 	if err := g.handleServerEvents(); err != nil {
 		return err
 	}
+	if g.state.CurrentTick() == -1 {
+		return nil
+	}
 	g.handleKeysPressed()
 	g.state.Next()
 	return nil
