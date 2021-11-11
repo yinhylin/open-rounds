@@ -134,6 +134,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		return
 	}
 
+	serverState := g.state.CurrentServer()
+
+	for _, e := range serverState.Entities {
+		ebitenutil.DrawRect(screen, e.Coords.X, e.Coords.Y, 16, 16, color.RGBA{188, 0, 0, 255})
+	}
+
 	g.state.ForEachEntity(func(ID string, e *world.Entity) {
 		// lol
 		image := g.Image("enemy")

@@ -148,6 +148,14 @@ func (s *StateBuffer) Current() *State {
 	return &current
 }
 
+func (s *StateBuffer) CurrentServer() *State {
+	current := s.states[s.currentServerTickIndex]
+	if current.Tick == nilTick {
+		return nil
+	}
+	return &current
+}
+
 func (s *StateBuffer) walkNextStates(index int, steps int, callback func(int)) {
 	for i := 1; i <= steps; i++ {
 		callback((index + i) % cap(s.states))
