@@ -42,7 +42,7 @@ func NewServer() *Server {
 	s := &Server{
 		subscribers: make(map[*subscriber]struct{}),
 		events:      make(chan *event, 1024),
-		state:       world.NewStateBuffer(32),
+		state:       world.NewStateBuffer(8),
 	}
 
 	s.state.Add(&world.State{
