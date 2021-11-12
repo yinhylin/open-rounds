@@ -30,7 +30,7 @@ type Game struct {
 	playerID        string
 	serverEvents    chan *pb.ServerEvent
 	clientEvents    chan *pb.ClientEvent
-	previousActions map[pb.Actions_Event]struct{}
+	previousIntents map[pb.Intents_Intent]struct{}
 }
 
 func NewGame(assets *Assets) *Game {
@@ -50,7 +50,7 @@ func NewGame(assets *Assets) *Game {
 		playerID:        playerID,
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
 		clientEvents:    clientEvents,
-		previousActions: make(map[pb.Actions_Event]struct{}),
+		previousIntents: make(map[pb.Intents_Intent]struct{}),
 	}
 }
 
@@ -74,18 +74,17 @@ func (g *Game) handleServerEvents() error {
 
 			case *pb.ServerEvent_EntityEvents:
 				msg := event.GetEntityEvents()
-				g.state.ApplyActions(&world.ActionsUpdate{
+				g.state.ApplyIntents(&world.IntentsUpdate{
 					Tick:    event.Tick,
 					ID:      msg.Id,
-					Actions: world.ActionsFromProto(msg.Actions),
+					Intents: world.IntentsFromProto(msg.Intents),
 				})
 
 			case *pb.ServerEvent_States:
 				msg := event.GetStates()
 				state := &world.State{
-					Simulated: false,
-					Entities:  make(map[string]world.Entity),
-					Tick:      event.Tick,
+					Entities: make(map[string]world.Entity),
+					Tick:     event.Tick,
 				}
 				for _, entity := range msg.States {
 					state.Entities[entity.Id] = *world.EntityFromProto(entity)
@@ -103,7 +102,7 @@ func (g *Game) Update() error {
 	if err := g.handleServerEvents(); err != nil {
 		return err
 	}
-	if g.state.CurrentTick() == -1 {
+	if g.state.CurrentTick() == world.NilTick {
 		return nil
 	}
 	g.handleKeysPressed()
@@ -136,12 +135,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		return
 	}
 
-	serverState := g.state.CurrentServer()
-
-	for _, e := range serverState.Entities {
-		ebitenutil.DrawRect(screen, e.Coords.X, e.Coords.Y, 16, 16, color.RGBA{188, 0, 0, 255})
-	}
-
 	g.state.ForEachEntity(func(ID string, e *world.Entity) {
 		// lol
 		image := g.Image("enemy")
@@ -164,36 +157,36 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func (g *Game) handleKeysPressed() {
-	actions := make(map[pb.Actions_Event]struct{})
+	actions := make(map[pb.Intents_Intent]struct{})
 	for _, key := range inpututil.AppendPressedKeys(nil) {
 		switch key {
 		case ebiten.KeyA:
-			actions[pb.Actions_MOVE_LEFT] = struct{}{}
+			actions[pb.Intents_MOVE_LEFT] = struct{}{}
 		case ebiten.KeyD:
-			actions[pb.Actions_MOVE_RIGHT] = struct{}{}
+			actions[pb.Intents_MOVE_RIGHT] = struct{}{}
 		case ebiten.KeyW:
-			actions[pb.Actions_MOVE_UP] = struct{}{}
+			actions[pb.Intents_MOVE_UP] = struct{}{}
 		case ebiten.KeyS:
-			actions[pb.Actions_MOVE_DOWN] = struct{}{}
+			actions[pb.Intents_MOVE_DOWN] = struct{}{}
 		}
 	}
-	if world.ActionsEqual(g.previousActions, actions) {
+	if world.IntentsEqual(g.previousIntents, actions) {
 		return
 	}
-	g.previousActions = actions
+	g.previousIntents = actions
 
 	tick := g.state.CurrentTick()
 	g.clientEvents <- &pb.ClientEvent{
 		Id: g.playerID,
-		Event: &pb.ClientEvent_Actions{
-			Actions: world.ActionsToProto(actions),
+		Event: &pb.ClientEvent_Intents{
+			Intents: world.IntentsToProto(actions),
 		},
 		Tick: tick,
 	}
 
-	g.state.ApplySimulatedActions(&world.ActionsUpdate{
+	g.state.ApplySimulatedIntents(&world.IntentsUpdate{
 		ID:      g.playerID,
-		Actions: actions,
+		Intents: actions,
 		Tick:    tick,
 	})
 }

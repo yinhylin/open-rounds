@@ -4,17 +4,16 @@ import (
 	"rounds/pb"
 )
 
-const nilTick = -1
+const NilTick = -1
 
 type State struct {
-	Simulated bool
-	Entities  map[string]Entity
-	Tick      int64
+	Entities map[string]Entity
+	Tick     int64
 }
 
-type ActionsUpdate struct {
+type IntentsUpdate struct {
 	ID      string
-	Actions map[pb.Actions_Event]struct{}
+	Intents map[pb.Intents_Intent]struct{}
 	Tick    int64
 }
 
@@ -34,7 +33,7 @@ type RemoveEntity struct {
 	Tick int64
 }
 
-func ActionsEqual(a, b map[pb.Actions_Event]struct{}) bool {
+func IntentsEqual(a, b map[pb.Intents_Intent]struct{}) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -47,7 +46,7 @@ func ActionsEqual(a, b map[pb.Actions_Event]struct{}) bool {
 }
 
 func entityEqual(a, b Entity) bool {
-	return a.Coords == b.Coords && a.Velocity == b.Velocity && ActionsEqual(a.Actions, b.Actions)
+	return a.Coords == b.Coords && a.Velocity == b.Velocity && IntentsEqual(a.Intents, b.Intents)
 }
 
 func entitiesEqual(a, b map[string]Entity) bool {
@@ -70,22 +69,18 @@ func (s *State) Next() State {
 		next.Entities[ID] = entity
 	}
 	next.Tick++
-	next.Simulated = true
 	return next
 }
 
 func (s *State) NextServer() State {
 	next := s.Next()
-	next.Simulated = false
 	return next
 }
 
 type StateBuffer struct {
-	states                 []State
-	index                  int
-	currentServerTick      int64
-	currentServerTickIndex int
-	currentTick            int64
+	states      []State
+	index       int
+	currentTick int64
 }
 
 func (s *StateBuffer) ForEachEntity(callback func(string, *Entity)) {
@@ -106,39 +101,25 @@ func (s *StateBuffer) CurrentTick() int64 {
 func NewStateBuffer(maxCapacity int) *StateBuffer {
 	states := make([]State, maxCapacity, maxCapacity)
 	for i := range states {
-		states[i].Tick = nilTick
+		states[i].Tick = NilTick
 	}
 	return &StateBuffer{
-		states:            states,
-		currentServerTick: nilTick,
-		currentTick:       nilTick,
+		states:      states,
+		currentTick: NilTick,
 	}
 }
 
 func (s *StateBuffer) Add(state *State) {
 	index := (s.index + 1) % cap(s.states)
-	if s.states[s.index].Tick == nilTick {
+	if s.states[s.index].Tick == NilTick {
 		index = s.index
 	}
 	s.index = index
 	s.states[index] = *state
-	if state.Simulated {
-		s.currentTick = state.Tick
-	} else {
-		s.currentServerTick = state.Tick
-		s.currentServerTickIndex = index
-		if s.currentTick < state.Tick {
-			s.currentTick = state.Tick
-		}
-	}
+	s.currentTick = state.Tick
 }
 
 func (s *StateBuffer) Next() *State {
-	if int(s.currentTick-s.currentServerTick+1) >= cap(s.states) {
-		// Simulated too far.
-		return nil
-	}
-
 	current := s.Current()
 	if current == nil {
 		return nil
@@ -149,33 +130,9 @@ func (s *StateBuffer) Next() *State {
 	return &next
 }
 
-func (s *StateBuffer) NextServer() *State {
-	if int(s.currentTick-s.currentServerTick+1) >= cap(s.states) {
-		// Simulated too far.
-		return nil
-	}
-
-	current := s.Current()
-	if current == nil {
-		return nil
-	}
-
-	next := current.NextServer()
-	s.Add(&next)
-	return &next
-}
-
 func (s *StateBuffer) Current() *State {
 	current := s.states[s.index]
-	if current.Tick == nilTick {
-		return nil
-	}
-	return &current
-}
-
-func (s *StateBuffer) CurrentServer() *State {
-	current := s.states[s.currentServerTickIndex]
-	if current.Tick == nilTick {
+	if current.Tick == NilTick {
 		return nil
 	}
 	return &current
@@ -202,9 +159,6 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) {
 		if state.Tick != tick {
 			continue
 		}
-		s.currentServerTick = tick
-		s.currentServerTickIndex = i
-
 		s.states[i] = callback(s.states[i])
 		currentState := &s.states[i]
 
@@ -221,9 +175,8 @@ func (s *StateBuffer) AddEntity(msg *AddEntity) {
 	s.applyUpdate(msg.Tick, func(existing State) State {
 		existing.Entities[msg.ID] = Entity{ID: msg.ID}
 		return State{
-			Simulated: false,
-			Entities:  existing.Entities,
-			Tick:      msg.Tick,
+			Entities: existing.Entities,
+			Tick:     msg.Tick,
 		}
 	})
 }
@@ -232,35 +185,32 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 	s.applyUpdate(msg.Tick, func(existing State) State {
 		delete(existing.Entities, msg.ID)
 		return State{
-			Simulated: false,
-			Entities:  existing.Entities,
-			Tick:      msg.Tick,
+			Entities: existing.Entities,
+			Tick:     msg.Tick,
 		}
 	})
 }
 
-func (s *StateBuffer) ApplyActions(msg *ActionsUpdate) {
+func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) {
 	s.applyUpdate(msg.Tick, func(existing State) State {
 		entity := existing.Entities[msg.ID]
-		entity.Actions = msg.Actions
+		entity.Intents = msg.Intents
 		existing.Entities[msg.ID] = entity
 		return State{
-			Simulated: false,
-			Entities:  existing.Entities,
-			Tick:      msg.Tick,
+			Entities: existing.Entities,
+			Tick:     msg.Tick,
 		}
 	})
 }
 
-func (s *StateBuffer) ApplySimulatedActions(msg *ActionsUpdate) {
+func (s *StateBuffer) ApplySimulatedIntents(msg *IntentsUpdate) {
 	s.applyUpdate(msg.Tick, func(existing State) State {
 		entity := existing.Entities[msg.ID]
-		entity.Actions = msg.Actions
+		entity.Intents = msg.Intents
 		existing.Entities[msg.ID] = entity
 		return State{
-			Simulated: existing.Simulated,
-			Entities:  existing.Entities,
-			Tick:      msg.Tick,
+			Entities: existing.Entities,
+			Tick:     msg.Tick,
 		}
 	})
 }

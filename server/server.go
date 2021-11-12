@@ -46,9 +46,8 @@ func NewServer() *Server {
 	}
 
 	s.state.Add(&world.State{
-		Simulated: false,
-		Entities:  make(map[string]world.Entity),
-		Tick:      0,
+		Entities: make(map[string]world.Entity),
+		Tick:     0,
 	})
 
 	go func() {
@@ -66,11 +65,11 @@ func NewServer() *Server {
 
 func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 	switch e.Event.(type) {
-	case *pb.ClientEvent_Actions:
-		s.state.ApplyActions(&world.ActionsUpdate{
+	case *pb.ClientEvent_Intents:
+		s.state.ApplyIntents(&world.IntentsUpdate{
 			ID:      e.Id,
 			Tick:    e.Tick,
-			Actions: world.ActionsFromProto(e.GetActions()),
+			Intents: world.IntentsFromProto(e.GetIntents()),
 		})
 
 		return &pb.ServerEvent{
@@ -78,7 +77,7 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 			Event: &pb.ServerEvent_EntityEvents{
 				EntityEvents: &pb.EntityEvents{
 					Id:      e.Id,
-					Actions: e.GetActions(),
+					Intents: e.GetIntents(),
 				},
 			},
 		}, nil
@@ -112,7 +111,7 @@ func (s *Server) onTick() {
 	if s.state.Current() != nil {
 		log.Printf("%+v\n", s.state.Current())
 	}
-	s.state.NextServer()
+	s.state.Next()
 	var serverEvents []*pb.ServerEvent
 
 	for len(s.events) > 0 {

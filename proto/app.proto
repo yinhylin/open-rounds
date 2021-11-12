@@ -11,27 +11,27 @@ message Entity {
   string id = 1;
   Vector velocity = 2;
   Vector position = 3;
-  Actions actions = 4;
+  Intents intents = 4;
 }
 
 message States {
   repeated Entity states = 1;
 }
 
-message Actions {
-  enum Event {
+message Intents {
+  enum Intent {
     NONE = 0;
     MOVE_UP = 1;
     MOVE_DOWN = 2;
     MOVE_LEFT = 3;
     MOVE_RIGHT = 4;
   }
-  repeated Event actions = 1;
+  repeated Intent intents = 1;
 }
 
 message EntityEvents {
   string id = 1;
-  Actions actions = 2;
+  Intents intents = 2;
 }
 
 message Connect {}
@@ -49,7 +49,7 @@ message ClientEvent {
   int64 tick = 2;
   oneof event {
     Connect connect = 3;
-    Actions actions = 4;
+    Intents intents = 4;
   }
 }
 

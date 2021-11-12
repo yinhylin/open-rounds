@@ -10,7 +10,7 @@ type Entity struct {
 	ID       string
 	Coords   Vector
 	Velocity Vector
-	Actions  map[pb.Actions_Event]struct{}
+	Intents  map[pb.Intents_Intent]struct{}
 }
 
 func (e *Entity) Update() {
@@ -18,15 +18,15 @@ func (e *Entity) Update() {
 
 	// TODO: Don't overwrite velocity.
 	var velocity Vector
-	for action := range e.Actions {
+	for action := range e.Intents {
 		switch action {
-		case pb.Actions_MOVE_UP:
+		case pb.Intents_MOVE_UP:
 			velocity.Y -= speed
-		case pb.Actions_MOVE_DOWN:
+		case pb.Intents_MOVE_DOWN:
 			velocity.Y += speed
-		case pb.Actions_MOVE_LEFT:
+		case pb.Intents_MOVE_LEFT:
 			velocity.X -= speed
-		case pb.Actions_MOVE_RIGHT:
+		case pb.Intents_MOVE_RIGHT:
 			velocity.X += speed
 		}
 	}
@@ -51,19 +51,19 @@ func VectorFromProto(v *pb.Vector) Vector {
 	}
 }
 
-func ActionsToProto(actions map[pb.Actions_Event]struct{}) *pb.Actions {
-	var events []pb.Actions_Event
+func IntentsToProto(actions map[pb.Intents_Intent]struct{}) *pb.Intents {
+	var events []pb.Intents_Intent
 	for action := range actions {
 		events = append(events, action)
 	}
-	return &pb.Actions{
-		Actions: events,
+	return &pb.Intents{
+		Intents: events,
 	}
 }
 
-func ActionsFromProto(a *pb.Actions) map[pb.Actions_Event]struct{} {
-	actions := make(map[pb.Actions_Event]struct{})
-	for _, action := range a.Actions {
+func IntentsFromProto(a *pb.Intents) map[pb.Intents_Intent]struct{} {
+	actions := make(map[pb.Intents_Intent]struct{})
+	for _, action := range a.Intents {
 		actions[action] = struct{}{}
 	}
 	return actions
@@ -74,7 +74,7 @@ func (e *Entity) ToProto() *pb.Entity {
 		Id:       e.ID,
 		Position: e.Coords.ToProto(),
 		Velocity: e.Velocity.ToProto(),
-		Actions:  ActionsToProto(e.Actions),
+		Intents:  IntentsToProto(e.Intents),
 	}
 }
 
@@ -86,6 +86,6 @@ func EntityFromProto(e *pb.Entity) *Entity {
 		ID:       e.Id,
 		Coords:   VectorFromProto(e.Position),
 		Velocity: VectorFromProto(e.Velocity),
-		Actions:  ActionsFromProto(e.Actions),
+		Intents:  IntentsFromProto(e.Intents),
 	}
 }
