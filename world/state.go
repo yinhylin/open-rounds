@@ -34,7 +34,7 @@ type RemoveEntity struct {
 	Tick int64
 }
 
-func actionsEqual(a, b map[pb.Actions_Event]struct{}) bool {
+func ActionsEqual(a, b map[pb.Actions_Event]struct{}) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -47,7 +47,7 @@ func actionsEqual(a, b map[pb.Actions_Event]struct{}) bool {
 }
 
 func entityEqual(a, b Entity) bool {
-	return a.Coords == b.Coords && a.Velocity == b.Velocity && actionsEqual(a.Actions, b.Actions)
+	return a.Coords == b.Coords && a.Velocity == b.Velocity && ActionsEqual(a.Actions, b.Actions)
 }
 
 func entitiesEqual(a, b map[string]Entity) bool {
@@ -71,6 +71,12 @@ func (s *State) Next() State {
 	}
 	next.Tick++
 	next.Simulated = true
+	return next
+}
+
+func (s *State) NextServer() State {
+	next := s.Next()
+	next.Simulated = false
 	return next
 }
 
@@ -121,6 +127,9 @@ func (s *StateBuffer) Add(state *State) {
 	} else {
 		s.currentServerTick = state.Tick
 		s.currentServerTickIndex = index
+		if s.currentTick < state.Tick {
+			s.currentTick = state.Tick
+		}
 	}
 }
 
@@ -136,6 +145,22 @@ func (s *StateBuffer) Next() *State {
 	}
 
 	next := current.Next()
+	s.Add(&next)
+	return &next
+}
+
+func (s *StateBuffer) NextServer() *State {
+	if int(s.currentTick-s.currentServerTick+1) >= cap(s.states) {
+		// Simulated too far.
+		return nil
+	}
+
+	current := s.Current()
+	if current == nil {
+		return nil
+	}
+
+	next := current.NextServer()
 	s.Add(&next)
 	return &next
 }
@@ -184,7 +209,7 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) {
 		currentState := &s.states[i]
 
 		// Re-simulate.
-		s.walkNextStates(i, int(s.currentTick-s.currentServerTick), func(index int) {
+		s.walkNextStates(i, int(s.currentTick-state.Tick), func(index int) {
 			s.states[index] = currentState.Next()
 			currentState = &s.states[index]
 		})

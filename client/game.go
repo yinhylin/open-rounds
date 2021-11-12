@@ -25,11 +25,12 @@ type Updatable interface {
 
 type Game struct {
 	*Assets
-	state        *world.StateBuffer
-	player       *world.Entity
-	playerID     string
-	serverEvents chan *pb.ServerEvent
-	clientEvents chan *pb.ClientEvent
+	state           *world.StateBuffer
+	player          *world.Entity
+	playerID        string
+	serverEvents    chan *pb.ServerEvent
+	clientEvents    chan *pb.ClientEvent
+	previousActions map[pb.Actions_Event]struct{}
 }
 
 func NewGame(assets *Assets) *Game {
@@ -43,12 +44,13 @@ func NewGame(assets *Assets) *Game {
 	}
 
 	return &Game{
-		Assets:       assets,
-		state:        world.NewStateBuffer(8),
-		player:       player,
-		playerID:     playerID,
-		serverEvents: make(chan *pb.ServerEvent, 1024),
-		clientEvents: clientEvents,
+		Assets:          assets,
+		state:           world.NewStateBuffer(8),
+		player:          player,
+		playerID:        playerID,
+		serverEvents:    make(chan *pb.ServerEvent, 1024),
+		clientEvents:    clientEvents,
+		previousActions: make(map[pb.Actions_Event]struct{}),
 	}
 }
 
@@ -175,6 +177,10 @@ func (g *Game) handleKeysPressed() {
 			actions[pb.Actions_MOVE_DOWN] = struct{}{}
 		}
 	}
+	if world.ActionsEqual(g.previousActions, actions) {
+		return
+	}
+	g.previousActions = actions
 
 	tick := g.state.CurrentTick()
 	g.clientEvents <- &pb.ClientEvent{

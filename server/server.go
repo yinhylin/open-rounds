@@ -85,9 +85,15 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 
 	case *pb.ClientEvent_Connect:
 		e.subscriber.PlayerID = e.Id
+		log.Println("adding entity")
+		log.Printf("%+v", s.state.Current())
+		log.Printf("%+v", s.state)
 		s.state.AddEntity(&world.AddEntity{
-			ID: e.Id,
+			ID:   e.Id,
+			Tick: s.state.CurrentTick(),
 		})
+		log.Printf("%+v", s.state.Current())
+		log.Printf("%+v", s.state)
 		return &pb.ServerEvent{
 			Tick: s.state.CurrentTick(),
 			Event: &pb.ServerEvent_AddEntity{
@@ -103,14 +109,16 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 }
 
 func (s *Server) onTick() {
-	s.state.Next()
+	if s.state.Current() != nil {
+		log.Printf("%+v\n", s.state.Current())
+	}
+	s.state.NextServer()
 	var serverEvents []*pb.ServerEvent
 
 	for len(s.events) > 0 {
 		event := <-s.events
 		serverEvent, err := s.onEvent(event)
 		if err != nil {
-			log.Println(err)
 			continue
 		}
 		if serverEvent != nil {
