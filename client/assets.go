@@ -57,11 +57,15 @@ func LoadAssets() (*Assets, error) {
 				return nil, fmt.Errorf("duplicate filename: %s", name)
 			}
 
-			file, err := assets.Open(filepath.Join(dir, f.Name()))
+			// Can't use filepath.Join due to Windows using backlash and assets expecting a forward slash.
+			file, err := assets.Open(strings.Join([]string{dir, f.Name()}, "/"))
 			if err != nil {
 				return nil, err
 			}
 			decoded, _, err := image.Decode(file)
+			if err != nil {
+				return nil, err
+			}
 			a.images[name] = ebiten.NewImageFromImage(decoded)
 		}
 	}
