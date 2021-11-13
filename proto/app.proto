@@ -36,6 +36,8 @@ message EntityEvents {
 
 message Connect {}
 
+message RequestState{}
+
 message AddEntity {
   Entity entity = 1;
 }
@@ -52,6 +54,7 @@ message ClientEvent {
   oneof event {
     Connect connect = 3;
     Intents intents = 4;
+    RequestState request_state = 5;
   }
 }
 

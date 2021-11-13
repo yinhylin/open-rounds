@@ -51,12 +51,12 @@ func NewServer() *Server {
 	})
 
 	go func() {
-		sync := time.Tick(100 * time.Millisecond)
-		tick := time.Tick(17 * time.Millisecond)
+		sync := time.NewTicker(100 * time.Millisecond)
+		tick := time.NewTicker(17 * time.Millisecond)
 		ticks := 0
 		for {
 			select {
-			case <-sync:
+			case <-sync.C:
 				// Ensure at least 6 ticks per sync period.
 				for i := 0; i < 6-ticks; i++ {
 					s.onTick()
@@ -68,7 +68,7 @@ func NewServer() *Server {
 					Event: &pb.ServerEvent_ServerTick{},
 				})
 				ticks = 0
-			case <-tick:
+			case <-tick.C:
 				s.onTick()
 				ticks++
 			}
@@ -115,6 +115,9 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 				},
 			},
 		}, nil
+
+	case *pb.ClientEvent_RequestState:
+		s.sendStates(e.subscriber)
 	}
 	return nil, nil
 }
@@ -139,7 +142,7 @@ func (s *Server) onTick() {
 	}
 }
 
-func (s *Server) addSubscriber(sub *subscriber) {
+func (s *Server) sendStates(sub *subscriber) {
 	states := &pb.States{}
 	s.state.ForEachEntity(func(ID string, entity *world.Entity) {
 		states.States = append(states.States, entity.ToProto())
@@ -151,6 +154,10 @@ func (s *Server) addSubscriber(sub *subscriber) {
 		},
 	})
 
+}
+
+func (s *Server) addSubscriber(sub *subscriber) {
+	s.sendStates(sub)
 	s.mu.Lock()
 	s.subscribers[sub] = struct{}{}
 	s.mu.Unlock()

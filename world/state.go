@@ -128,13 +128,21 @@ func (s *StateBuffer) CurrentTick() int64 {
 	return s.currentTick
 }
 
-func NewStateBuffer(maxCapacity int) *StateBuffer {
-	states := make([]State, maxCapacity, maxCapacity)
+func newRingBuffer(maxCapacity int) []State {
+	states := make([]State, maxCapacity)
 	for i := range states {
 		states[i].Tick = NilTick
 	}
+	return states
+}
+
+func (s *StateBuffer) Clear() {
+	s.states = newRingBuffer(60)
+}
+
+func NewStateBuffer(maxCapacity int) *StateBuffer {
 	return &StateBuffer{
-		states:       states,
+		states:       newRingBuffer(maxCapacity),
 		updateBuffer: make(map[int64]UpdateBuffer),
 		currentTick:  NilTick,
 	}

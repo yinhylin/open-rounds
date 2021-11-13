@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"io/ioutil"
 	"log"
+	"math"
 	"rounds/pb"
 	"rounds/world"
 	"strings"
@@ -77,6 +78,9 @@ func (g *Game) handleServerEvents() error {
 
 			case *pb.ServerEvent_EntityEvents:
 				msg := event.GetEntityEvents()
+				if msg.Id == g.playerID {
+					continue
+				}
 				g.state.ApplyIntents(&world.IntentsUpdate{
 					Tick:    event.Tick,
 					ID:      msg.Id,
@@ -105,10 +109,9 @@ func (g *Game) handleServerEvents() error {
 
 			case *pb.ServerEvent_ServerTick:
 				g.serverTick = event.Tick
-
-			default:
-				return errors.New("should never block")
 			}
+		default:
+			return errors.New("should never block")
 
 		}
 	}
@@ -132,12 +135,23 @@ func (g *Game) Update() error {
 
 	}
 
-	g.state.Next()
 	if g.state.CurrentTick() < g.serverTick {
-		// Only skip one frame if we're behind.
-		log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick)
+		if math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 30 {
+			log.Println("requesting server state. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
+			g.state.Clear()
+			g.clientEvents <- &pb.ClientEvent{
+				Tick:  g.state.CurrentTick(),
+				Event: &pb.ClientEvent_RequestState{},
+			}
+			return nil
+		}
+
+		// Only skip one at a time frame if we're behind.
+		// TODO: Do this less frequently. Every frame is a bit jarring.
+		log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 		g.state.Next()
 	}
+	g.state.Next()
 	return nil
 }
 
