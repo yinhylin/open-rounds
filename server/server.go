@@ -62,6 +62,7 @@ func NewServer() *Server {
 					s.onTick()
 				}
 
+				// Send all the clients the current tick the server is on.
 				s.publish(&pb.ServerEvent{
 					Tick:  s.state.CurrentTick(),
 					Event: &pb.ServerEvent_ServerTick{},
@@ -99,10 +100,9 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 
 	case *pb.ClientEvent_Connect:
 		e.subscriber.PlayerID = e.Id
-		log.Println("adding entity")
 		s.state.AddEntity(&world.AddEntity{
-			ID:   e.Id,
 			Tick: s.state.CurrentTick(),
+			ID:   e.Id,
 		})
 
 		return &pb.ServerEvent{

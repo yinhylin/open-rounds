@@ -202,15 +202,3 @@ func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) {
 		}
 	})
 }
-
-func (s *StateBuffer) ApplySimulatedIntents(msg *IntentsUpdate) {
-	s.applyUpdate(msg.Tick, func(existing State) State {
-		entity := existing.Entities[msg.ID]
-		entity.Intents = msg.Intents
-		existing.Entities[msg.ID] = entity
-		return State{
-			Entities: existing.Entities,
-			Tick:     msg.Tick,
-		}
-	})
-}

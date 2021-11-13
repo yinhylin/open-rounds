@@ -187,36 +187,36 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func (g *Game) handleKeysPressed() {
-	actions := make(map[pb.Intents_Intent]struct{})
+	intents := make(map[pb.Intents_Intent]struct{})
 	for _, key := range inpututil.AppendPressedKeys(nil) {
 		switch key {
 		case ebiten.KeyA:
-			actions[pb.Intents_MOVE_LEFT] = struct{}{}
+			intents[pb.Intents_MOVE_LEFT] = struct{}{}
 		case ebiten.KeyD:
-			actions[pb.Intents_MOVE_RIGHT] = struct{}{}
+			intents[pb.Intents_MOVE_RIGHT] = struct{}{}
 		case ebiten.KeyW:
-			actions[pb.Intents_MOVE_UP] = struct{}{}
+			intents[pb.Intents_MOVE_UP] = struct{}{}
 		case ebiten.KeyS:
-			actions[pb.Intents_MOVE_DOWN] = struct{}{}
+			intents[pb.Intents_MOVE_DOWN] = struct{}{}
 		}
 	}
-	if world.IntentsEqual(g.previousIntents, actions) {
+	if world.IntentsEqual(g.previousIntents, intents) {
 		return
 	}
-	g.previousIntents = actions
+	g.previousIntents = intents
 
 	tick := g.state.CurrentTick()
 	g.clientEvents <- &pb.ClientEvent{
 		Id: g.playerID,
 		Event: &pb.ClientEvent_Intents{
-			Intents: world.IntentsToProto(actions),
+			Intents: world.IntentsToProto(intents),
 		},
 		Tick: tick,
 	}
 
-	g.state.ApplySimulatedIntents(&world.IntentsUpdate{
+	g.state.ApplyIntents(&world.IntentsUpdate{
 		ID:      g.playerID,
-		Intents: actions,
+		Intents: intents,
 		Tick:    tick,
 	})
 }
