@@ -98,13 +98,12 @@ func (g *Game) handleServerEvents() error {
 				}
 
 			case *pb.ServerEvent_ServerTick:
-				tick := event.Tick
-				difference := g.state.CurrentTick() - tick
-				if difference > 0 {
-					log.Printf("client behind server, server=%d vs client=%d. fast-forwarding\n", tick, g.state.CurrentTick())
-					for i := int64(0); i < difference+5; i++ {
-						g.state.Next()
-					}
+				serverTick := event.Tick
+				if serverTick > g.state.CurrentTick() {
+					log.Printf("client behind server, server=%d vs client=%d. fast-forwarding\n", serverTick, g.state.CurrentTick())
+				}
+				for i := int64(0); i < (serverTick - g.state.CurrentTick()); i++ {
+					g.state.Next()
 				}
 
 			default:

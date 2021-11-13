@@ -51,16 +51,18 @@ func NewServer() *Server {
 	})
 
 	go func() {
-		sync := time.Tick(250 * time.Millisecond)
+		sync := time.Tick(100 * time.Millisecond)
 		tick := time.Tick(17 * time.Millisecond)
 		ticks := 0
 		for {
 			select {
 			case <-sync:
-				// If we're behind, catch up.
-				for i := 0; i < 15-ticks; i++ {
+				// Ensure at least 6 ticks per sync period.
+				for i := 0; i < 6-ticks; i++ {
+					log.Println(i)
 					s.onTick()
 				}
+
 				s.publish(&pb.ServerEvent{
 					Tick:  s.state.CurrentTick(),
 					Event: &pb.ServerEvent_ServerTick{},
