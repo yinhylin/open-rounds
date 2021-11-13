@@ -45,7 +45,7 @@ func NewGame(assets *Assets) *Game {
 
 	return &Game{
 		Assets:          assets,
-		state:           world.NewStateBuffer(8),
+		state:           world.NewStateBuffer(60),
 		player:          player,
 		playerID:        playerID,
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
