@@ -59,7 +59,6 @@ func NewServer() *Server {
 			case <-sync:
 				// Ensure at least 6 ticks per sync period.
 				for i := 0; i < 6-ticks; i++ {
-					log.Println(i)
 					s.onTick()
 				}
 

@@ -30,6 +30,7 @@ type Game struct {
 	playerID        string
 	serverEvents    chan *pb.ServerEvent
 	clientEvents    chan *pb.ClientEvent
+	serverTick      int64
 	previousIntents map[pb.Intents_Intent]struct{}
 }
 
@@ -49,6 +50,7 @@ func NewGame(assets *Assets) *Game {
 		player:          player,
 		playerID:        playerID,
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
+		serverTick:      world.NilTick,
 		clientEvents:    clientEvents,
 		previousIntents: make(map[pb.Intents_Intent]struct{}),
 	}
@@ -92,19 +94,16 @@ func (g *Game) handleServerEvents() error {
 				g.state.Add(state)
 
 				log.Printf("statez: %+v\n", state)
-				// Simulate next 5 states.
-				for i := 0; i < 5; i++ {
-					g.state.Next()
-				}
+				g.serverTick = event.Tick
+				/*
+					// Simulate next 5 states.
+					for i := 0; i < 5; i++ {
+						g.state.Next()
+					}
+				*/
 
 			case *pb.ServerEvent_ServerTick:
-				serverTick := event.Tick
-				if serverTick > g.state.CurrentTick() {
-					log.Printf("client behind server, server=%d vs client=%d. fast-forwarding\n", serverTick, g.state.CurrentTick())
-				}
-				for i := int64(0); i < (serverTick - g.state.CurrentTick()); i++ {
-					g.state.Next()
-				}
+				g.serverTick = event.Tick
 
 			default:
 				return errors.New("should never block")
@@ -119,11 +118,16 @@ func (g *Game) Update() error {
 	if err := g.handleServerEvents(); err != nil {
 		return err
 	}
-	if g.state.CurrentTick() == world.NilTick {
+	if g.state.CurrentTick() == world.NilTick || g.serverTick == world.NilTick {
 		return nil
 	}
 	g.handleKeysPressed()
 	g.state.Next()
+	if g.state.CurrentTick() < g.serverTick {
+		// Only skip one frame if we're behind.
+		log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick)
+		g.state.Next()
+	}
 	return nil
 }
 
