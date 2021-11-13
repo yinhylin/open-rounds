@@ -62,23 +62,51 @@ func entitiesEqual(a, b map[string]Entity) bool {
 	return true
 }
 
-func (s *State) Next(intentBuffer map[string]map[pb.Intents_Intent]struct{}) State {
+func (s *State) Next(updateBuffer UpdateBuffer) State {
 	next := *s
 	next.Entities = make(map[string]Entity, len(s.Entities))
+
+	// Add
+	for ID := range updateBuffer.Add {
+		next.Entities[ID] = Entity{ID: ID}
+	}
+
+	// Update
 	for ID, entity := range s.Entities {
-		if buffer, ok := intentBuffer[ID]; ok {
-			entity.Intents = buffer
+		if _, ok := updateBuffer.Remove[ID]; ok {
+			// Remove
+			continue
+		}
+		if intents, ok := updateBuffer.Intents[ID]; ok {
+			entity.Intents = intents
 		}
 		entity.Update()
 		next.Entities[ID] = entity
 	}
+
 	next.Tick++
 	return next
 }
 
+type UpdateBuffer struct {
+	Intents map[string]map[pb.Intents_Intent]struct{}
+	Add     map[string]struct{}
+	Remove  map[string]struct{}
+}
+
+var emptyUpdateBuffer UpdateBuffer
+
+func NewUpdateBuffer() UpdateBuffer {
+	return UpdateBuffer{
+		Intents: make(map[string]map[pb.Intents_Intent]struct{}),
+		Add:     make(map[string]struct{}),
+		Remove:  make(map[string]struct{}),
+	}
+}
+
 type StateBuffer struct {
 	states       []State
-	intentBuffer map[int64]map[string]map[pb.Intents_Intent]struct{}
+	updateBuffer map[int64]UpdateBuffer
 	index        int
 	currentTick  int64
 }
@@ -105,7 +133,7 @@ func NewStateBuffer(maxCapacity int) *StateBuffer {
 	}
 	return &StateBuffer{
 		states:       states,
-		intentBuffer: make(map[int64]map[string]map[pb.Intents_Intent]struct{}),
+		updateBuffer: make(map[int64]UpdateBuffer),
 		currentTick:  NilTick,
 	}
 }
@@ -126,9 +154,9 @@ func (s *StateBuffer) Next() *State {
 		return nil
 	}
 
-	next := current.Next(s.intentBuffer[s.currentTick+1])
+	next := current.Next(s.updateBuffer[s.currentTick+1])
 	s.Add(&next)
-	delete(s.intentBuffer, s.currentTick)
+	delete(s.updateBuffer, s.currentTick)
 	return &next
 }
 
@@ -167,16 +195,27 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) {
 
 		// Re-simulate.
 		s.walkNextStates(i, int(s.currentTick-state.Tick), func(index int) {
-			s.states[index] = currentState.Next(s.intentBuffer[currentState.Tick+1])
+			s.states[index] = currentState.Next(s.updateBuffer[currentState.Tick+1])
 			currentState = &s.states[index]
 		})
 		return
 	}
 }
 
+func (s *StateBuffer) modifyUpdateBuffer(tick int64, callback func(UpdateBuffer) UpdateBuffer) {
+	if _, ok := s.updateBuffer[tick]; !ok {
+		s.updateBuffer[tick] = NewUpdateBuffer()
+	}
+	s.updateBuffer[tick] = callback(s.updateBuffer[tick])
+}
+
 func (s *StateBuffer) AddEntity(msg *AddEntity) {
 	if msg.Tick > s.currentTick {
-		log.Println("future add entity")
+		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
+			buffer.Add[msg.ID] = struct{}{}
+			return buffer
+		})
+		return
 	}
 	s.applyUpdate(msg.Tick, func(existing State) State {
 		existing.Entities[msg.ID] = Entity{ID: msg.ID}
@@ -189,7 +228,11 @@ func (s *StateBuffer) AddEntity(msg *AddEntity) {
 
 func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 	if msg.Tick > s.currentTick {
-		log.Println("future remove entity")
+		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
+			buffer.Remove[msg.ID] = struct{}{}
+			return buffer
+		})
+		return
 	}
 	s.applyUpdate(msg.Tick, func(existing State) State {
 		delete(existing.Entities, msg.ID)
@@ -202,11 +245,10 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 
 func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) {
 	if msg.Tick > s.currentTick {
-		if _, ok := s.intentBuffer[msg.Tick]; !ok {
-			s.intentBuffer[msg.Tick] = make(map[string]map[pb.Intents_Intent]struct{})
-		}
-		s.intentBuffer[msg.Tick][msg.ID] = msg.Intents
-
+		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
+			buffer.Intents[msg.ID] = msg.Intents
+			return buffer
+		})
 		return
 	}
 
