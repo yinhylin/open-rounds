@@ -21,6 +21,11 @@ func main() {
 		return
 	}
 
+	host := "localhost:4242"
+	if len(os.Args) > 1 {
+		host = os.Args[1]
+	}
+
 	assets, err := client.LoadAssets()
 	if err != nil {
 		log.Fatal(err)
@@ -33,7 +38,7 @@ func main() {
 
 	ctx := context.Background()
 	go func() {
-		c, _, err := websocket.Dial(ctx, "ws://localhost:4242", nil)
+		c, _, err := websocket.Dial(ctx, "ws://"+host, nil)
 		if err != nil {
 			log.Printf("Encountered err: %v. Trying to spin up server manually\n", err)
 

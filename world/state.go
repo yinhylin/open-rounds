@@ -68,12 +68,14 @@ func (s *State) Next(updateBuffer UpdateBuffer) State {
 
 	// Add
 	for ID := range updateBuffer.Add {
+		log.Println("add ", ID)
 		next.Entities[ID] = Entity{ID: ID}
 	}
 
 	// Update
 	for ID, entity := range s.Entities {
 		if _, ok := updateBuffer.Remove[ID]; ok {
+			log.Println("remove ", ID)
 			// Remove
 			continue
 		}
@@ -217,6 +219,7 @@ func (s *StateBuffer) AddEntity(msg *AddEntity) {
 		})
 		return
 	}
+
 	s.applyUpdate(msg.Tick, func(existing State) State {
 		existing.Entities[msg.ID] = Entity{ID: msg.ID}
 		return State{
@@ -234,6 +237,7 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 		})
 		return
 	}
+
 	s.applyUpdate(msg.Tick, func(existing State) State {
 		delete(existing.Entities, msg.ID)
 		return State{

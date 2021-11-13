@@ -37,6 +37,7 @@ type Game struct {
 func NewGame(assets *Assets) *Game {
 	player := &world.Entity{}
 	playerID := ksuid.New().String()
+	log.Println("you are", playerID)
 
 	clientEvents := make(chan *pb.ClientEvent, 1024)
 	clientEvents <- &pb.ClientEvent{
@@ -200,6 +201,7 @@ func (g *Game) handleKeysPressed() {
 			intents[pb.Intents_MOVE_DOWN] = struct{}{}
 		}
 	}
+
 	/*
 		if world.IntentsEqual(g.previousIntents, intents) {
 			return
