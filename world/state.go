@@ -1,6 +1,7 @@
 package world
 
 import (
+	"log"
 	"rounds/pb"
 )
 
@@ -78,9 +79,10 @@ func (s *State) NextServer() State {
 }
 
 type StateBuffer struct {
-	states      []State
-	index       int
-	currentTick int64
+	states       []State
+	intentBuffer map[int64]map[pb.Intents_Intent]struct{}
+	index        int
+	currentTick  int64
 }
 
 func (s *StateBuffer) ForEachEntity(callback func(string, *Entity)) {
@@ -104,8 +106,9 @@ func NewStateBuffer(maxCapacity int) *StateBuffer {
 		states[i].Tick = NilTick
 	}
 	return &StateBuffer{
-		states:      states,
-		currentTick: NilTick,
+		states:       states,
+		intentBuffer: make(map[int64]map[pb.Intents_Intent]struct{}),
+		currentTick:  NilTick,
 	}
 }
 
@@ -192,6 +195,9 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 }
 
 func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) {
+	if msg.Tick > s.currentTick {
+		log.Println("future intent")
+	}
 	s.applyUpdate(msg.Tick, func(existing State) State {
 		entity := existing.Entities[msg.ID]
 		entity.Intents = msg.Intents
