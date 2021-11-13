@@ -121,6 +121,14 @@ func (g *Game) Update() error {
 	if g.state.CurrentTick() == world.NilTick || g.serverTick == world.NilTick {
 		return nil
 	}
+
+	// Drop a frame if we're too far ahead.
+	if g.state.CurrentTick()-g.serverTick > 10 {
+		log.Println("drop frame", g.state.CurrentTick(), g.serverTick)
+		return nil
+
+	}
+
 	g.handleKeysPressed()
 	g.state.Next()
 	if g.state.CurrentTick() < g.serverTick {
