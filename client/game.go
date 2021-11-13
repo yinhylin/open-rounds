@@ -93,7 +93,7 @@ func (g *Game) handleServerEvents() error {
 				}
 				g.state.Add(state)
 
-				log.Printf("statez: %+v\n", state)
+				log.Printf("statez: %+v :: %d\n", state, g.state.CurrentTick())
 				g.serverTick = event.Tick
 				/*
 					// Simulate next 5 states.
@@ -183,7 +183,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return outsideWidth, outsideHeight
+	return outsideWidth / 2, outsideHeight / 2
 }
 
 func (g *Game) handleKeysPressed() {
