@@ -96,9 +96,21 @@ func (g *Game) handleServerEvents() error {
 				for i := 0; i < 5; i++ {
 					g.state.Next()
 				}
+
+			case *pb.ServerEvent_ServerTick:
+				tick := event.Tick
+				difference := g.state.CurrentTick() - tick
+				if difference > 0 {
+					log.Printf("client behind server, server=%d vs client=%d. fast-forwarding\n", tick, g.state.CurrentTick())
+					for i := int64(0); i < difference+5; i++ {
+						g.state.Next()
+					}
+				}
+
+			default:
+				return errors.New("should never block")
 			}
-		default:
-			return errors.New("should never block")
+
 		}
 	}
 	return nil

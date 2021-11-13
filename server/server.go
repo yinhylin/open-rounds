@@ -51,11 +51,25 @@ func NewServer() *Server {
 	})
 
 	go func() {
-		// Tick roughly 60 times per second.
-		// TODO: Catch up ticks if we're too slow to process a tick.
-		// Should probably be OK.
-		for range time.Tick(16 * time.Millisecond) {
-			s.onTick()
+		sync := time.Tick(250 * time.Second)
+		tick := time.Tick(17 * time.Millisecond)
+		ticks := 0
+		for {
+			select {
+			case <-sync:
+				// If we're behind, catch up.
+				for i := 0; i < 15-ticks; i++ {
+					s.onTick()
+				}
+				s.publish(&pb.ServerEvent{
+					Tick:  s.state.CurrentTick(),
+					Event: &pb.ServerEvent_ServerTick{},
+				})
+				ticks = 0
+			case <-tick:
+				s.onTick()
+				ticks++
+			}
 		}
 	}()
 
@@ -64,7 +78,6 @@ func NewServer() *Server {
 }
 
 func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
-	log.Printf("%+v\n", e)
 	switch e.Event.(type) {
 	case *pb.ClientEvent_Intents:
 		s.state.ApplyIntents(&world.IntentsUpdate{
@@ -86,14 +99,11 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 	case *pb.ClientEvent_Connect:
 		e.subscriber.PlayerID = e.Id
 		log.Println("adding entity")
-		log.Printf("%+v", s.state.Current())
-		log.Printf("%+v", s.state)
 		s.state.AddEntity(&world.AddEntity{
 			ID:   e.Id,
 			Tick: s.state.CurrentTick(),
 		})
-		log.Printf("%+v", s.state.Current())
-		log.Printf("%+v", s.state)
+
 		return &pb.ServerEvent{
 			Tick: s.state.CurrentTick(),
 			Event: &pb.ServerEvent_AddEntity{
@@ -109,9 +119,6 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 }
 
 func (s *Server) onTick() {
-	if s.state.Current() != nil {
-		log.Printf("%+v\n", s.state.Current())
-	}
 	s.state.Next()
 	var serverEvents []*pb.ServerEvent
 
@@ -134,7 +141,6 @@ func (s *Server) onTick() {
 func (s *Server) addSubscriber(sub *subscriber) {
 	states := &pb.States{}
 	s.state.ForEachEntity(func(ID string, entity *world.Entity) {
-		log.Printf("%+v\n", entity)
 		states.States = append(states.States, entity.ToProto())
 	})
 	sub.Messages <- toBytesOrDie(&pb.ServerEvent{

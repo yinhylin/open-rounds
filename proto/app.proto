@@ -44,6 +44,8 @@ message RemoveEntity {
   string id = 1;
 }
 
+message Tick {}
+
 message ClientEvent {
   string id = 1;
   int64 tick = 2;
@@ -55,11 +57,11 @@ message ClientEvent {
 
 message ServerEvent {
   int64 tick = 1;
-  int64 client_tick = 1;
   oneof event {
     AddEntity add_entity = 2;
     RemoveEntity remove_entity = 3;
     EntityEvents entity_events = 4;
     States states = 5;
+    Tick server_tick = 6;
   }
 }
