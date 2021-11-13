@@ -196,7 +196,7 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 
 func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) {
 	if msg.Tick > s.currentTick {
-		log.Println("future intent")
+		log.Println("future intent ", msg)
 	}
 	s.applyUpdate(msg.Tick, func(existing State) State {
 		entity := existing.Entities[msg.ID]
