@@ -51,7 +51,7 @@ func NewServer() *Server {
 	})
 
 	go func() {
-		sync := time.Tick(250 * time.Second)
+		sync := time.Tick(250 * time.Millisecond)
 		tick := time.Tick(17 * time.Millisecond)
 		ticks := 0
 		for {
