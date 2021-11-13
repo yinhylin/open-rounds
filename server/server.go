@@ -64,6 +64,7 @@ func NewServer() *Server {
 }
 
 func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
+	log.Printf("%+v\n", e)
 	switch e.Event.(type) {
 	case *pb.ClientEvent_Intents:
 		s.state.ApplyIntents(&world.IntentsUpdate{

@@ -90,6 +90,12 @@ func (g *Game) handleServerEvents() error {
 					state.Entities[entity.Id] = *world.EntityFromProto(entity)
 				}
 				g.state.Add(state)
+
+				log.Printf("statez: %+v\n", state)
+				// Simulate next 5 states.
+				for i := 0; i < 5; i++ {
+					g.state.Next()
+				}
 			}
 		default:
 			return errors.New("should never block")

@@ -1,6 +1,7 @@
 package world
 
 import (
+	"log"
 	"rounds/pb"
 )
 
@@ -117,6 +118,7 @@ func (s *StateBuffer) Add(state *State) {
 	s.index = index
 	s.states[index] = *state
 	s.currentTick = state.Tick
+	log.Printf("%+v\n", state)
 }
 
 func (s *StateBuffer) Next() *State {
