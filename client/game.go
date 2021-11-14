@@ -233,9 +233,11 @@ func (g *Game) handleKeysPressed() {
 		}
 	}
 
-	if world.IntentsEqual(g.previousIntents, intents) {
-		return
-	}
+	/*
+		if world.IntentsEqual(g.previousIntents, intents) {
+			return
+		}
+	*/
 	g.previousIntents = intents
 
 	tick := g.state.CurrentTick()
