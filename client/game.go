@@ -11,6 +11,7 @@ import (
 	"rounds/pb"
 	"rounds/world"
 	"strings"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -126,6 +127,13 @@ func (g *Game) handleServerEvents() error {
 }
 
 func (g *Game) Update() error {
+	now := time.Now()
+	defer func() {
+		timeTaken := time.Now().Sub(now)
+		if timeTaken > time.Millisecond {
+			log.Println("long update", time.Now().Sub(now))
+		}
+	}()
 	if err := g.handleServerEvents(); err != nil {
 		return err
 	}
@@ -170,12 +178,6 @@ func (g *Game) debugString() string {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	/*
-		now := time.Now()
-		defer func() {
-			log.Println(time.Now().Sub(now))
-		}()
-	*/
 	if g.state.Current() == nil {
 		screen.Fill(color.RGBA{
 			0,
