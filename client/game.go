@@ -91,6 +91,7 @@ func (g *Game) handleServerEvents() error {
 					Tick:     event.Tick,
 				}
 				for _, entity := range msg.States {
+					log.Println(entity.Id)
 					state.Entities[entity.Id] = *world.EntityFromProto(entity)
 				}
 				g.state.Add(state)
