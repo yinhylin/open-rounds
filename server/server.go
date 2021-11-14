@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"net/http/pprof"
+
 	"google.golang.org/protobuf/proto"
 	"nhooyr.io/websocket"
 )
@@ -76,6 +78,11 @@ func NewServer() *Server {
 	}()
 
 	s.serveMux.HandleFunc("/", s.onConnection)
+	s.serveMux.HandleFunc("/debug/pprof/", pprof.Index)
+	s.serveMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	s.serveMux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	s.serveMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	s.serveMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 	return s
 }
 

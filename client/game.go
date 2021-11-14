@@ -219,7 +219,7 @@ func (g *Game) handleKeysPressed() {
 	}
 	g.previousIntents = intents
 
-	tick := g.state.CurrentTick()
+	tick := g.state.CurrentTick() + 1
 	g.clientEvents <- &pb.ClientEvent{
 		Id: g.playerID,
 		Event: &pb.ClientEvent_Intents{

@@ -186,15 +186,8 @@ func (s *StateBuffer) walkNextStates(index int, steps int, callback func(int)) {
 }
 
 func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) {
-	// Fast forward until we have a state.
-	for s.currentTick < tick && s.Next() != nil {
-		log.Println("fast forward ", s.currentTick, tick)
-	}
-
 	if s.currentTick < tick {
-		// need to buffer this xD
-		// log.Fatal(tick, s.currentTick)
-		return
+		log.Fatal(tick, s.currentTick)
 	}
 
 	for i, state := range s.states {
