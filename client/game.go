@@ -181,13 +181,6 @@ func (g *Game) debugString() string {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.Fill(color.RGBA{
-		164,
-		178,
-		191,
-		255,
-	})
-
 	if g.state.Current() == nil {
 		screen.Fill(color.RGBA{
 			0,
@@ -198,6 +191,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrint(screen, "connecting...")
 		return
 	}
+
+	screen.Fill(color.RGBA{
+		164,
+		178,
+		191,
+		255,
+	})
 
 	g.state.ForEachEntity(func(ID string, e *world.Entity) {
 		// lol

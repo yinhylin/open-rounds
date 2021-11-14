@@ -63,6 +63,7 @@ func NewServer() *Server {
 					Tick:  s.state.CurrentTick(),
 					Event: &pb.ServerEvent_ServerTick{},
 				})
+
 			case <-tick.C:
 				s.onTick()
 			}
