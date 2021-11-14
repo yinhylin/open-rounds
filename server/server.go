@@ -149,6 +149,8 @@ func (s *Server) onTick() {
 	}
 }
 
+// TODO: This has to send the _entire_ StateBuffer so future and past intents
+// are not missing.
 func (s *Server) sendStates(sub *subscriber) {
 	states := &pb.States{}
 	s.state.ForEachEntity(func(ID string, entity *world.Entity) {

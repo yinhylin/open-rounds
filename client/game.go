@@ -100,7 +100,7 @@ func (g *Game) handleServerEvents() error {
 				}
 				g.state.Add(state)
 
-				log.Printf("statez: %+v :: %d\n", state, g.state.CurrentTick())
+				log.Printf("server state: %+v :: %d\n", state, g.state.CurrentTick())
 				g.serverTick = event.Tick
 				/*
 					// Simulate next 5 states.
@@ -150,19 +150,22 @@ func (g *Game) Update() error {
 		}
 
 		// Only skip one at a time frame if we're too far behind.
-		if math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 10 {
+		for math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 3 {
 			log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
+			// TODO: Drop player intents?
 			g.state.Next()
-			return nil
 		}
 	}
 	g.state.Next()
 	return nil
 }
 
-func debugString() string {
+func (g *Game) debugString() string {
 	return strings.Join([]string{
-		fmt.Sprintf("Version: %s, TPS: %0.02f, FPS: %0.02f", strings.TrimSpace(Version), ebiten.CurrentTPS(), ebiten.CurrentFPS()),
+		fmt.Sprintf("TPS: %0.02f, FPS: %0.02f", ebiten.CurrentTPS(), ebiten.CurrentFPS()),
+		fmt.Sprintf(" T: %d", g.state.CurrentTick()),
+		fmt.Sprintf("ST: %d", g.serverTick),
+		fmt.Sprintf("DT: %d", g.serverTick-g.state.CurrentTick()),
 	}, "\n")
 }
 
@@ -199,11 +202,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+16)
 	})
 
-	ebitenutil.DebugPrint(screen, debugString())
+	ebitenutil.DebugPrint(screen, g.debugString())
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return outsideWidth / 2, outsideHeight / 2
+	return outsideWidth, outsideHeight
 }
 
 func (g *Game) handleKeysPressed() {
