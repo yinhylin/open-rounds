@@ -256,6 +256,7 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 }
 
 func (s *StateBuffer) ApplyIntents(source string, msg *IntentsUpdate) {
+	log.Printf("%s intents %+v :: future: %+v\n", source, msg, s.updateBuffer)
 	if msg.Tick > s.currentTick {
 		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
 			buffer.Intents[msg.ID] = msg.Intents
