@@ -98,11 +98,9 @@ func (g *Game) handleServerEvents() error {
 				for _, entity := range msg.States {
 					state.Entities[entity.Id] = *world.EntityFromProto(entity)
 				}
-				g.state.Add(state)
-
-				log.Printf("server state: %+v :: %d\n", state, g.state.CurrentTick())
 				g.serverTick = event.Tick
-
+				// TODO: This needs to _set_ the entire StateBuffer.
+				g.state.Add(state)
 				// Simulate next 5 states.
 				for i := 0; i < 5; i++ {
 					g.state.Next()
@@ -127,8 +125,6 @@ func (g *Game) Update() error {
 		return nil
 	}
 
-	g.handleKeysPressed()
-
 	// Drop a frame if we're too far ahead.
 	if g.state.CurrentTick()-g.serverTick > 5 {
 		log.Println("drop frame", g.state.CurrentTick(), g.serverTick)
@@ -136,6 +132,7 @@ func (g *Game) Update() error {
 	}
 
 	if g.state.CurrentTick() < g.serverTick && g.state.CurrentTick() != world.NilTick {
+		// 30 frames behind? Re-request entire server state.
 		if math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 30 {
 			log.Println("requesting server state. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 			g.state.Clear()
@@ -147,7 +144,7 @@ func (g *Game) Update() error {
 			return nil
 		}
 
-		// Skip until we catch up.
+		// 5 frames behind? Skip until we catch up.
 		for math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 5 {
 			log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 
@@ -167,6 +164,7 @@ func (g *Game) Update() error {
 			g.state.Next()
 		}
 	}
+	g.handleKeysPressed()
 	g.state.Next()
 	return nil
 }
