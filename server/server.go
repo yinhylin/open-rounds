@@ -53,26 +53,18 @@ func NewServer() *Server {
 	})
 
 	go func() {
-		sync := time.NewTicker(100 * time.Millisecond)
+		sync := time.NewTicker(50 * time.Millisecond)
 		tick := time.NewTicker(17 * time.Millisecond)
-		ticks := 0
 		for {
 			select {
 			case <-sync.C:
-				// Ensure at least 6 ticks per sync period.
-				for i := 0; i < 6-ticks; i++ {
-					s.onTick()
-				}
-
 				// Send all the clients the current tick the server is on.
 				s.publish(&pb.ServerEvent{
 					Tick:  s.state.CurrentTick(),
 					Event: &pb.ServerEvent_ServerTick{},
 				})
-				ticks = 0
 			case <-tick.C:
 				s.onTick()
-				ticks++
 			}
 		}
 	}()

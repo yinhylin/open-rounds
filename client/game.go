@@ -102,12 +102,11 @@ func (g *Game) handleServerEvents() error {
 
 				log.Printf("server state: %+v :: %d\n", state, g.state.CurrentTick())
 				g.serverTick = event.Tick
-				/*
-					// Simulate next 5 states.
-					for i := 0; i < 5; i++ {
-						g.state.Next()
-					}
-				*/
+
+				// Simulate next 5 states.
+				for i := 0; i < 5; i++ {
+					g.state.Next()
+				}
 
 			case *pb.ServerEvent_ServerTick:
 				g.serverTick = event.Tick
@@ -131,10 +130,9 @@ func (g *Game) Update() error {
 	g.handleKeysPressed()
 
 	// Drop a frame if we're too far ahead.
-	if g.state.CurrentTick()-g.serverTick > 15 {
+	if g.state.CurrentTick()-g.serverTick > 5 {
 		log.Println("drop frame", g.state.CurrentTick(), g.serverTick)
 		return nil
-
 	}
 
 	if g.state.CurrentTick() < g.serverTick && g.state.CurrentTick() != world.NilTick {
@@ -149,10 +147,23 @@ func (g *Game) Update() error {
 			return nil
 		}
 
-		// Only skip one at a time frame if we're too far behind.
-		for math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 3 {
+		// Skip until we catch up.
+		for math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 5 {
 			log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
-			// TODO: Drop player intents?
+
+			// Drop our intents for the frame.
+			g.state.ApplyIntents("local press", &world.IntentsUpdate{
+				ID:      g.playerID,
+				Intents: nil,
+				Tick:    g.state.CurrentTick(),
+			})
+			g.clientEvents <- &pb.ClientEvent{
+				Id: g.playerID,
+				Event: &pb.ClientEvent_Intents{
+					Intents: world.IntentsToProto(nil),
+				},
+				Tick: g.state.CurrentTick(),
+			}
 			g.state.Next()
 		}
 	}
