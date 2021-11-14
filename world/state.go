@@ -182,6 +182,10 @@ func (s *StateBuffer) Current() *State {
 
 func (s *StateBuffer) walkNextStates(index int, steps int, callback func(int)) {
 	for i := 1; i <= steps; i++ {
+		nextIndex := (index + i) % cap(s.states)
+		if s.states[index].Tick > s.states[nextIndex].Tick {
+			log.Fatal(s.states[i].Tick, s.states[nextIndex].Tick)
+		}
 		callback((index + i) % cap(s.states))
 	}
 }
@@ -252,7 +256,6 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 }
 
 func (s *StateBuffer) ApplyIntents(source string, msg *IntentsUpdate) {
-	//	log.Printf("%s intents: %+v\n", source, msg)
 	if msg.Tick > s.currentTick {
 		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
 			buffer.Intents[msg.ID] = msg.Intents

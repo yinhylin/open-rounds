@@ -127,12 +127,15 @@ func (g *Game) Update() error {
 
 	// Drop a frame if we're too far ahead.
 	if g.state.CurrentTick()-g.serverTick > 5 {
+		// TODO: Disconnect if this happens too many times in a row without a
+		// real frame. Server is dead.
 		log.Println("drop frame", g.state.CurrentTick(), g.serverTick)
 		return nil
 	}
 
 	if g.state.CurrentTick() < g.serverTick && g.state.CurrentTick() != world.NilTick {
 		// 30 frames behind? Re-request entire server state.
+		// TODO: 10 frames behind once server state sends _everything_.
 		if math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 30 {
 			log.Println("requesting server state. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 			g.state.Clear()
@@ -233,11 +236,10 @@ func (g *Game) handleKeysPressed() {
 		}
 	}
 
-	/*
-		if world.IntentsEqual(g.previousIntents, intents) {
-			return
-		}
-	*/
+	if world.IntentsEqual(g.previousIntents, intents) {
+		// Edge triggered.
+		return
+	}
 	g.previousIntents = intents
 
 	tick := g.state.CurrentTick()
