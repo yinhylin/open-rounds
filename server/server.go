@@ -145,6 +145,9 @@ func (s *Server) onTick() {
 func (s *Server) sendStates(sub *subscriber) {
 	states := &pb.States{}
 	s.state.ForEachEntity(func(ID string, entity *world.Entity) {
+		if ID == "" {
+			return
+		}
 		states.States = append(states.States, entity.ToProto())
 	})
 	sub.Messages <- toBytesOrDie(&pb.ServerEvent{
