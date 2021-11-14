@@ -131,7 +131,7 @@ func (g *Game) Update() error {
 	g.handleKeysPressed()
 
 	// Drop a frame if we're too far ahead.
-	if g.state.CurrentTick()-g.serverTick > 10 {
+	if g.state.CurrentTick()-g.serverTick > 15 {
 		log.Println("drop frame", g.state.CurrentTick(), g.serverTick)
 		return nil
 
@@ -149,10 +149,12 @@ func (g *Game) Update() error {
 			return nil
 		}
 
-		// Only skip one at a time frame if we're behind.
-		// TODO: Do this less frequently. Every frame is a bit jarring.
-		log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
-		g.state.Next()
+		// Only skip one at a time frame if we're too far behind.
+		if math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 10 {
+			log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
+			g.state.Next()
+			return nil
+		}
 	}
 	g.state.Next()
 	return nil
