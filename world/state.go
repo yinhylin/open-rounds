@@ -294,7 +294,7 @@ func (s *StateBuffer) walkNextStates(index int, steps int, callback func(int)) {
 	}
 }
 
-func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) {
+func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) error {
 	if s.currentTick < tick {
 		log.Fatal(tick, s.currentTick)
 	}
@@ -310,9 +310,9 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) {
 			s.states[index] = currentState.Next(s.updateBuffer[currentState.Tick+1])
 			currentState = &s.states[index]
 		})
-		return
+		return nil
 	}
-	log.Fatal("could not find tick ", s.CurrentTick(), tick)
+	return fmt.Errorf("could not find tick. current=%d, server=%d", s.currentTick, tick)
 }
 
 func (s *StateBuffer) modifyUpdateBuffer(tick int64, callback func(UpdateBuffer) UpdateBuffer) {
@@ -322,16 +322,16 @@ func (s *StateBuffer) modifyUpdateBuffer(tick int64, callback func(UpdateBuffer)
 	s.updateBuffer[tick] = callback(s.updateBuffer[tick])
 }
 
-func (s *StateBuffer) AddEntity(msg *AddEntity) {
+func (s *StateBuffer) AddEntity(msg *AddEntity) error {
 	if msg.Tick > s.currentTick {
 		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
 			buffer.Add[msg.ID] = struct{}{}
 			return buffer
 		})
-		return
+		return nil
 	}
 
-	s.applyUpdate(msg.Tick, func(existing State) State {
+	return s.applyUpdate(msg.Tick, func(existing State) State {
 		existing.Entities[msg.ID] = Entity{ID: msg.ID}
 		fmt.Printf("%+v\n", existing.Entities)
 		return State{
@@ -341,16 +341,16 @@ func (s *StateBuffer) AddEntity(msg *AddEntity) {
 	})
 }
 
-func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
+func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) error {
 	if msg.Tick > s.currentTick {
 		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
 			buffer.Remove[msg.ID] = struct{}{}
 			return buffer
 		})
-		return
+		return nil
 	}
 
-	s.applyUpdate(msg.Tick, func(existing State) State {
+	return s.applyUpdate(msg.Tick, func(existing State) State {
 		delete(existing.Entities, msg.ID)
 		return State{
 			Entities: existing.Entities,
@@ -359,16 +359,16 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 	})
 }
 
-func (s *StateBuffer) ApplyIntents(source string, msg *IntentsUpdate) {
+func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) error {
 	if msg.Tick > s.currentTick {
 		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
 			buffer.Intents[msg.ID] = msg.Intents
 			return buffer
 		})
-		return
+		return nil
 	}
 
-	s.applyUpdate(msg.Tick, func(existing State) State {
+	return s.applyUpdate(msg.Tick, func(existing State) State {
 		entity := existing.Entities[msg.ID]
 		entity.Intents = msg.Intents
 		existing.Entities[msg.ID] = entity

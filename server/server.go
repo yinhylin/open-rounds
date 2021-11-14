@@ -82,11 +82,20 @@ func NewServer() *Server {
 func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 	switch e.Event.(type) {
 	case *pb.ClientEvent_Intents:
-		s.state.ApplyIntents("client incoming", &world.IntentsUpdate{
+		if err := s.state.ApplyIntents(&world.IntentsUpdate{
 			ID:      e.Id,
 			Tick:    e.Tick,
 			Intents: world.IntentsFromProto(e.GetIntents()),
-		})
+		}); err != nil {
+			// Resync the client if there are any issues with their intents.
+			e.subscriber.Messages <- toBytesOrDie(&pb.ServerEvent{
+				Tick: s.state.CurrentTick(),
+				Event: &pb.ServerEvent_State{
+					State: s.state.ToProto(),
+				},
+			})
+			return nil, nil
+		}
 
 		return &pb.ServerEvent{
 			Tick: e.Tick,

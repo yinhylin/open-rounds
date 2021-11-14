@@ -44,7 +44,6 @@ func NewGame(assets *Assets) *Game {
 		Event: &pb.ClientEvent_Connect{},
 	}
 	clientEvents <- &pb.ClientEvent{
-		Tick:  0,
 		Id:    playerID,
 		Event: &pb.ClientEvent_RequestState{},
 	}
@@ -60,20 +59,33 @@ func NewGame(assets *Assets) *Game {
 	}
 }
 
+func (g *Game) requestState() {
+	if g.state.CurrentTick() == world.NilTick {
+		return
+	}
+	g.state.Clear()
+	g.clientEvents <- &pb.ClientEvent{
+		Id:    g.playerID,
+		Tick:  g.state.CurrentTick(),
+		Event: &pb.ClientEvent_RequestState{},
+	}
+}
+
 // handleServerEvents drains and applies server events every tick.
 func (g *Game) handleServerEvents() error {
 	for len(g.serverEvents) > 0 {
+		var err error
 		select {
 		case event := <-g.serverEvents:
 			switch event.Event.(type) {
 			case *pb.ServerEvent_AddEntity:
-				g.state.AddEntity(&world.AddEntity{
+				err = g.state.AddEntity(&world.AddEntity{
 					Tick: event.Tick,
 					ID:   event.GetAddEntity().Entity.Id,
 				})
 
 			case *pb.ServerEvent_RemoveEntity:
-				g.state.RemoveEntity(&world.RemoveEntity{
+				err = g.state.RemoveEntity(&world.RemoveEntity{
 					Tick: event.Tick,
 					ID:   event.GetRemoveEntity().Id,
 				})
@@ -83,7 +95,7 @@ func (g *Game) handleServerEvents() error {
 				if msg.Id == g.playerID {
 					continue
 				}
-				g.state.ApplyIntents("incoming server", &world.IntentsUpdate{
+				err = g.state.ApplyIntents(&world.IntentsUpdate{
 					Tick:    event.Tick,
 					ID:      msg.Id,
 					Intents: world.IntentsFromProto(msg.Intents),
@@ -103,6 +115,11 @@ func (g *Game) handleServerEvents() error {
 		default:
 			return errors.New("should never block")
 
+		}
+
+		if err != nil {
+			log.Println(err)
+			g.requestState()
 		}
 	}
 	return nil
@@ -128,12 +145,7 @@ func (g *Game) Update() error {
 		// 10 frames behind? Re-request entire server state.
 		if math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 10 {
 			log.Println("requesting server state. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
-			g.state.Clear()
-			g.clientEvents <- &pb.ClientEvent{
-				Id:    g.playerID,
-				Tick:  g.state.CurrentTick(),
-				Event: &pb.ClientEvent_RequestState{},
-			}
+			g.requestState()
 			return nil
 		}
 
@@ -142,7 +154,7 @@ func (g *Game) Update() error {
 			log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 
 			// Drop our intents for the frame.
-			g.state.ApplyIntents("local press", &world.IntentsUpdate{
+			g.state.ApplyIntents(&world.IntentsUpdate{
 				ID:      g.playerID,
 				Intents: nil,
 				Tick:    g.state.CurrentTick(),
@@ -233,7 +245,7 @@ func (g *Game) handleKeysPressed() {
 	g.previousIntents = intents
 
 	tick := g.state.CurrentTick()
-	g.state.ApplyIntents("local press", &world.IntentsUpdate{
+	g.state.ApplyIntents(&world.IntentsUpdate{
 		ID:      g.playerID,
 		Intents: intents,
 		Tick:    tick,
