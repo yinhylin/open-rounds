@@ -184,6 +184,12 @@ func (g *Game) debugString() string {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	/*
+		now := time.Now()
+		defer func() {
+			log.Println(time.Now().Sub(now))
+		}()
+	*/
 	if g.state.Current() == nil {
 		screen.Fill(color.RGBA{
 			0,
@@ -212,8 +218,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		options := &ebiten.DrawImageOptions{}
 		options.GeoM.Translate(e.Coords.X, e.Coords.Y)
 		screen.DrawImage(image, options)
-		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.Coords.X, e.Coords.Y)
-		ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+16)
+		// debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.Coords.X, e.Coords.Y)
+		// ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+16)
 	})
 
 	ebitenutil.DebugPrint(screen, g.debugString())
