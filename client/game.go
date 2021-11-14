@@ -78,7 +78,7 @@ func (g *Game) handleServerEvents() error {
 				if msg.Id == g.playerID {
 					continue
 				}
-				g.state.ApplyIntents(&world.IntentsUpdate{
+				g.state.ApplyIntents("incoming server", &world.IntentsUpdate{
 					Tick:    event.Tick,
 					ID:      msg.Id,
 					Intents: world.IntentsFromProto(msg.Intents),
@@ -220,6 +220,11 @@ func (g *Game) handleKeysPressed() {
 	g.previousIntents = intents
 
 	tick := g.state.CurrentTick() + 1
+	g.state.ApplyIntents("local press", &world.IntentsUpdate{
+		ID:      g.playerID,
+		Intents: intents,
+		Tick:    tick,
+	})
 	g.clientEvents <- &pb.ClientEvent{
 		Id: g.playerID,
 		Event: &pb.ClientEvent_Intents{
@@ -227,12 +232,6 @@ func (g *Game) handleKeysPressed() {
 		},
 		Tick: tick,
 	}
-
-	g.state.ApplyIntents(&world.IntentsUpdate{
-		ID:      g.playerID,
-		Intents: intents,
-		Tick:    tick,
-	})
 }
 
 // ReadMessages reads the server messages so the game can update accordingly.

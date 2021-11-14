@@ -89,7 +89,7 @@ func NewServer() *Server {
 func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 	switch e.Event.(type) {
 	case *pb.ClientEvent_Intents:
-		s.state.ApplyIntents(&world.IntentsUpdate{
+		s.state.ApplyIntents("client incoming", &world.IntentsUpdate{
 			ID:      e.Id,
 			Tick:    e.Tick,
 			Intents: world.IntentsFromProto(e.GetIntents()),
@@ -215,7 +215,6 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 
 	defer s.removeSubscriber(sub)
 
-	// this is the magic event loop
 	go func() {
 		defer func() {
 			if sub.PlayerID == "" {
@@ -223,6 +222,7 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 			}
 			s.removeSubscriber(sub)
 			s.publish(&pb.ServerEvent{
+				Tick: s.state.CurrentTick(),
 				Event: &pb.ServerEvent_RemoveEntity{
 					RemoveEntity: &pb.RemoveEntity{
 						Id: sub.PlayerID,
@@ -230,7 +230,8 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 				},
 			})
 			s.state.RemoveEntity(&world.RemoveEntity{
-				ID: sub.PlayerID,
+				Tick: s.state.CurrentTick(),
+				ID:   sub.PlayerID,
 			})
 		}()
 

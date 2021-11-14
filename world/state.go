@@ -190,20 +190,23 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) {
 		log.Fatal(tick, s.currentTick)
 	}
 
+	log.Printf("re-simulating %d and beyond\n", tick)
 	for i, state := range s.states {
 		if state.Tick != tick {
 			continue
 		}
 		s.states[i] = callback(s.states[i])
 		currentState := &s.states[i]
-
 		// Re-simulate.
 		s.walkNextStates(i, int(s.currentTick-state.Tick), func(index int) {
+			log.Printf("re-simulating %+v\n", s.states[index])
 			s.states[index] = currentState.Next(s.updateBuffer[currentState.Tick+1])
+			log.Printf("re-simulated %+v\n", s.states[index])
 			currentState = &s.states[index]
 		})
 		return
 	}
+	log.Fatal(s.CurrentTick(), tick)
 }
 
 func (s *StateBuffer) modifyUpdateBuffer(tick int64, callback func(UpdateBuffer) UpdateBuffer) {
@@ -250,7 +253,8 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 	})
 }
 
-func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) {
+func (s *StateBuffer) ApplyIntents(source string, msg *IntentsUpdate) {
+	log.Printf("%s intents: %+v\n", source, msg)
 	if msg.Tick > s.currentTick {
 		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
 			buffer.Intents[msg.ID] = msg.Intents
