@@ -36,7 +36,7 @@ message EntityEvents {
 
 message Connect {}
 
-message RequestState{}
+message RequestState {}
 
 message AddEntity {
   Entity entity = 1;

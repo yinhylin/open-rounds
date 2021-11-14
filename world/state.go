@@ -1,6 +1,7 @@
 package world
 
 import (
+	"fmt"
 	"log"
 	"rounds/pb"
 )
@@ -230,6 +231,7 @@ func (s *StateBuffer) AddEntity(msg *AddEntity) {
 
 	s.applyUpdate(msg.Tick, func(existing State) State {
 		existing.Entities[msg.ID] = Entity{ID: msg.ID}
+		fmt.Printf("%+v\n", existing.Entities)
 		return State{
 			Entities: existing.Entities,
 			Tick:     msg.Tick,

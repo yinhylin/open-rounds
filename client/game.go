@@ -27,7 +27,6 @@ type Updatable interface {
 type Game struct {
 	*Assets
 	state           *world.StateBuffer
-	player          *world.Entity
 	playerID        string
 	serverEvents    chan *pb.ServerEvent
 	clientEvents    chan *pb.ClientEvent
@@ -36,7 +35,6 @@ type Game struct {
 }
 
 func NewGame(assets *Assets) *Game {
-	player := &world.Entity{}
 	playerID := ksuid.New().String()
 	log.Println("you are", playerID)
 
@@ -49,7 +47,6 @@ func NewGame(assets *Assets) *Game {
 	return &Game{
 		Assets:          assets,
 		state:           world.NewStateBuffer(60),
-		player:          player,
 		playerID:        playerID,
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
 		serverTick:      world.NilTick,
