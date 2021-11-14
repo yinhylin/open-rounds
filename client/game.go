@@ -134,9 +134,11 @@ func (g *Game) Update() error {
 			log.Println("long update", time.Now().Sub(now))
 		}
 	}()
+
 	if err := g.handleServerEvents(); err != nil {
 		return err
 	}
+
 	if g.state.CurrentTick() == world.NilTick || g.serverTick == world.NilTick {
 		return nil
 	}
@@ -145,7 +147,6 @@ func (g *Game) Update() error {
 	if g.state.CurrentTick()-g.serverTick > 5 {
 		// TODO: Disconnect if this happens too many times in a row without a
 		// real frame. Server is dead.
-		log.Println("drop frame", g.state.CurrentTick(), g.serverTick)
 		return nil
 	}
 
