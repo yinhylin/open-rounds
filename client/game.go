@@ -43,6 +43,11 @@ func NewGame(assets *Assets) *Game {
 		Id:    playerID,
 		Event: &pb.ClientEvent_Connect{},
 	}
+	clientEvents <- &pb.ClientEvent{
+		Tick:  0,
+		Id:    playerID,
+		Event: &pb.ClientEvent_RequestState{},
+	}
 
 	return &Game{
 		Assets:          assets,
@@ -138,6 +143,7 @@ func (g *Game) Update() error {
 			log.Println("requesting server state. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 			g.state.Clear()
 			g.clientEvents <- &pb.ClientEvent{
+				Id:    g.playerID,
 				Tick:  g.state.CurrentTick(),
 				Event: &pb.ClientEvent_RequestState{},
 			}

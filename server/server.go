@@ -167,7 +167,6 @@ func (s *Server) sendStates(sub *subscriber) {
 }
 
 func (s *Server) addSubscriber(sub *subscriber) {
-	s.sendStates(sub)
 	s.mu.Lock()
 	s.subscribers[sub] = struct{}{}
 	s.mu.Unlock()
