@@ -39,8 +39,9 @@ func IntentsEqual(a, b map[pb.Intents_Intent]struct{}) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	for i := range a {
-		if a[i] != b[i] {
+
+	for k := range a {
+		if _, ok := b[k]; !ok {
 			return false
 		}
 	}
@@ -256,7 +257,6 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 }
 
 func (s *StateBuffer) ApplyIntents(source string, msg *IntentsUpdate) {
-	log.Printf("%s intents %+v :: future: %+v\n", source, msg, s.updateBuffer)
 	if msg.Tick > s.currentTick {
 		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
 			buffer.Intents[msg.ID] = msg.Intents
