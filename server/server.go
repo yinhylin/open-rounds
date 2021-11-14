@@ -117,7 +117,12 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		}, nil
 
 	case *pb.ClientEvent_RequestState:
-		s.sendStates(e.subscriber)
+		e.subscriber.Messages <- toBytesOrDie(&pb.ServerEvent{
+			Tick: s.state.CurrentTick(),
+			Event: &pb.ServerEvent_State{
+				State: s.state.ToProto(),
+			},
+		})
 	}
 	return nil, nil
 }
@@ -140,22 +145,6 @@ func (s *Server) onTick() {
 	for _, event := range serverEvents {
 		s.publish(event)
 	}
-}
-
-// TODO: This has to send the _entire_ StateBuffer so future and past intents
-// are not missing.
-func (s *Server) sendStates(sub *subscriber) {
-	states := &pb.States{}
-	s.state.ForEachEntity(func(ID string, entity *world.Entity) {
-		states.States = append(states.States, entity.ToProto())
-	})
-	sub.Messages <- toBytesOrDie(&pb.ServerEvent{
-		Tick: s.state.CurrentTick(),
-		Event: &pb.ServerEvent_States{
-			States: states,
-		},
-	})
-
 }
 
 func (s *Server) addSubscriber(sub *subscriber) {

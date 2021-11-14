@@ -6,11 +6,41 @@ import (
 	"rounds/pb"
 )
 
-const NilTick = -1
+const NilTick int64 = -1
 
 type State struct {
 	Entities map[string]Entity
 	Tick     int64
+}
+
+func EntitiesFromProto(p []*pb.Entity) map[string]Entity {
+	entities := make(map[string]Entity, len(p))
+	for _, entity := range p {
+		entities[entity.Id] = *EntityFromProto(entity)
+	}
+	return entities
+}
+
+func EntitiesToProto(e map[string]Entity) []*pb.Entity {
+	p := make([]*pb.Entity, 0, len(e))
+	for _, entity := range e {
+		p = append(p, entity.ToProto())
+	}
+	return p
+}
+
+func StateFromProto(p *pb.State) *State {
+	return &State{
+		Tick:     p.Tick,
+		Entities: EntitiesFromProto(p.EntityStates),
+	}
+}
+
+func (s *State) ToProto() *pb.State {
+	return &pb.State{
+		Tick:         s.Tick,
+		EntityStates: EntitiesToProto(s.Entities),
+	}
 }
 
 type IntentsUpdate struct {
@@ -98,6 +128,39 @@ type UpdateBuffer struct {
 	Remove  map[string]struct{}
 }
 
+func UpdateBufferFromProto(p *pb.UpdateBuffer) UpdateBuffer {
+	u := NewUpdateBuffer()
+	for _, intent := range p.Intents {
+		u.Intents[intent.Id] = IntentsFromProto(intent.Intents)
+	}
+	for _, ID := range p.Add {
+		u.Add[ID] = struct{}{}
+	}
+	for _, ID := range p.Remove {
+		u.Remove[ID] = struct{}{}
+	}
+	return u
+}
+
+func (u *UpdateBuffer) ToProto(tick int64) *pb.UpdateBuffer {
+	p := &pb.UpdateBuffer{
+		Tick: tick,
+	}
+	for ID, intents := range u.Intents {
+		p.Intents = append(p.Intents, &pb.EntityIntents{
+			Id:      ID,
+			Intents: IntentsToProto(intents),
+		})
+	}
+	for ID := range u.Add {
+		p.Add = append(p.Add, ID)
+	}
+	for ID := range u.Remove {
+		p.Remove = append(p.Remove, ID)
+	}
+	return p
+}
+
 var emptyUpdateBuffer UpdateBuffer
 
 func NewUpdateBuffer() UpdateBuffer {
@@ -113,6 +176,46 @@ type StateBuffer struct {
 	updateBuffer map[int64]UpdateBuffer
 	index        int
 	currentTick  int64
+}
+
+func StateBufferFromProto(p *pb.StateBuffer) *StateBuffer {
+	states := newRingBuffer(int(p.MaxCapacity))
+	currentTick := NilTick
+	index := -1
+	for i := range p.States {
+		state := *StateFromProto(p.States[i])
+		states[i] = state
+		if state.Tick > currentTick {
+			currentTick = state.Tick
+			index = i
+		}
+	}
+
+	updateBuffer := make(map[int64]UpdateBuffer, len(p.UpdateBuffers))
+	for _, buffer := range p.UpdateBuffers {
+		updateBuffer[buffer.Tick] = UpdateBufferFromProto(buffer)
+	}
+	return &StateBuffer{
+		states:       states,
+		updateBuffer: updateBuffer,
+		index:        index,
+		currentTick:  currentTick,
+	}
+}
+
+func (s *StateBuffer) ToProto() *pb.StateBuffer {
+	p := &pb.StateBuffer{
+		MaxCapacity:   int64(cap(s.states)),
+		States:        make([]*pb.State, 0, len(s.states)),
+		UpdateBuffers: make([]*pb.UpdateBuffer, 0, len(s.updateBuffer)),
+	}
+	for _, state := range s.states {
+		p.States = append(p.States, state.ToProto())
+	}
+	for tick, buffer := range s.updateBuffer {
+		p.UpdateBuffers = append(p.UpdateBuffers, buffer.ToProto(tick))
+	}
+	return p
 }
 
 func (s *StateBuffer) ForEachEntity(callback func(string, *Entity)) {

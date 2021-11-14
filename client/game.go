@@ -89,18 +89,9 @@ func (g *Game) handleServerEvents() error {
 					Intents: world.IntentsFromProto(msg.Intents),
 				})
 
-			case *pb.ServerEvent_States:
-				msg := event.GetStates()
-				state := &world.State{
-					Entities: make(map[string]world.Entity),
-					Tick:     event.Tick,
-				}
-				for _, entity := range msg.States {
-					state.Entities[entity.Id] = *world.EntityFromProto(entity)
-				}
+			case *pb.ServerEvent_State:
 				g.serverTick = event.Tick
-				// TODO: This needs to _set_ the entire StateBuffer.
-				g.state.Add(state)
+				g.state = world.StateBufferFromProto(event.GetState())
 				// Simulate next 5 states.
 				for i := 0; i < 5; i++ {
 					g.state.Next()
@@ -134,9 +125,8 @@ func (g *Game) Update() error {
 	}
 
 	if g.state.CurrentTick() < g.serverTick && g.state.CurrentTick() != world.NilTick {
-		// 30 frames behind? Re-request entire server state.
-		// TODO: 10 frames behind once server state sends _everything_.
-		if math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 30 {
+		// 10 frames behind? Re-request entire server state.
+		if math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 10 {
 			log.Println("requesting server state. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 			g.state.Clear()
 			g.clientEvents <- &pb.ClientEvent{
