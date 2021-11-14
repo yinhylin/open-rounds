@@ -51,7 +51,7 @@ func NewGame(assets *Assets) *Game {
 
 	return &Game{
 		Assets:          assets,
-		state:           world.NewStateBuffer(60),
+		state:           world.NewStateBuffer(20),
 		playerID:        playerID,
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
 		serverTick:      world.NilTick,
@@ -96,7 +96,6 @@ func (g *Game) handleServerEvents() error {
 					Tick:     event.Tick,
 				}
 				for _, entity := range msg.States {
-					log.Println(entity.Id)
 					state.Entities[entity.Id] = *world.EntityFromProto(entity)
 				}
 				g.state.Add(state)
@@ -138,7 +137,7 @@ func (g *Game) Update() error {
 
 	}
 
-	if g.state.CurrentTick() < g.serverTick {
+	if g.state.CurrentTick() < g.serverTick && g.state.CurrentTick() != world.NilTick {
 		if math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 30 {
 			log.Println("requesting server state. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 			g.state.Clear()
@@ -225,7 +224,7 @@ func (g *Game) handleKeysPressed() {
 	}
 	g.previousIntents = intents
 
-	tick := g.state.CurrentTick() + 1
+	tick := g.state.CurrentTick()
 	g.state.ApplyIntents("local press", &world.IntentsUpdate{
 		ID:      g.playerID,
 		Intents: intents,

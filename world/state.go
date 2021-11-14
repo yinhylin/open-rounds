@@ -80,10 +80,10 @@ func (s *State) Next(updateBuffer UpdateBuffer) State {
 			// Remove
 			continue
 		}
+		entity.Update()
 		if intents, ok := updateBuffer.Intents[ID]; ok {
 			entity.Intents = intents
 		}
-		entity.Update()
 		next.Entities[ID] = entity
 	}
 
@@ -138,7 +138,8 @@ func newRingBuffer(maxCapacity int) []State {
 }
 
 func (s *StateBuffer) Clear() {
-	s.states = newRingBuffer(60)
+	s.states = newRingBuffer(cap(s.states))
+	s.currentTick = NilTick
 }
 
 func NewStateBuffer(maxCapacity int) *StateBuffer {
@@ -190,7 +191,6 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) {
 		log.Fatal(tick, s.currentTick)
 	}
 
-	log.Printf("re-simulating %d and beyond\n", tick)
 	for i, state := range s.states {
 		if state.Tick != tick {
 			continue
@@ -199,14 +199,12 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) {
 		currentState := &s.states[i]
 		// Re-simulate.
 		s.walkNextStates(i, int(s.currentTick-state.Tick), func(index int) {
-			log.Printf("re-simulating %+v\n", s.states[index])
 			s.states[index] = currentState.Next(s.updateBuffer[currentState.Tick+1])
-			log.Printf("re-simulated %+v\n", s.states[index])
 			currentState = &s.states[index]
 		})
 		return
 	}
-	log.Fatal(s.CurrentTick(), tick)
+	log.Fatal("could not find tick ", s.CurrentTick(), tick)
 }
 
 func (s *StateBuffer) modifyUpdateBuffer(tick int64, callback func(UpdateBuffer) UpdateBuffer) {
@@ -254,7 +252,7 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) {
 }
 
 func (s *StateBuffer) ApplyIntents(source string, msg *IntentsUpdate) {
-	log.Printf("%s intents: %+v\n", source, msg)
+	//	log.Printf("%s intents: %+v\n", source, msg)
 	if msg.Tick > s.currentTick {
 		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
 			buffer.Intents[msg.ID] = msg.Intents
