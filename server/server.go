@@ -227,6 +227,7 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 		for {
 			messageType, reader, err := c.Reader(ctx)
 			if err != nil {
+				log.Println(err)
 				return
 			}
 
