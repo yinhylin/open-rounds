@@ -295,4 +295,5 @@ func (g *Game) WriteMessages(ctx context.Context, c *websocket.Conn) {
 			log.Fatal(err)
 		}
 	}
+	c.Close(websocket.StatusInternalError, "reader closed")
 }

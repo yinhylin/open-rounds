@@ -37,6 +37,7 @@ func main() {
 	game := client.NewGame(assets)
 
 	ctx := context.Background()
+	errc := make(chan error)
 	go func() {
 		c, _, err := websocket.Dial(ctx, "ws://"+host, nil)
 		if err != nil {
@@ -57,14 +58,15 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-		// lol
-		// defer c.Close(websocket.StatusInternalError, "")
 
 		go game.ReadMessages(ctx, c)
 		go game.WriteMessages(ctx, c)
+		err = <-errc
+		c.Close(websocket.StatusInternalError, err.Error())
 	}()
 
 	if err := ebiten.RunGame(game); err != nil {
+		errc <- err
 		log.Fatal(err)
 	}
 }
