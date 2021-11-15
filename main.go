@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"rounds/client"
 	"rounds/server"
@@ -63,6 +65,10 @@ func main() {
 		go game.WriteMessages(ctx, c)
 		err = <-errc
 		c.Close(websocket.StatusInternalError, err.Error())
+	}()
+
+	go func() {
+		http.ListenAndServe(":8080", nil)
 	}()
 
 	if err := ebiten.RunGame(game); err != nil {
