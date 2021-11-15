@@ -50,3 +50,7 @@ func ReadTOML(fileName string) (*Config, error) {
 func AlmostEqual(a, b, threshold float64) bool {
 	return math.Abs(a-b) <= threshold
 }
+
+func Lerp(start, end, t float64) float64 {
+	return start * (1.0 - t) + end * t
+}
