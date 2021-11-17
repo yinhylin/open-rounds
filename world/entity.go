@@ -13,30 +13,6 @@ type Entity struct {
 	Intents  map[pb.Intents_Intent]struct{}
 }
 
-func (e *Entity) Update() {
-	const speed = 4
-
-	// TODO: Don't overwrite velocity.
-	var velocity Vector
-	for action := range e.Intents {
-		switch action {
-		case pb.Intents_MOVE_UP:
-			velocity.Y -= speed
-		case pb.Intents_MOVE_DOWN:
-			velocity.Y += speed
-		case pb.Intents_MOVE_LEFT:
-			velocity.X -= speed
-		case pb.Intents_MOVE_RIGHT:
-			velocity.X += speed
-		}
-	}
-
-	// TODO: This needs to move elsewhere and have collision checking.
-	e.Velocity = velocity
-	e.Coords.X += e.Velocity.X
-	e.Coords.Y += e.Velocity.Y
-}
-
 func (v *Vector) ToProto() *pb.Vector {
 	return &pb.Vector{
 		X: v.X,
