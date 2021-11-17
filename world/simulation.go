@@ -2,19 +2,19 @@ package world
 
 import (
 	"log"
+	"math"
 	"rounds/pb"
 )
 
 func updateEntity(e *Entity) {
-	const speed = 4
+	const speed = 8
 	// TODO: Don't overwrite velocity.
+	jump := false
 	var velocity Vector
 	for action := range e.Intents {
 		switch action {
 		case pb.Intents_MOVE_UP:
-			velocity.Y -= speed
-		case pb.Intents_MOVE_DOWN:
-			velocity.Y += speed
+			jump = true
 		case pb.Intents_MOVE_LEFT:
 			velocity.X -= speed
 		case pb.Intents_MOVE_RIGHT:
@@ -22,10 +22,27 @@ func updateEntity(e *Entity) {
 		}
 	}
 
-	// TODO: This needs to move elsewhere and have collision checking.
+	// gravity
+	velocity.Y = math.Min(e.Velocity.Y+2, 16)
 	e.Velocity = velocity
 	e.Coords.X += e.Velocity.X
 	e.Coords.Y += e.Velocity.Y
+
+	// TODO: This needs to be proper collision detection but yolo prototyping.
+	// TODO: Finish Map.
+	if e.Coords.Y > 500 {
+		e.Coords.Y = 500
+		if !jump {
+			// lol bounce
+			e.Velocity.Y = -math.Abs(e.Velocity.Y / 1.25)
+		} else {
+			e.Velocity.Y = 0
+		}
+	}
+
+	if e.Coords.Y == 500 && jump {
+		e.Velocity.Y -= 32
+	}
 }
 
 func Simulate(s State, u UpdateBuffer) State {
