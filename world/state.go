@@ -94,34 +94,6 @@ func entitiesEqual(a, b map[string]Entity) bool {
 	return true
 }
 
-func (s *State) Next(updateBuffer UpdateBuffer) State {
-	next := *s
-	next.Entities = make(map[string]Entity, len(s.Entities))
-
-	// Add
-	for ID := range updateBuffer.Add {
-		log.Println("add ", ID)
-		next.Entities[ID] = Entity{ID: ID}
-	}
-
-	// Update
-	for ID, entity := range s.Entities {
-		if _, ok := updateBuffer.Remove[ID]; ok {
-			log.Println("remove ", ID)
-			// Remove
-			continue
-		}
-		entity.Update()
-		if intents, ok := updateBuffer.Intents[ID]; ok {
-			entity.Intents = intents
-		}
-		next.Entities[ID] = entity
-	}
-
-	next.Tick++
-	return next
-}
-
 type UpdateBuffer struct {
 	Intents map[string]map[pb.Intents_Intent]struct{}
 	Add     map[string]struct{}
@@ -160,8 +132,6 @@ func (u *UpdateBuffer) ToProto(tick int64) *pb.UpdateBuffer {
 	}
 	return p
 }
-
-var emptyUpdateBuffer UpdateBuffer
 
 func NewUpdateBuffer() UpdateBuffer {
 	return UpdateBuffer{
@@ -266,7 +236,7 @@ func (s *StateBuffer) Next() *State {
 		return nil
 	}
 
-	next := current.Next(s.updateBuffer[s.currentTick+1])
+	next := Simulate(*current, s.updateBuffer[s.currentTick+1])
 	s.Add(&next)
 	delete(s.updateBuffer, s.currentTick)
 	return &next
@@ -303,7 +273,7 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) error 
 		currentState := &s.states[i]
 		// Re-simulate.
 		s.walkNextStates(i, int(s.currentTick-state.Tick), func(index int) {
-			s.states[index] = currentState.Next(s.updateBuffer[currentState.Tick+1])
+			s.states[index] = Simulate(*currentState, s.updateBuffer[currentState.Tick+1])
 			currentState = &s.states[index]
 		})
 		return nil
