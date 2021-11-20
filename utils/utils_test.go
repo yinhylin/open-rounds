@@ -51,46 +51,26 @@ func TestReadToml(t *testing.T) {
 	}
 
 	wantFloat = float64(1.0)
-	var jumpHeightVal = config.Player.JumpHeight
+	var jumpHeightVal = Cfg.Player.JumpHeight
 	if !AlmostEqual(wantFloat, jumpHeightVal, threshold) {
 		t.Fatalf(`Player.jumpHeight = %v, want match for %#v, diff %v with threshold %v`, jumpHeightVal, wantFloat, wantFloat-jumpHeightVal, threshold)
 	}
 
 	wantFloat = float64(1.0)
-	var speedVal = config.Player.Speed
+	var speedVal = Cfg.Player.Speed
 	if !AlmostEqual(wantFloat, speedVal, threshold) {
 		t.Fatalf(`Player.speed = %v, want match for %#v, diff %v with threshold %v`, speedVal, wantFloat, wantFloat-speedVal, threshold)
 	}
 
 	var wantInt = 1
-	var resXval = config.UI.Resolution.X
+	var resXval = Cfg.Ui.Resolution.X
 	if wantInt != resXval {
 		t.Fatalf(`UI.Resolution.X = %v, want match for %#v`, resXval, wantInt)
 	}
 
 	wantInt = 1
-	var resYval = config.UI.Resolution.Y
+	var resYval = Cfg.Ui.Resolution.Y
 	if wantInt != resYval {
 		t.Fatalf(`UI.Resolution.Y = %v, want match for %#v`, resYval, wantInt)
-	}
-}
-
-type LerpInput struct {
-	Start, End, T float64
-	Expected float64
-}
-
-func TestLerp(t *testing.T) {
-	var testVals = [...]LerpInput{
-		{0, 100, 0.5, 50},
-		{20, 80, 0, 20},
-		{-1, 1, 0.5, 0},
-		{0.5, 1, 0.5, 0.75},
-	}
-	for _, aTest := range testVals {
-		if Lerp(aTest.Start, aTest.End, aTest.T) != aTest.Expected {
-			t.Fatalf(`Start = %v, End = %v, T = %v, expected %v but got %v`,
-				aTest.Start, aTest.End, aTest.T, aTest.Expected, Lerp(aTest.Start, aTest.End, aTest.T))
-		}
 	}
 }

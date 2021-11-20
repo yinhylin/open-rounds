@@ -188,10 +188,14 @@ func (s *StateBuffer) ToProto() *pb.StateBuffer {
 	return p
 }
 
-func (s *State) ForEachEntity(prev *State, callback func(string, *Entity, *Entity)) {
-	for ID, entity := range s.Entities {
-		previousEntity := prev.Entities[ID]
-		callback(ID, &entity, &previousEntity)
+func (s *StateBuffer) ForEachEntity(callback func(string, *Entity)) {
+	current := s.Current()
+	if current == nil {
+		return
+	}
+
+	for ID, entity := range current.Entities {
+		callback(ID, &entity)
 	}
 }
 

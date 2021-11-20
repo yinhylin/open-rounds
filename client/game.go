@@ -9,7 +9,6 @@ import (
 	"log"
 	"math"
 	"rounds/pb"
-	"rounds/utils"
 	"rounds/world"
 	"strings"
 	"time"
@@ -28,17 +27,12 @@ type Updatable interface {
 
 type Game struct {
 	*Assets
-	state                   *world.StateBuffer
-	currentState            [2]world.State
-	previousState           [2]world.State
-	stateIndex              int64
-	playerID                string
-	serverEvents            chan *pb.ServerEvent
-	clientEvents            chan *pb.ClientEvent
-	serverTick              int64
-	lastUpdateCompletedTime time.Time
-	lastRenderCompletedTime time.Time
-	previousIntents         map[pb.Intents_Intent]struct{}
+	state           *world.StateBuffer
+	playerID        string
+	serverEvents    chan *pb.ServerEvent
+	clientEvents    chan *pb.ClientEvent
+	serverTick      int64
+	previousIntents map[pb.Intents_Intent]struct{}
 }
 
 func NewGame(assets *Assets) *Game {
@@ -171,10 +165,7 @@ func (g *Game) Update() error {
 		}
 	}
 	g.handleKeysPressed()
-	g.previousState[g.stateIndex] = g.currentState[g.stateIndex]
-	g.currentState[g.stateIndex] = *g.state.Next()
-	g.stateIndex = 1 - g.stateIndex
-	g.lastUpdateCompletedTime = time.Now()
+	g.state.Next()
 	return nil
 }
 
@@ -206,7 +197,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		255,
 	})
 
-	g.currentState[g.stateIndex].ForEachEntity(&g.previousState[g.stateIndex], func(ID string, current, previous *world.Entity) {
+	g.state.ForEachEntity(func(ID string, e *world.Entity) {
 		// lol
 		image := g.Image("enemy")
 		if ID == g.playerID {
@@ -214,18 +205,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 
 		options := &ebiten.DrawImageOptions{}
-		elapsedTime := time.Now().Sub(g.lastUpdateCompletedTime).Seconds()
-		updateTickLength := 1.0 / (elapsedTime)
-		x := utils.Lerp(previous.Coords.X, current.Coords.X, elapsedTime  / updateTickLength)
-		y := utils.Lerp(previous.Coords.Y, current.Coords.Y, elapsedTime / updateTickLength)
-		options.GeoM.Translate(x, y)
+		options.GeoM.Translate(e.Coords.X, e.Coords.Y)
 		screen.DrawImage(image, options)
-		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, x, y)
-		ebitenutil.DebugPrintAt(screen, debugString, int(x), int(y)+16)
+		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.Coords.X, e.Coords.Y)
+		ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+16)
 	})
 
 	ebitenutil.DebugPrint(screen, g.debugString())
-	g.lastRenderCompletedTime = time.Now()
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
