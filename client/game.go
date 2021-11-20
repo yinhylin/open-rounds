@@ -7,7 +7,6 @@ import (
 	"image/color"
 	"io/ioutil"
 	"log"
-	"math"
 	"rounds/pb"
 	"rounds/world"
 	"strings"
@@ -105,8 +104,8 @@ func (g *Game) handleServerEvents() error {
 			case *pb.ServerEvent_State:
 				g.serverTick = event.Tick
 				g.state = world.StateBufferFromProto(event.GetState())
-				// Simulate next 5 states.
-				for i := 0; i < 5; i++ {
+				// Simulate next 2 states.
+				for i := 0; i < 2; i++ {
 					g.state.Next()
 				}
 
@@ -144,7 +143,7 @@ func (g *Game) Update() error {
 	}
 
 	// Drop a frame if we're too far ahead.
-	if g.state.CurrentTick()-g.serverTick > 5 {
+	if g.state.CurrentTick()-g.serverTick > 2 {
 		// TODO: Disconnect if this happens too many times in a row without a
 		// real frame. Server is dead.
 		return nil
@@ -152,14 +151,14 @@ func (g *Game) Update() error {
 
 	if g.state.CurrentTick() < g.serverTick && g.state.CurrentTick() != world.NilTick {
 		// 10 frames behind? Re-request entire server state.
-		if math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 10 {
+		if g.serverTick-g.state.CurrentTick() > 10 {
 			log.Println("requesting server state. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 			g.requestState()
 			return nil
+
 		}
 
-		// 5 frames behind? Skip until we catch up.
-		for math.Abs(float64(g.state.CurrentTick()-g.serverTick)) > 5 {
+		for g.serverTick-g.state.CurrentTick() > 5 {
 			log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 			g.state.Next()
 		}
