@@ -20,9 +20,8 @@ import (
 	"nhooyr.io/websocket"
 )
 
-type Updatable interface {
-	Update()
-}
+// How many states to render in the future.
+const futureStates = 5
 
 type Game struct {
 	*Assets
@@ -105,7 +104,7 @@ func (g *Game) handleServerEvents() error {
 				g.serverTick = event.Tick
 				g.state = world.StateBufferFromProto(event.GetState())
 				// Simulate next 2 states.
-				for i := 0; i < 2; i++ {
+				for i := 0; i < futureStates; i++ {
 					g.state.Next()
 				}
 
@@ -128,8 +127,7 @@ func (g *Game) handleServerEvents() error {
 func (g *Game) Update() error {
 	now := time.Now()
 	defer func() {
-		timeTaken := time.Now().Sub(now)
-		if timeTaken > time.Millisecond {
+		if time.Since(now) > time.Millisecond {
 			log.Println("long update", time.Now().Sub(now))
 		}
 	}()
@@ -143,7 +141,7 @@ func (g *Game) Update() error {
 	}
 
 	// Drop a frame if we're too far ahead.
-	if g.state.CurrentTick()-g.serverTick > 2 {
+	if g.state.CurrentTick()-g.serverTick > futureStates {
 		// TODO: Disconnect if this happens too many times in a row without a
 		// real frame. Server is dead.
 		return nil
@@ -238,7 +236,7 @@ func (g *Game) handleKeysPressed() {
 	}
 	g.previousIntents = intents
 
-	tick := g.state.CurrentTick()
+	tick := g.state.CurrentTick() + 2
 	g.state.ApplyIntents(&world.IntentsUpdate{
 		ID:      g.playerID,
 		Intents: intents,
