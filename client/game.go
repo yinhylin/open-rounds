@@ -84,18 +84,27 @@ func (g *Game) handleServerEvents() error {
 		case event := <-g.serverEvents:
 			switch event.Event.(type) {
 			case *pb.ServerEvent_AddEntity:
+				if g.state.CurrentTick() == world.NilTick {
+					continue
+				}
 				err = g.state.AddEntity(&world.AddEntity{
 					Tick: event.Tick,
 					ID:   event.GetAddEntity().Entity.Id,
 				})
 
 			case *pb.ServerEvent_RemoveEntity:
+				if g.state.CurrentTick() == world.NilTick {
+					continue
+				}
 				err = g.state.RemoveEntity(&world.RemoveEntity{
 					Tick: event.Tick,
 					ID:   event.GetRemoveEntity().Id,
 				})
 
 			case *pb.ServerEvent_EntityEvents:
+				if g.state.CurrentTick() == world.NilTick {
+					continue
+				}
 				msg := event.GetEntityEvents()
 				if msg.Id == g.playerID {
 					// TODO: Store a rolling buffer of input delay and ease instead of updating immediately.
@@ -126,6 +135,9 @@ func (g *Game) handleServerEvents() error {
 				g.serverTick = event.Tick
 
 			case *pb.ServerEvent_EntityAngle:
+				if g.state.CurrentTick() == world.NilTick {
+					continue
+				}
 				msg := event.GetEntityAngle()
 				if msg.Id == g.playerID {
 					continue
