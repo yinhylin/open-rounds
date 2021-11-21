@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -18,11 +17,12 @@ import (
 
 	"google.golang.org/protobuf/proto"
 	"nhooyr.io/websocket"
+	"nhooyr.io/websocket/wspb"
 )
 
 // TODO: non-global subscribers. rooms or something?
 type subscriber struct {
-	Messages chan []byte
+	Messages chan *pb.ServerEvent
 	PlayerID string
 	c        *websocket.Conn
 }
@@ -88,12 +88,12 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 			Intents: world.IntentsFromProto(e.GetIntents()),
 		}); err != nil {
 			// Resync the client if there are any issues with their intents.
-			e.subscriber.Messages <- toBytesOrDie(&pb.ServerEvent{
+			e.subscriber.Messages <- &pb.ServerEvent{
 				Tick: s.state.CurrentTick(),
 				Event: &pb.ServerEvent_State{
 					State: s.state.ToProto(),
 				},
-			})
+			}
 			return nil, nil
 		}
 
@@ -137,12 +137,12 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		}, nil
 
 	case *pb.ClientEvent_RequestState:
-		e.subscriber.Messages <- toBytesOrDie(&pb.ServerEvent{
+		e.subscriber.Messages <- &pb.ServerEvent{
 			Tick: s.state.CurrentTick(),
 			Event: &pb.ServerEvent_State{
 				State: s.state.ToProto(),
 			},
-		})
+		}
 
 	}
 	return nil, nil
@@ -209,7 +209,7 @@ func (s *Server) onConnection(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error {
 	sub := &subscriber{
-		Messages: make(chan []byte, 1024),
+		Messages: make(chan *pb.ServerEvent, 1024),
 		c:        c,
 	}
 	s.addSubscriber(sub)
@@ -237,30 +237,11 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 		}()
 
 		for {
-			messageType, reader, err := c.Reader(ctx)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
-			if messageType != websocket.MessageBinary {
-				log.Println("unexpected message type", messageType)
-				return
-			}
-
-			b, err := ioutil.ReadAll(reader)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
 			var clientEvent pb.ClientEvent
-			err = proto.Unmarshal(b, &clientEvent)
-			if err != nil {
+			if err := wspb.Read(ctx, c, &clientEvent); err != nil {
 				log.Println(err)
 				return
 			}
-
 			s.events <- &event{
 				&clientEvent,
 				sub,
@@ -270,7 +251,9 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 	for {
 		select {
 		case msg := <-sub.Messages:
-			c.Write(ctx, websocket.MessageBinary, msg)
+			if err := wspb.Write(ctx, c, msg); err != nil {
+				log.Println(err)
+			}
 		case <-ctx.Done():
 			fmt.Println(":(")
 			return ctx.Err()
@@ -287,12 +270,11 @@ func toBytesOrDie(event *pb.ServerEvent) []byte {
 }
 
 func (s *Server) publish(event *pb.ServerEvent) {
-	bytes := toBytesOrDie(event)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for sub := range s.subscribers {
 		select {
-		case sub.Messages <- bytes:
+		case sub.Messages <- event:
 		default:
 			sub.c.Close(websocket.StatusPolicyViolation, "write would block???")
 		}
