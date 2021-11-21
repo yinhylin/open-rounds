@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	futureStates = 5
+	futureStates = 3
 	inputDelay   = 3
 )
 
