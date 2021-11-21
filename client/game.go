@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	futureStates = 3
-	inputDelay   = 3
+	futureStates = 5
+	inputDelay   = 5
 )
 
 type Game struct {
