@@ -20,8 +20,10 @@ import (
 	"nhooyr.io/websocket"
 )
 
-// How many states to render in the future.
-const futureStates = 5
+const (
+	futureStates = 5
+	inputDelay   = 3
+)
 
 type Game struct {
 	*Assets
@@ -236,7 +238,7 @@ func (g *Game) handleKeysPressed() {
 	}
 	g.previousIntents = intents
 
-	tick := g.state.CurrentTick() + 2
+	tick := g.state.CurrentTick() + inputDelay
 	g.state.ApplyIntents(&world.IntentsUpdate{
 		ID:      g.playerID,
 		Intents: intents,
