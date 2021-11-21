@@ -22,7 +22,6 @@ import (
 
 const (
 	futureStates = 5
-	inputDelay   = 5
 )
 
 type Game struct {
@@ -32,6 +31,7 @@ type Game struct {
 	serverEvents    chan *pb.ServerEvent
 	clientEvents    chan *pb.ClientEvent
 	serverTick      int64
+	inputDelay      int64
 	previousIntents map[pb.Intents_Intent]struct{}
 }
 
@@ -56,6 +56,7 @@ func NewGame(assets *Assets) *Game {
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
 		serverTick:      world.NilTick,
 		clientEvents:    clientEvents,
+		inputDelay:      futureStates,
 		previousIntents: make(map[pb.Intents_Intent]struct{}),
 	}
 }
@@ -94,6 +95,14 @@ func (g *Game) handleServerEvents() error {
 			case *pb.ServerEvent_EntityEvents:
 				msg := event.GetEntityEvents()
 				if msg.Id == g.playerID {
+					// TODO: Store a rolling buffer of input delay and ease instead of updating immediately.
+					difference := g.state.CurrentTick() - event.Tick
+					if difference > 0 {
+						g.inputDelay++
+					}
+					if difference < 0 {
+						g.inputDelay--
+					}
 					continue
 				}
 				err = g.state.ApplyIntents(&world.IntentsUpdate{
@@ -174,6 +183,7 @@ func (g *Game) debugString() string {
 		fmt.Sprintf(" T: %d", g.state.CurrentTick()),
 		fmt.Sprintf("ST: %d", g.serverTick),
 		fmt.Sprintf("DT: %d", g.serverTick-g.state.CurrentTick()),
+		fmt.Sprintf("ID: %d", g.inputDelay),
 	}, "\n")
 }
 
@@ -238,7 +248,7 @@ func (g *Game) handleKeysPressed() {
 	}
 	g.previousIntents = intents
 
-	tick := g.state.CurrentTick() + inputDelay
+	tick := g.state.CurrentTick() + g.inputDelay
 	g.state.ApplyIntents(&world.IntentsUpdate{
 		ID:      g.playerID,
 		Intents: intents,
