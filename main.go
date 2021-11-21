@@ -33,7 +33,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ebiten.SetWindowSize(1280, 620)
+	ebiten.SetWindowSize(1280, 720)
 	ebiten.SetWindowTitle("Open ROUNDS")
 
 	game := client.NewGame(assets)
