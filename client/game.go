@@ -56,7 +56,7 @@ func NewGame(assets *Assets) *Game {
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
 		serverTick:      world.NilTick,
 		clientEvents:    clientEvents,
-		inputDelay:      futureStates,
+		inputDelay:      3,
 		previousIntents: make(map[pb.Intents_Intent]struct{}),
 	}
 }
