@@ -55,6 +55,12 @@ type EntityUpdate struct {
 	Tick   int64
 }
 
+type AngleUpdate struct {
+	ID    string
+	Angle float64
+	Tick  int64
+}
+
 type AddEntity struct {
 	ID   string
 	Tick int64
@@ -341,6 +347,23 @@ func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) error {
 	return s.applyUpdate(msg.Tick, func(existing State) State {
 		entity := existing.Entities[msg.ID]
 		entity.Intents = msg.Intents
+		existing.Entities[msg.ID] = entity
+		return State{
+			Entities: existing.Entities,
+			Tick:     msg.Tick,
+		}
+	})
+}
+
+func (s *StateBuffer) ApplyAngle(msg *AngleUpdate) error {
+	if msg.Tick > s.currentTick {
+		// TODO: maybe buffer these like the rest? but doesn't really matter much
+		return nil
+	}
+
+	return s.applyUpdate(msg.Tick, func(existing State) State {
+		entity := existing.Entities[msg.ID]
+		entity.Angle = msg.Angle
 		existing.Entities[msg.ID] = entity
 		return State{
 			Entities: existing.Entities,

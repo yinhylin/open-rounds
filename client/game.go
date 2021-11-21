@@ -34,6 +34,7 @@ type Game struct {
 	clientEvents    chan *pb.ClientEvent
 	serverTick      int64
 	inputDelay      int64
+	previousAngle   float64
 	previousIntents map[pb.Intents_Intent]struct{}
 }
 
@@ -123,6 +124,17 @@ func (g *Game) handleServerEvents() error {
 
 			case *pb.ServerEvent_ServerTick:
 				g.serverTick = event.Tick
+
+			case *pb.ServerEvent_EntityAngle:
+				msg := event.GetEntityAngle()
+				if msg.Id == g.playerID {
+					continue
+				}
+				g.state.ApplyAngle(&world.AngleUpdate{
+					Tick:  g.state.CurrentTick(),
+					ID:    msg.Id,
+					Angle: msg.Angle,
+				})
 			}
 		default:
 			return errors.New("should never block")
@@ -224,9 +236,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(image, options)
 
 		gun := emoji.Image("🔫")
-		cX, cY := ebiten.CursorPosition()
 		options = &ebiten.DrawImageOptions{}
-		angle := math.Atan2(e.Coords.Y-float64(cY), e.Coords.X-float64(cX))
+		angle := e.Angle
 		scale := 0.4
 		x := float64(0)
 		if math.Abs(angle) > math.Pi/2 {
@@ -267,6 +278,29 @@ func (g *Game) handleKeysPressed() {
 			case ebiten.KeyS:
 				intents[pb.Intents_MOVE_DOWN] = struct{}{}
 			}
+		}
+	}
+
+	e := g.state.Current().Entities[g.playerID]
+	cX, cY := ebiten.CursorPosition()
+	angle := math.Atan2(e.Coords.Y-float64(cY), e.Coords.X-float64(cX))
+	g.state.ApplyAngle(&world.AngleUpdate{
+		Tick:  g.state.CurrentTick(),
+		ID:    g.playerID,
+		Angle: angle,
+	})
+
+	// TODO: Lower threshold with lerping.
+	if math.Abs(g.previousAngle-angle) > math.Pi/32 {
+		g.previousAngle = angle
+		g.clientEvents <- &pb.ClientEvent{
+			Id: g.playerID,
+			Event: &pb.ClientEvent_Angle{
+				Angle: &pb.Angle{
+					Angle: angle,
+				},
+			},
+			Tick: g.state.CurrentTick() + 3,
 		}
 	}
 

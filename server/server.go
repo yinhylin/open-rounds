@@ -125,6 +125,17 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 			},
 		}, nil
 
+	case *pb.ClientEvent_Angle:
+		return &pb.ServerEvent{
+			Tick: e.Tick,
+			Event: &pb.ServerEvent_EntityAngle{
+				EntityAngle: &pb.EntityAngle{
+					Id:    e.Id,
+					Angle: e.GetAngle().Angle,
+				},
+			},
+		}, nil
+
 	case *pb.ClientEvent_RequestState:
 		e.subscriber.Messages <- toBytesOrDie(&pb.ServerEvent{
 			Tick: s.state.CurrentTick(),
@@ -132,6 +143,7 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 				State: s.state.ToProto(),
 			},
 		})
+
 	}
 	return nil, nil
 }

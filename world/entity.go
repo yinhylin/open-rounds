@@ -11,6 +11,7 @@ type Entity struct {
 	Coords   Vector
 	Velocity Vector
 	Intents  map[pb.Intents_Intent]struct{}
+	Angle    float64
 }
 
 func (v *Vector) ToProto() *pb.Vector {
@@ -51,6 +52,7 @@ func (e *Entity) ToProto() *pb.Entity {
 		Position: e.Coords.ToProto(),
 		Velocity: e.Velocity.ToProto(),
 		Intents:  IntentsToProto(e.Intents),
+		Angle:    e.Angle,
 	}
 }
 
@@ -63,5 +65,6 @@ func EntityFromProto(e *pb.Entity) *Entity {
 		Coords:   VectorFromProto(e.Position),
 		Velocity: VectorFromProto(e.Velocity),
 		Intents:  IntentsFromProto(e.Intents),
+		Angle:    e.Angle,
 	}
 }

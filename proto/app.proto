@@ -12,6 +12,7 @@ message Entity {
   Vector velocity = 2;
   Vector position = 3;
   Intents intents = 4;
+  double angle = 5;
 }
 
 message EntityIntents {
@@ -69,6 +70,15 @@ message RemoveEntity {
   string id = 1;
 }
 
+message Angle {
+  double angle = 1;
+}
+
+message EntityAngle {
+  string id = 1;
+  double angle = 2;
+}
+
 message Tick {}
 
 message ClientEvent {
@@ -78,6 +88,7 @@ message ClientEvent {
     Connect connect = 3;
     Intents intents = 4;
     RequestState request_state = 5;
+    Angle angle = 6;
   }
 }
 
@@ -89,5 +100,6 @@ message ServerEvent {
     EntityEvents entity_events = 4;
     Tick server_tick = 5;
     StateBuffer state = 6;
+    EntityAngle entity_angle = 7;
   }
 }
