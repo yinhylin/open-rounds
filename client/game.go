@@ -293,8 +293,11 @@ func (g *Game) handleKeysPressed() {
 	}
 
 	e := g.state.Current().Entities[g.playerID]
-	cX, cY := ebiten.CursorPosition()
-	angle := math.Atan2(e.Coords.Y-float64(cY), e.Coords.X-float64(cX))
+	angle := e.Angle
+	if ebiten.IsFocused() {
+		cX, cY := ebiten.CursorPosition()
+		angle = math.Atan2(e.Coords.Y-float64(cY), e.Coords.X-float64(cX))
+	}
 	g.state.ApplyAngle(&world.AngleUpdate{
 		Tick:  g.state.CurrentTick(),
 		ID:    g.playerID,
