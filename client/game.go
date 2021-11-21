@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"io/ioutil"
 	"log"
+	"math"
 	"rounds/pb"
 	"rounds/world"
 	"strings"
@@ -211,7 +212,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		// lol
 		image := emoji.Image("🥴")
 		if ID == g.playerID {
-			image = emoji.Image("😏")
+			image = emoji.Image("🤠")
 		}
 
 		options := &ebiten.DrawImageOptions{}
@@ -221,6 +222,26 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		_, height := image.Size()
 		height /= 2
 		screen.DrawImage(image, options)
+
+		gun := emoji.Image("🔫")
+		cX, cY := ebiten.CursorPosition()
+		options = &ebiten.DrawImageOptions{}
+		angle := math.Atan2(e.Coords.Y-float64(cY), e.Coords.X-float64(cX))
+		scale := 0.4
+		x := float64(0)
+		if math.Abs(angle) > math.Pi/2 {
+			scale *= -1
+			angle *= -1
+			angle += math.Pi
+			x += 64
+		}
+		options.GeoM.Translate(-64, -64)
+		options.GeoM.Rotate(angle)
+		options.GeoM.Scale(scale, 0.4)
+		options.GeoM.Translate(e.Coords.X+x, e.Coords.Y+48)
+		options.Filter = ebiten.FilterLinear
+		screen.DrawImage(gun, options)
+
 		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.Coords.X, e.Coords.Y)
 		ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+height)
 	})
