@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ebiten/emoji"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -97,10 +98,10 @@ func (g *Game) handleServerEvents() error {
 				if msg.Id == g.playerID {
 					// TODO: Store a rolling buffer of input delay and ease instead of updating immediately.
 					difference := g.state.CurrentTick() - event.Tick
-					if difference > 0 {
+					if difference > 2 {
 						g.inputDelay++
 					}
-					if difference < 0 {
+					if difference < 1 {
 						g.inputDelay--
 					}
 					continue
@@ -208,16 +209,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	g.state.ForEachEntity(func(ID string, e *world.Entity) {
 		// lol
-		image := g.Image("enemy")
+		image := emoji.Image("🥴")
 		if ID == g.playerID {
-			image = g.Image("player")
+			image = emoji.Image("😏")
 		}
 
 		options := &ebiten.DrawImageOptions{}
+		options.GeoM.Scale(0.5, 0.5)
 		options.GeoM.Translate(e.Coords.X, e.Coords.Y)
+		options.Filter = ebiten.FilterLinear
+		_, height := image.Size()
+		height /= 2
 		screen.DrawImage(image, options)
 		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.Coords.X, e.Coords.Y)
-		ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+16)
+		ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+height)
 	})
 
 	ebitenutil.DebugPrint(screen, g.debugString())
@@ -236,7 +241,7 @@ func (g *Game) handleKeysPressed() {
 				intents[pb.Intents_MOVE_LEFT] = struct{}{}
 			case ebiten.KeyD:
 				intents[pb.Intents_MOVE_RIGHT] = struct{}{}
-			case ebiten.KeyW:
+			case ebiten.KeyW, ebiten.KeySpace:
 				intents[pb.Intents_MOVE_UP] = struct{}{}
 			case ebiten.KeyS:
 				intents[pb.Intents_MOVE_DOWN] = struct{}{}

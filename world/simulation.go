@@ -7,7 +7,7 @@ import (
 )
 
 func updateEntity(e *Entity) {
-	const speed = 8
+	const speed = 10
 	// TODO: Don't overwrite velocity.
 	jump := false
 	var velocity Vector
