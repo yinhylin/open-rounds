@@ -229,16 +229,18 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func (g *Game) handleKeysPressed() {
 	intents := make(map[pb.Intents_Intent]struct{})
-	for _, key := range inpututil.AppendPressedKeys(nil) {
-		switch key {
-		case ebiten.KeyA:
-			intents[pb.Intents_MOVE_LEFT] = struct{}{}
-		case ebiten.KeyD:
-			intents[pb.Intents_MOVE_RIGHT] = struct{}{}
-		case ebiten.KeyW:
-			intents[pb.Intents_MOVE_UP] = struct{}{}
-		case ebiten.KeyS:
-			intents[pb.Intents_MOVE_DOWN] = struct{}{}
+	if ebiten.IsFocused() {
+		for _, key := range inpututil.AppendPressedKeys(nil) {
+			switch key {
+			case ebiten.KeyA:
+				intents[pb.Intents_MOVE_LEFT] = struct{}{}
+			case ebiten.KeyD:
+				intents[pb.Intents_MOVE_RIGHT] = struct{}{}
+			case ebiten.KeyW:
+				intents[pb.Intents_MOVE_UP] = struct{}{}
+			case ebiten.KeyS:
+				intents[pb.Intents_MOVE_DOWN] = struct{}{}
+			}
 		}
 	}
 
