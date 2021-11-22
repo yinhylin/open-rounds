@@ -28,6 +28,7 @@ const (
 type Game struct {
 	*Assets
 	state           *world.StateBuffer
+	m               *world.Map
 	playerID        string
 	serverEvents    chan *pb.ServerEvent
 	clientEvents    chan *pb.ClientEvent
@@ -53,6 +54,7 @@ func NewGame(assets *Assets) *Game {
 
 	return &Game{
 		Assets:          assets,
+		m:               assets.Map("basic"),
 		state:           world.NewStateBuffer(20),
 		playerID:        playerID,
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
@@ -221,11 +223,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		return
 	}
 
-	screen.Fill(color.RGBA{
-		164,
-		178,
-		191,
-		255,
+	g.m.ForEach(func(x, y int, tile world.Tile) {
+		image := g.Image(tile.Image)
+		options := &ebiten.DrawImageOptions{}
+		options.GeoM.Translate(float64(x*32), float64(y*32))
+		screen.DrawImage(image, options)
 	})
 
 	g.state.ForEachEntity(func(ID string, e *world.Entity) {
