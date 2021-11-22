@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	futureStates = 10
+	futureStates = 5
 )
 
 type Game struct {
@@ -139,7 +139,7 @@ func (g *Game) handleServerEvents() error {
 					continue
 				}
 				g.state.ApplyAngle(&world.AngleUpdate{
-					Tick:  event.Tick,
+					Tick:  g.state.CurrentTick(),
 					ID:    msg.Id,
 					Angle: msg.Angle,
 				})

@@ -65,9 +65,6 @@ func Simulate(s State, u UpdateBuffer) State {
 		if intents, ok := u.Intents[ID]; ok {
 			entity.Intents = intents
 		}
-		if angle, ok := u.Angles[ID]; ok {
-			entity.Angle = angle
-		}
 		next.Entities[ID] = entity
 	}
 
