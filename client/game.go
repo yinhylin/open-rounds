@@ -83,7 +83,7 @@ func (g *Game) handleServerEvents() error {
 		case event := <-g.serverEvents:
 			switch event.Event.(type) {
 			case *pb.ServerEvent_AddEntity:
-				if g.state.CurrentTick() == world.NilTick {
+				if g.state.Current() == nil {
 					continue
 				}
 				err = g.state.AddEntity(&world.AddEntity{
@@ -92,7 +92,7 @@ func (g *Game) handleServerEvents() error {
 				})
 
 			case *pb.ServerEvent_RemoveEntity:
-				if g.state.CurrentTick() == world.NilTick {
+				if g.state.Current() == nil {
 					continue
 				}
 				err = g.state.RemoveEntity(&world.RemoveEntity{
@@ -134,7 +134,7 @@ func (g *Game) handleServerEvents() error {
 				g.serverTick = event.Tick
 
 			case *pb.ServerEvent_EntityAngle:
-				if g.state.CurrentTick() == world.NilTick {
+				if g.state.Current() == nil {
 					continue
 				}
 				msg := event.GetEntityAngle()
