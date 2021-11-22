@@ -53,7 +53,7 @@ func NewServer() *Server {
 	})
 
 	go func() {
-		sync := time.NewTicker(20 * time.Millisecond)
+		sync := time.NewTicker(17 * time.Millisecond)
 		tick := time.NewTicker(17 * time.Millisecond)
 		for {
 			select {

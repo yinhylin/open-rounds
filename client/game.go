@@ -125,8 +125,8 @@ func (g *Game) handleServerEvents() error {
 			case *pb.ServerEvent_State:
 				g.serverTick = event.Tick
 				g.state = world.StateBufferFromProto(event.GetState())
-				// Simulate next 2 states.
-				for i := 0; i < futureStates; i++ {
+				// Simulate next N states.
+				for i := 0; i <= futureStates; i++ {
 					g.state.Next()
 				}
 
