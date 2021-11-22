@@ -20,10 +20,6 @@ message EntityIntents {
   Intents intents = 2;
 }
 
-message States {
-  repeated Entity states = 1;
-}
-
 message UpdateBuffer {
   int64 tick = 1;
   repeated EntityIntents intents = 2;
