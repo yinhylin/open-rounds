@@ -15,7 +15,6 @@ import (
 
 	"net/http/pprof"
 
-	"google.golang.org/protobuf/proto"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wspb"
 )
@@ -53,15 +52,14 @@ func NewServer() *Server {
 	})
 
 	go func() {
-		sync := time.NewTicker(50 * time.Millisecond)
+		sync := time.NewTicker(25 * time.Millisecond)
 		tick := time.NewTicker(17 * time.Millisecond)
 		for {
 			select {
 			case <-sync.C:
 				// Send all the clients the current tick the server is on.
 				s.publish(&pb.ServerEvent{
-					Tick:  s.state.CurrentTick(),
-					Event: &pb.ServerEvent_ServerTick{},
+					ServerTick: s.state.CurrentTick(),
 				})
 
 			case <-tick.C:
@@ -89,7 +87,8 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		}); err != nil {
 			// Resync the client if there are any issues with their intents.
 			e.subscriber.Messages <- &pb.ServerEvent{
-				Tick: s.state.CurrentTick(),
+				Tick:       s.state.CurrentTick(),
+				ServerTick: s.state.CurrentTick(),
 				Event: &pb.ServerEvent_State{
 					State: s.state.ToProto(),
 				},
@@ -98,7 +97,8 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		}
 
 		return &pb.ServerEvent{
-			Tick: e.Tick,
+			Tick:       e.Tick,
+			ServerTick: s.state.CurrentTick(),
 			Event: &pb.ServerEvent_EntityEvents{
 				EntityEvents: &pb.EntityEvents{
 					Id:      e.Id,
@@ -115,7 +115,8 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		})
 
 		return &pb.ServerEvent{
-			Tick: s.state.CurrentTick(),
+			Tick:       s.state.CurrentTick(),
+			ServerTick: s.state.CurrentTick(),
 			Event: &pb.ServerEvent_AddEntity{
 				AddEntity: &pb.AddEntity{
 					Entity: &pb.Entity{
@@ -127,7 +128,8 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 
 	case *pb.ClientEvent_Angle:
 		return &pb.ServerEvent{
-			Tick: e.Tick,
+			Tick:       e.Tick,
+			ServerTick: s.state.CurrentTick(),
 			Event: &pb.ServerEvent_EntityAngle{
 				EntityAngle: &pb.EntityAngle{
 					Id:    e.Id,
@@ -138,7 +140,8 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 
 	case *pb.ClientEvent_RequestState:
 		e.subscriber.Messages <- &pb.ServerEvent{
-			Tick: s.state.CurrentTick(),
+			Tick:       s.state.CurrentTick(),
+			ServerTick: s.state.CurrentTick(),
 			Event: &pb.ServerEvent_State{
 				State: s.state.ToProto(),
 			},
@@ -223,7 +226,8 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 			}
 			s.removeSubscriber(sub)
 			s.publish(&pb.ServerEvent{
-				Tick: s.state.CurrentTick(),
+				Tick:       s.state.CurrentTick(),
+				ServerTick: s.state.CurrentTick(),
 				Event: &pb.ServerEvent_RemoveEntity{
 					RemoveEntity: &pb.RemoveEntity{
 						Id: sub.PlayerID,
@@ -259,14 +263,6 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 			return ctx.Err()
 		}
 	}
-}
-
-func toBytesOrDie(event *pb.ServerEvent) []byte {
-	bytes, err := proto.Marshal(event)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return bytes
 }
 
 func (s *Server) publish(event *pb.ServerEvent) {

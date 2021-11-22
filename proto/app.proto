@@ -79,8 +79,6 @@ message EntityAngle {
   double angle = 2;
 }
 
-message Tick {}
-
 message ClientEvent {
   string id = 1;
   int64 tick = 2;
@@ -94,11 +92,11 @@ message ClientEvent {
 
 message ServerEvent {
   int64 tick = 1;
+  int64 server_tick = 2;
   oneof event {
-    AddEntity add_entity = 2;
-    RemoveEntity remove_entity = 3;
-    EntityEvents entity_events = 4;
-    Tick server_tick = 5;
+    AddEntity add_entity = 3;
+    RemoveEntity remove_entity = 4;
+    EntityEvents entity_events = 5;
     StateBuffer state = 6;
     EntityAngle entity_angle = 7;
   }

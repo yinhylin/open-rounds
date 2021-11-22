@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	futureStates = 10
+	futureStates = 8
 )
 
 type Game struct {
@@ -81,6 +81,7 @@ func (g *Game) handleServerEvents() error {
 		var err error
 		select {
 		case event := <-g.serverEvents:
+			g.serverTick = event.ServerTick
 			switch event.Event.(type) {
 			case *pb.ServerEvent_AddEntity:
 				if g.state.Current() == nil {
@@ -123,15 +124,11 @@ func (g *Game) handleServerEvents() error {
 				})
 
 			case *pb.ServerEvent_State:
-				g.serverTick = event.Tick
 				g.state = world.StateBufferFromProto(event.GetState())
 				// Simulate next N states.
 				for i := 0; i <= futureStates; i++ {
 					g.state.Next()
 				}
-
-			case *pb.ServerEvent_ServerTick:
-				g.serverTick = event.Tick
 
 			case *pb.ServerEvent_EntityAngle:
 				if g.state.Current() == nil {
