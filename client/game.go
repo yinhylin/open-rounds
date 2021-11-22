@@ -237,16 +237,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			image = emoji.Image("🤠")
 		}
 
-		options := &ebiten.DrawImageOptions{}
-		options.GeoM.Scale(0.5, 0.5)
-		options.GeoM.Translate(e.Coords.X, e.Coords.Y)
-		options.Filter = ebiten.FilterLinear
+		bodyOptions := &ebiten.DrawImageOptions{}
+		bodyOptions.GeoM.Scale(0.5, 0.5)
+		bodyOptions.GeoM.Translate(e.Coords.X, e.Coords.Y)
+		bodyOptions.Filter = ebiten.FilterLinear
 		_, height := image.Size()
 		height /= 2
-		screen.DrawImage(image, options)
 
 		gun := emoji.Image("🔫")
-		options = &ebiten.DrawImageOptions{}
+		gunOptions := &ebiten.DrawImageOptions{}
 		angle := e.Angle
 		scale := 0.4
 		x := float64(0)
@@ -256,12 +255,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			angle += math.Pi
 			x += 64
 		}
-		options.GeoM.Translate(-64, -64)
-		options.GeoM.Rotate(angle)
-		options.GeoM.Scale(scale, 0.4)
-		options.GeoM.Translate(e.Coords.X+x, e.Coords.Y+48)
-		options.Filter = ebiten.FilterLinear
-		screen.DrawImage(gun, options)
+		gunOptions.GeoM.Translate(-64, -64)
+		gunOptions.GeoM.Rotate(angle)
+		gunOptions.GeoM.Scale(scale, 0.4)
+		gunOptions.GeoM.Translate(e.Coords.X+x, e.Coords.Y+48)
+		gunOptions.Filter = ebiten.FilterLinear
+
+		screen.DrawImage(image, bodyOptions)
+		screen.DrawImage(gun, gunOptions)
 
 		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.Coords.X, e.Coords.Y)
 		ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+height)
