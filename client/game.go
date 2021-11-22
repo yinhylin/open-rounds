@@ -271,7 +271,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return outsideWidth, outsideHeight
+	return 1280, 720
 }
 
 func (g *Game) handleKeysPressed() {
