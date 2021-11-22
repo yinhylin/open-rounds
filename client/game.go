@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
+	"io/ioutil"
 	"log"
 	"math"
 	"rounds/pb"
@@ -17,8 +18,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/segmentio/ksuid"
+	"google.golang.org/protobuf/proto"
 	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wspb"
 )
 
 const (
@@ -339,8 +340,27 @@ func (g *Game) handleKeysPressed() {
 // ReadMessages reads the server messages so the game can update accordingly.
 func (g *Game) ReadMessages(ctx context.Context, c *websocket.Conn) {
 	for {
+		messageType, reader, err := c.Reader(ctx)
+		if messageType != websocket.MessageBinary {
+			continue
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		b, err := ioutil.ReadAll(reader)
+		if err != nil {
+			// TODO: close connection / reconnect
+			log.Fatal(err)
+		}
+		if len(b) <= 0 {
+			continue
+		}
+
 		var serverEvent pb.ServerEvent
-		if err := wspb.Read(ctx, c, &serverEvent); err != nil {
+		err = proto.Unmarshal(b, &serverEvent)
+		if err != nil {
+			// TODO: close connection / reconnect
 			log.Fatal(err)
 		}
 		g.serverEvents <- &serverEvent
@@ -350,7 +370,11 @@ func (g *Game) ReadMessages(ctx context.Context, c *websocket.Conn) {
 // WriteMessages takes the game acitons and sends it to the server.
 func (g *Game) WriteMessages(ctx context.Context, c *websocket.Conn) {
 	for event := range g.clientEvents {
-		if err := wspb.Write(ctx, c, event); err != nil {
+		bytes, err := proto.Marshal(event)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := c.Write(ctx, websocket.MessageBinary, bytes); err != nil {
 			log.Fatal(err)
 		}
 	}
