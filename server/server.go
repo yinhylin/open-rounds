@@ -33,7 +33,7 @@ type event struct {
 
 type Server struct {
 	subscribers map[*subscriber]struct{}
-	mu          sync.Mutex
+	mu          sync.RWMutex
 	serveMux    http.ServeMux
 	events      chan *event
 	state       *world.StateBuffer
@@ -266,8 +266,8 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 }
 
 func (s *Server) publish(event *pb.ServerEvent) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	for sub := range s.subscribers {
 		select {
 		case sub.Messages <- event:

@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	futureStates = 8
+	futureStates = 5
 )
 
 type Game struct {
@@ -81,7 +81,7 @@ func (g *Game) handleServerEvents() error {
 		var err error
 		select {
 		case event := <-g.serverEvents:
-			g.serverTick = event.ServerTick
+			g.serverTick = int64(math.Max(float64(g.serverTick), float64(event.ServerTick)))
 			switch event.Event.(type) {
 			case *pb.ServerEvent_AddEntity:
 				if g.state.Current() == nil {
