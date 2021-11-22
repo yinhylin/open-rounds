@@ -290,31 +290,28 @@ func (g *Game) handleKeysPressed() {
 				intents[pb.Intents_MOVE_DOWN] = struct{}{}
 			}
 		}
-	}
 
-	e := g.state.Current().Entities[g.playerID]
-	angle := e.Angle
-	if ebiten.IsFocused() {
+		e := g.state.Current().Entities[g.playerID]
 		cX, cY := ebiten.CursorPosition()
-		angle = math.Atan2(e.Coords.Y-float64(cY), e.Coords.X-float64(cX))
-	}
-	g.state.ApplyAngle(&world.AngleUpdate{
-		Tick:  g.state.CurrentTick(),
-		ID:    g.playerID,
-		Angle: angle,
-	})
+		angle := math.Atan2(e.Coords.Y-float64(cY), e.Coords.X-float64(cX))
+		g.state.ApplyAngle(&world.AngleUpdate{
+			Tick:  g.state.CurrentTick(),
+			ID:    g.playerID,
+			Angle: angle,
+		})
 
-	// TODO: Lower threshold with lerping.
-	if math.Abs(g.previousAngle-angle) > math.Pi/32 {
-		g.previousAngle = angle
-		g.clientEvents <- &pb.ClientEvent{
-			Id: g.playerID,
-			Event: &pb.ClientEvent_Angle{
-				Angle: &pb.Angle{
-					Angle: angle,
+		// TODO: Lower threshold with lerping.
+		if math.Abs(g.previousAngle-angle) > math.Pi/32 {
+			g.previousAngle = angle
+			g.clientEvents <- &pb.ClientEvent{
+				Id: g.playerID,
+				Event: &pb.ClientEvent_Angle{
+					Angle: &pb.Angle{
+						Angle: angle,
+					},
 				},
-			},
-			Tick: g.state.CurrentTick() + 3,
+				Tick: g.state.CurrentTick() + 3,
+			}
 		}
 	}
 
