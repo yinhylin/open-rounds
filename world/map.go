@@ -3,7 +3,6 @@ package world
 import (
 	"bufio"
 	"errors"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -47,7 +46,6 @@ func (m *Map) At(x, y int) (*Tile, error) {
 }
 
 func (m *Map) ForEach(callback func(x, y int, tile Tile)) {
-	log.Println(m.Height, m.Width)
 	for y := 0; y < m.Height; y++ {
 		for x := 0; x < m.Width; x++ {
 			callback(x, y, tileIndices[m.Tiles[m.Width*y+x]])
