@@ -127,6 +127,11 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		}, nil
 
 	case *pb.ClientEvent_Angle:
+		s.state.ApplyAngle(&world.AngleUpdate{
+			ID:    e.Id,
+			Tick:  e.Tick,
+			Angle: e.GetAngle().Angle,
+		})
 		return &pb.ServerEvent{
 			Tick:       e.Tick,
 			ServerTick: s.state.CurrentTick(),
