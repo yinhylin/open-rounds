@@ -18,7 +18,7 @@ var tileIndices = []Tile{
 	// skyTile
 	{
 		Dense: false,
-		Image: "sky",
+		Image: "",
 	},
 	// platformTile
 	{
@@ -33,9 +33,10 @@ type Tile struct {
 }
 
 type Map struct {
-	Tiles  []tileIndex
-	Width  int
-	Height int
+	Tiles      []tileIndex
+	Background string
+	Width      int
+	Height     int
 }
 
 func (m *Map) At(x, y int) (*Tile, error) {
@@ -68,6 +69,9 @@ func LoadMap(contents string) (*Map, error) {
 		return nil, err
 	}
 
+	scanner.Scan()
+	background := scanner.Text()
+
 	tiles := make([]tileIndex, 0, width*height)
 	for scanner.Scan() {
 		for _, item := range scanner.Text() {
@@ -81,8 +85,9 @@ func LoadMap(contents string) (*Map, error) {
 	}
 
 	return &Map{
-		Tiles:  tiles,
-		Width:  width,
-		Height: height,
+		Tiles:      tiles,
+		Background: background,
+		Width:      width,
+		Height:     height,
 	}, nil
 }

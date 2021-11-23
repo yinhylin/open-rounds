@@ -222,11 +222,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrint(screen, "connecting...")
 		return
 	}
+	screen.DrawImage(g.Image(g.m.Background), nil)
 
 	g.m.ForEach(func(x, y int, tile world.Tile) {
+		if tile.Image == "" {
+			return
+		}
 		image := g.Image(tile.Image)
 		options := &ebiten.DrawImageOptions{}
-		options.GeoM.Translate(float64(x*32), float64(y*32))
+		options.GeoM.Translate(float64(x*128), float64(y*128))
 		screen.DrawImage(image, options)
 	})
 
