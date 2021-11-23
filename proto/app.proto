@@ -25,6 +25,7 @@ message UpdateBuffer {
   repeated EntityIntents intents = 2;
   repeated string add = 3;
   repeated string remove = 4;
+  repeated EntityAngle angles = 5;
 }
 
 message State {

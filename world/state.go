@@ -118,6 +118,9 @@ func UpdateBufferFromProto(p *pb.UpdateBuffer) UpdateBuffer {
 	for _, ID := range p.Remove {
 		u.Remove[ID] = struct{}{}
 	}
+	for _, angle := range p.Angles {
+		u.Angles[angle.Id] = angle.Angle
+	}
 	return u
 }
 
@@ -136,6 +139,12 @@ func (u *UpdateBuffer) ToProto(tick int64) *pb.UpdateBuffer {
 	}
 	for ID := range u.Remove {
 		p.Remove = append(p.Remove, ID)
+	}
+	for ID, angle := range u.Angles {
+		p.Angles = append(p.Angles, &pb.EntityAngle{
+			Id:    ID,
+			Angle: angle,
+		})
 	}
 	return p
 }
