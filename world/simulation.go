@@ -13,7 +13,7 @@ func updateEntity(e *Entity) {
 	var velocity Vector
 	for action := range e.Intents {
 		switch action {
-		case pb.Intents_MOVE_UP:
+		case pb.Intents_JUMP:
 			jump = true
 		case pb.Intents_MOVE_LEFT:
 			velocity.X -= speed

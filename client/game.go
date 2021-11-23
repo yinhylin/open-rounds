@@ -286,9 +286,7 @@ func (g *Game) handleKeysPressed() {
 			case ebiten.KeyD:
 				intents[pb.Intents_MOVE_RIGHT] = struct{}{}
 			case ebiten.KeyW, ebiten.KeySpace:
-				intents[pb.Intents_MOVE_UP] = struct{}{}
-			case ebiten.KeyS:
-				intents[pb.Intents_MOVE_DOWN] = struct{}{}
+				intents[pb.Intents_JUMP] = struct{}{}
 			}
 		}
 

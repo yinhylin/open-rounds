@@ -42,10 +42,10 @@ message StateBuffer {
 message Intents {
   enum Intent {
     NONE = 0;
-    MOVE_UP = 1;
-    MOVE_DOWN = 2;
-    MOVE_LEFT = 3;
-    MOVE_RIGHT = 4;
+    JUMP = 1;
+    MOVE_LEFT = 2;
+    MOVE_RIGHT = 3;
+    SHOOT = 4;
   }
   repeated Intent intents = 1;
 }
