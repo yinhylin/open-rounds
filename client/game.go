@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	futureStates = 5
+	futureStates = 10
 )
 
 type Game struct {
@@ -141,7 +141,7 @@ func (g *Game) handleServerEvents() error {
 					continue
 				}
 				g.state.ApplyAngle(&world.AngleUpdate{
-					Tick:  g.state.CurrentTick(),
+					Tick:  event.Tick,
 					ID:    msg.Id,
 					Angle: msg.Angle,
 				})
@@ -277,6 +277,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func (g *Game) handleKeysPressed() {
 	intents := make(map[pb.Intents_Intent]struct{})
+	delayedTick := g.state.CurrentTick() + g.inputDelay
 	if ebiten.IsFocused() {
 		for _, key := range inpututil.AppendPressedKeys(nil) {
 			switch key {
@@ -294,15 +295,15 @@ func (g *Game) handleKeysPressed() {
 		e := g.state.Current().Entities[g.playerID]
 		cX, cY := ebiten.CursorPosition()
 		angle := math.Atan2(e.Coords.Y-float64(cY), e.Coords.X-float64(cX))
-		g.state.ApplyAngle(&world.AngleUpdate{
-			Tick:  g.state.CurrentTick(),
-			ID:    g.playerID,
-			Angle: angle,
-		})
 
 		// TODO: Lower threshold with lerping.
 		if math.Abs(g.previousAngle-angle) > math.Pi/32 {
 			g.previousAngle = angle
+			g.state.ApplyAngle(&world.AngleUpdate{
+				Tick:  delayedTick,
+				ID:    g.playerID,
+				Angle: angle,
+			})
 			g.clientEvents <- &pb.ClientEvent{
 				Id: g.playerID,
 				Event: &pb.ClientEvent_Angle{
@@ -310,7 +311,7 @@ func (g *Game) handleKeysPressed() {
 						Angle: angle,
 					},
 				},
-				Tick: g.state.CurrentTick() + 3,
+				Tick: delayedTick,
 			}
 		}
 	}
@@ -321,18 +322,17 @@ func (g *Game) handleKeysPressed() {
 	}
 	g.previousIntents = intents
 
-	tick := g.state.CurrentTick() + g.inputDelay
 	g.state.ApplyIntents(&world.IntentsUpdate{
 		ID:      g.playerID,
 		Intents: intents,
-		Tick:    tick,
+		Tick:    delayedTick,
 	})
 	g.clientEvents <- &pb.ClientEvent{
 		Id: g.playerID,
 		Event: &pb.ClientEvent_Intents{
 			Intents: world.IntentsToProto(intents),
 		},
-		Tick: tick,
+		Tick: delayedTick,
 	}
 }
 
