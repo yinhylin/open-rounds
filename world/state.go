@@ -102,7 +102,6 @@ func entitiesEqual(a, b map[string]Entity) bool {
 
 type UpdateBuffer struct {
 	Intents map[string]map[pb.Intents_Intent]struct{}
-	Angles  map[string]float64
 	Add     map[string]struct{}
 	Remove  map[string]struct{}
 }
@@ -143,7 +142,6 @@ func (u *UpdateBuffer) ToProto(tick int64) *pb.UpdateBuffer {
 func NewUpdateBuffer() UpdateBuffer {
 	return UpdateBuffer{
 		Intents: make(map[string]map[pb.Intents_Intent]struct{}),
-		Angles:  make(map[string]float64),
 		Add:     make(map[string]struct{}),
 		Remove:  make(map[string]struct{}),
 	}
@@ -359,10 +357,7 @@ func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) error {
 
 func (s *StateBuffer) ApplyAngle(msg *AngleUpdate) error {
 	if msg.Tick > s.currentTick {
-		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
-			buffer.Angles[msg.ID] = msg.Angle
-			return buffer
-		})
+		// TODO: maybe buffer these like the rest? but doesn't really matter much
 		return nil
 	}
 
