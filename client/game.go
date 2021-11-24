@@ -184,14 +184,14 @@ func (g *Game) Update() error {
 
 	if g.state.CurrentTick() < g.serverTick && g.state.CurrentTick() != world.NilTick {
 		// 10 frames behind? Re-request entire server state.
-		if g.serverTick-g.state.CurrentTick() > 10 {
+		if g.serverTick-g.state.CurrentTick() > 20 {
 			log.Println("requesting server state. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 			g.requestState()
 			return nil
 
 		}
 
-		for g.serverTick-g.state.CurrentTick() > 5 {
+		for g.serverTick-g.state.CurrentTick() > futureStates {
 			log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
 			g.state.Next()
 		}
