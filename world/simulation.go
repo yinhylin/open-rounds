@@ -45,9 +45,17 @@ func updateEntity(e *Entity) {
 	}
 }
 
+func updateBullet(b *Bullet) bool {
+	b.Velocity.Y = math.Min(b.Velocity.Y+1, 32)
+	b.Coords.X += b.Velocity.X
+	b.Coords.Y += b.Velocity.Y
+	return b.Coords.Y < 720
+}
+
 func Simulate(s State, u UpdateBuffer) State {
 	next := s
 	next.Entities = make(map[string]Entity, len(s.Entities))
+	next.Bullets = make(map[string]Bullet, len(s.Bullets))
 	// Add
 	for ID := range u.Add {
 		log.Println("add ", ID)
@@ -55,6 +63,11 @@ func Simulate(s State, u UpdateBuffer) State {
 	}
 
 	// Update
+	for ID, bullet := range s.Bullets {
+		if updateBullet(&bullet) {
+			next.Bullets[ID] = bullet
+		}
+	}
 	for ID, entity := range s.Entities {
 		if _, ok := u.Remove[ID]; ok {
 			log.Println("remove ", ID)

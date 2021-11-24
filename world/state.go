@@ -3,6 +3,7 @@ package world
 import (
 	"fmt"
 	"log"
+	"math"
 	"rounds/pb"
 )
 
@@ -10,6 +11,7 @@ const NilTick int64 = -1
 
 type State struct {
 	Entities map[string]Entity
+	Bullets  map[string]Bullet
 	Tick     int64
 }
 
@@ -64,6 +66,12 @@ type AngleUpdate struct {
 type AddEntity struct {
 	ID   string
 	Tick int64
+}
+
+type AddBullet struct {
+	Source string
+	ID     string
+	Tick   int64
 }
 
 type RemoveEntity struct {
@@ -205,6 +213,17 @@ func (s *StateBuffer) ToProto() *pb.StateBuffer {
 	return p
 }
 
+func (s *StateBuffer) ForEachBullet(callback func(string, *Bullet)) {
+	current := s.Current()
+	if current == nil {
+		return
+	}
+
+	for ID, bullet := range current.Bullets {
+		callback(ID, &bullet)
+	}
+}
+
 func (s *StateBuffer) ForEachEntity(callback func(string, *Entity)) {
 	current := s.Current()
 	if current == nil {
@@ -318,13 +337,9 @@ func (s *StateBuffer) AddEntity(msg *AddEntity) error {
 		return nil
 	}
 
-	return s.applyUpdate(msg.Tick, func(existing State) State {
-		existing.Entities[msg.ID] = Entity{ID: msg.ID}
-		fmt.Printf("%+v\n", existing.Entities)
-		return State{
-			Entities: existing.Entities,
-			Tick:     msg.Tick,
-		}
+	return s.applyUpdate(msg.Tick, func(state State) State {
+		state.Entities[msg.ID] = Entity{ID: msg.ID}
+		return state
 	})
 }
 
@@ -337,12 +352,9 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) error {
 		return nil
 	}
 
-	return s.applyUpdate(msg.Tick, func(existing State) State {
-		delete(existing.Entities, msg.ID)
-		return State{
-			Entities: existing.Entities,
-			Tick:     msg.Tick,
-		}
+	return s.applyUpdate(msg.Tick, func(state State) State {
+		delete(state.Entities, msg.ID)
+		return state
 	})
 }
 
@@ -355,14 +367,11 @@ func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) error {
 		return nil
 	}
 
-	return s.applyUpdate(msg.Tick, func(existing State) State {
-		entity := existing.Entities[msg.ID]
+	return s.applyUpdate(msg.Tick, func(state State) State {
+		entity := state.Entities[msg.ID]
 		entity.Intents = msg.Intents
-		existing.Entities[msg.ID] = entity
-		return State{
-			Entities: existing.Entities,
-			Tick:     msg.Tick,
-		}
+		state.Entities[msg.ID] = entity
+		return state
 	})
 }
 
@@ -375,13 +384,33 @@ func (s *StateBuffer) ApplyAngle(msg *AngleUpdate) error {
 		return nil
 	}
 
-	return s.applyUpdate(msg.Tick, func(existing State) State {
-		entity := existing.Entities[msg.ID]
+	return s.applyUpdate(msg.Tick, func(state State) State {
+		entity := state.Entities[msg.ID]
 		entity.Angle = msg.Angle
-		existing.Entities[msg.ID] = entity
-		return State{
-			Entities: existing.Entities,
-			Tick:     msg.Tick,
+		state.Entities[msg.ID] = entity
+		return state
+	})
+}
+
+func (s *StateBuffer) AddBullet(msg *AddBullet) error {
+	if msg.Tick > s.currentTick {
+		// TODO: future states
+		return nil
+	}
+
+	return s.applyUpdate(msg.Tick, func(state State) State {
+		// TODO: Validate can shoot etc. YOLO for now.
+		entity := state.Entities[msg.Source]
+		state.Bullets[msg.ID] = Bullet{
+			ID:     msg.ID,
+			Coords: entity.Coords,
+			Velocity: Vector{
+				// TODO: Use gun constants and stuff.
+				X: -math.Cos(entity.Angle)*30 + entity.Velocity.X,
+				Y: -math.Sin(entity.Angle)*30 + entity.Velocity.Y,
+			},
+			Angle: entity.Angle,
 		}
+		return state
 	})
 }

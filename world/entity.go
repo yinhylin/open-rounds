@@ -6,11 +6,19 @@ type Vector struct {
 	X, Y float64
 }
 
+// TODO: This all needs a giant refactor to dedupe things. :(
 type Entity struct {
 	ID       string
 	Coords   Vector
 	Velocity Vector
 	Intents  map[pb.Intents_Intent]struct{}
+	Angle    float64
+}
+
+type Bullet struct {
+	ID       string
+	Coords   Vector
+	Velocity Vector
 	Angle    float64
 }
 

@@ -196,7 +196,7 @@ func (g *Game) Update() error {
 			g.state.Next()
 		}
 	}
-	g.handleKeysPressed()
+	g.handleInput()
 	g.state.Next()
 	return nil
 }
@@ -268,6 +268,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+height)
 	})
 
+	g.state.ForEachBullet(func(ID string, e *world.Bullet) {
+		image := emoji.Image("🔴")
+		opt := &ebiten.DrawImageOptions{}
+		opt.GeoM.Scale(0.1, 0.1)
+		opt.GeoM.Translate(32, 32)
+		opt.GeoM.Translate(e.Coords.X, e.Coords.Y)
+		screen.DrawImage(image, opt)
+	})
+
 	ebitenutil.DebugPrint(screen, g.debugString())
 }
 
@@ -275,7 +284,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return 1280, 720
 }
 
-func (g *Game) handleKeysPressed() {
+func (g *Game) handleInput() {
 	intents := make(map[pb.Intents_Intent]struct{})
 	delayedTick := g.state.CurrentTick() + g.inputDelay
 	if ebiten.IsFocused() {
@@ -294,8 +303,9 @@ func (g *Game) handleKeysPressed() {
 		cX, cY := ebiten.CursorPosition()
 		angle := math.Atan2(e.Coords.Y-float64(cY), e.Coords.X-float64(cX))
 
+		shoot := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 		// TODO: Lower threshold with lerping.
-		if math.Abs(g.previousAngle-angle) > math.Pi/32 {
+		if shoot || math.Abs(g.previousAngle-angle) > math.Pi/32 {
 			g.previousAngle = angle
 			g.state.ApplyAngle(&world.AngleUpdate{
 				Tick:  delayedTick,
@@ -310,6 +320,19 @@ func (g *Game) handleKeysPressed() {
 					},
 				},
 				Tick: delayedTick,
+			}
+		}
+
+		if shoot {
+			g.state.AddBullet(&world.AddBullet{
+				Source: g.playerID,
+				ID:     ksuid.New().String(),
+				Tick:   g.state.CurrentTick(),
+			})
+			g.clientEvents <- &pb.ClientEvent{
+				Id:    g.playerID,
+				Event: &pb.ClientEvent_Shoot{},
+				Tick:  delayedTick,
 			}
 		}
 	}
