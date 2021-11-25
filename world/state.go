@@ -110,7 +110,7 @@ func entitiesEqual(a, b map[string]Entity) bool {
 
 type StateBuffer struct {
 	states       []State
-	updateBuffer map[int64]UpdateBuffer
+	updateBuffer map[int64]*UpdateBuffer
 	index        int
 	currentTick  int64
 }
@@ -128,7 +128,7 @@ func StateBufferFromProto(p *pb.StateBuffer) *StateBuffer {
 		}
 	}
 
-	updateBuffer := make(map[int64]UpdateBuffer, len(p.UpdateBuffers))
+	updateBuffer := make(map[int64]*UpdateBuffer, len(p.UpdateBuffers))
 	for _, buffer := range p.UpdateBuffers {
 		updateBuffer[buffer.Tick] = UpdateBufferFromProto(buffer)
 	}
@@ -197,7 +197,7 @@ func (s *StateBuffer) Clear() {
 func NewStateBuffer(maxCapacity int) *StateBuffer {
 	return &StateBuffer{
 		states:       newRingBuffer(maxCapacity),
-		updateBuffer: make(map[int64]UpdateBuffer),
+		updateBuffer: make(map[int64]*UpdateBuffer),
 		currentTick:  NilTick,
 	}
 }
@@ -263,18 +263,17 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) error 
 	return fmt.Errorf("could not find tick. current=%d, server=%d", s.currentTick, tick)
 }
 
-func (s *StateBuffer) modifyUpdateBuffer(tick int64, callback func(UpdateBuffer) UpdateBuffer) {
+func (s *StateBuffer) modifyUpdateBuffer(tick int64, callback func(*UpdateBuffer)) {
 	if _, ok := s.updateBuffer[tick]; !ok {
 		s.updateBuffer[tick] = NewUpdateBuffer()
 	}
-	s.updateBuffer[tick] = callback(s.updateBuffer[tick])
+	callback(s.updateBuffer[tick])
 }
 
 func (s *StateBuffer) AddEntity(msg *AddEntity) error {
 	if msg.Tick > s.currentTick {
-		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
+		s.modifyUpdateBuffer(msg.Tick, func(buffer *UpdateBuffer) {
 			buffer.Add[msg.ID] = struct{}{}
-			return buffer
 		})
 		return nil
 	}
@@ -287,9 +286,8 @@ func (s *StateBuffer) AddEntity(msg *AddEntity) error {
 
 func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) error {
 	if msg.Tick > s.currentTick {
-		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
+		s.modifyUpdateBuffer(msg.Tick, func(buffer *UpdateBuffer) {
 			buffer.Remove[msg.ID] = struct{}{}
-			return buffer
 		})
 		return nil
 	}
@@ -302,9 +300,8 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) error {
 
 func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) error {
 	if msg.Tick > s.currentTick {
-		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
+		s.modifyUpdateBuffer(msg.Tick, func(buffer *UpdateBuffer) {
 			buffer.Intents[msg.ID] = msg.Intents
-			return buffer
 		})
 		return nil
 	}
@@ -319,9 +316,8 @@ func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) error {
 
 func (s *StateBuffer) ApplyAngle(msg *AngleUpdate) error {
 	if msg.Tick > s.currentTick {
-		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
+		s.modifyUpdateBuffer(msg.Tick, func(buffer *UpdateBuffer) {
 			buffer.Angles[msg.ID] = msg.Angle
-			return buffer
 		})
 		return nil
 	}
@@ -336,9 +332,8 @@ func (s *StateBuffer) ApplyAngle(msg *AngleUpdate) error {
 
 func (s *StateBuffer) AddBullet(msg *AddBullet) error {
 	if msg.Tick > s.currentTick {
-		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
+		s.modifyUpdateBuffer(msg.Tick, func(buffer *UpdateBuffer) {
 			buffer.Shots[msg.Source] = append(buffer.Shots[msg.Source], msg.ID)
-			return buffer
 		})
 		return nil
 	}

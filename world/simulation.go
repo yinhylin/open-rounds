@@ -52,10 +52,17 @@ func updateBullet(b *Bullet) bool {
 	return b.Coords.Y < 720
 }
 
-func Simulate(s State, u UpdateBuffer) State {
+var emptyUpdateBuffer *UpdateBuffer = &UpdateBuffer{}
+
+func Simulate(s State, u *UpdateBuffer) State {
+	if u == nil {
+		u = emptyUpdateBuffer
+	}
+
 	next := s
 	next.Entities = make(map[string]Entity, len(s.Entities))
 	next.Bullets = make(map[string]Bullet, len(s.Bullets))
+
 	// Add
 	for ID := range u.Add {
 		log.Println("add ", ID)

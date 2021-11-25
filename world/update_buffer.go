@@ -10,7 +10,7 @@ type UpdateBuffer struct {
 	Shots   map[string][]string
 }
 
-func UpdateBufferFromProto(p *pb.UpdateBuffer) UpdateBuffer {
+func UpdateBufferFromProto(p *pb.UpdateBuffer) *UpdateBuffer {
 	u := NewUpdateBuffer()
 	for _, intent := range p.Intents {
 		u.Intents[intent.Id] = IntentsFromProto(intent.Intents)
@@ -63,8 +63,8 @@ func (u *UpdateBuffer) ToProto(tick int64) *pb.UpdateBuffer {
 	return p
 }
 
-func NewUpdateBuffer() UpdateBuffer {
-	return UpdateBuffer{
+func NewUpdateBuffer() *UpdateBuffer {
+	return &UpdateBuffer{
 		Intents: make(map[string]map[pb.Intents_Intent]struct{}),
 		Angles:  make(map[string]float64),
 		Add:     make(map[string]struct{}),
