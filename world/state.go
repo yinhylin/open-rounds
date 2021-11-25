@@ -23,6 +23,7 @@ func StateFromProto(p *pb.State) *State {
 	return &State{
 		Tick:    p.Tick,
 		Players: PlayersFromProto(p.PlayerStates),
+		Bullets: BulletsFromProto(p.Bullets),
 	}
 }
 
@@ -30,5 +31,6 @@ func (s *State) ToProto() *pb.State {
 	return &pb.State{
 		Tick:         s.Tick,
 		PlayerStates: PlayersToProto(s.Players),
+		Bullets:      BulletsToProto(s.Bullets),
 	}
 }

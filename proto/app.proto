@@ -15,9 +15,15 @@ message Player {
   double angle = 5;
 }
 
+message Bullet {
+  Vector velocity = 1;
+  Vector position = 2;
+}
+
 message State {
   int64 tick = 1;
   repeated Player player_states = 2;
+  repeated Bullet bullets = 3;
 }
 
 message StateBuffer {
