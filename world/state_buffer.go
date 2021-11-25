@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"rounds/pb"
+	"sort"
 )
 
 type StateBuffer struct {
@@ -124,8 +125,24 @@ func (s *StateBuffer) ForEachBullet(callback func(string, *Bullet)) {
 
 func (s *StateBuffer) ForEachPlayer(callback func(string, *Player)) {
 	if current := s.Current(); current != nil {
-		for ID, entity := range current.Players {
-			callback(ID, &entity)
+		sortedIDs := make([]string, 0, len(current.Players))
+		for ID := range current.Players {
+			sortedIDs = append(sortedIDs, ID)
+		}
+		sort.Slice(sortedIDs, func(i, j int) bool {
+			l := current.Players[sortedIDs[i]]
+			r := current.Players[sortedIDs[j]]
+			if l.Coords.Y == r.Coords.Y {
+				if l.Coords.X == r.Coords.X {
+					return l.ID > r.ID
+				}
+				return l.Coords.X > r.Coords.X
+			}
+			return l.Coords.Y > r.Coords.Y
+		})
+		for _, ID := range sortedIDs {
+			player := current.Players[ID]
+			callback(ID, &player)
 		}
 	}
 }
