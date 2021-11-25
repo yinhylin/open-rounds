@@ -109,7 +109,7 @@ func entitiesEqual(a, b map[string]Entity) bool {
 }
 
 type StateBuffer struct {
-	states       []State
+	states       []*State
 	updateBuffer map[int64]*UpdateBuffer
 	index        int
 	currentTick  int64
@@ -120,7 +120,7 @@ func StateBufferFromProto(p *pb.StateBuffer) *StateBuffer {
 	currentTick := NilTick
 	index := -1
 	for i := range p.States {
-		state := *StateFromProto(p.States[i])
+		state := StateFromProto(p.States[i])
 		states[i] = state
 		if state.Tick > currentTick {
 			currentTick = state.Tick
@@ -181,10 +181,12 @@ func (s *StateBuffer) CurrentTick() int64 {
 	return s.currentTick
 }
 
-func newRingBuffer(maxCapacity int) []State {
-	states := make([]State, maxCapacity)
+func newRingBuffer(maxCapacity int) []*State {
+	states := make([]*State, maxCapacity)
 	for i := range states {
-		states[i].Tick = NilTick
+		states[i] = &State{
+			Tick: NilTick,
+		}
 	}
 	return states
 }
@@ -208,7 +210,7 @@ func (s *StateBuffer) Add(state *State) {
 		index = s.index
 	}
 	s.index = index
-	s.states[index] = *state
+	s.states[index] = state
 	s.currentTick = state.Tick
 }
 
@@ -218,10 +220,10 @@ func (s *StateBuffer) Next() *State {
 		return nil
 	}
 
-	next := Simulate(*current, s.updateBuffer[s.currentTick+1])
-	s.Add(&next)
+	next := Simulate(current, s.updateBuffer[s.currentTick+1])
+	s.Add(next)
 	delete(s.updateBuffer, s.currentTick)
-	return &next
+	return next
 }
 
 func (s *StateBuffer) Current() *State {
@@ -229,7 +231,7 @@ func (s *StateBuffer) Current() *State {
 	if current.Tick == NilTick {
 		return nil
 	}
-	return &current
+	return current
 }
 
 func (s *StateBuffer) walkNextStates(index int, steps int, callback func(int)) {
@@ -242,7 +244,7 @@ func (s *StateBuffer) walkNextStates(index int, steps int, callback func(int)) {
 	}
 }
 
-func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) error {
+func (s *StateBuffer) applyUpdate(tick int64, callback func(*State)) error {
 	if s.currentTick < tick {
 		log.Fatal(tick, s.currentTick)
 	}
@@ -251,12 +253,12 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(State) State) error 
 		if state.Tick != tick {
 			continue
 		}
-		s.states[i] = callback(s.states[i])
-		currentState := &s.states[i]
+		callback(s.states[i])
+		currentState := s.states[i]
 		// Re-simulate.
 		s.walkNextStates(i, int(s.currentTick-state.Tick), func(index int) {
-			s.states[index] = Simulate(*currentState, s.updateBuffer[currentState.Tick+1])
-			currentState = &s.states[index]
+			s.states[index] = Simulate(currentState, s.updateBuffer[currentState.Tick+1])
+			currentState = s.states[index]
 		})
 		return nil
 	}
@@ -278,9 +280,8 @@ func (s *StateBuffer) AddEntity(msg *AddEntity) error {
 		return nil
 	}
 
-	return s.applyUpdate(msg.Tick, func(state State) State {
+	return s.applyUpdate(msg.Tick, func(state *State) {
 		state.Entities[msg.ID] = Entity{ID: msg.ID}
-		return state
 	})
 }
 
@@ -292,9 +293,8 @@ func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) error {
 		return nil
 	}
 
-	return s.applyUpdate(msg.Tick, func(state State) State {
+	return s.applyUpdate(msg.Tick, func(state *State) {
 		delete(state.Entities, msg.ID)
-		return state
 	})
 }
 
@@ -306,11 +306,10 @@ func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) error {
 		return nil
 	}
 
-	return s.applyUpdate(msg.Tick, func(state State) State {
+	return s.applyUpdate(msg.Tick, func(state *State) {
 		entity := state.Entities[msg.ID]
 		entity.Intents = msg.Intents
 		state.Entities[msg.ID] = entity
-		return state
 	})
 }
 
@@ -322,11 +321,10 @@ func (s *StateBuffer) ApplyAngle(msg *AngleUpdate) error {
 		return nil
 	}
 
-	return s.applyUpdate(msg.Tick, func(state State) State {
+	return s.applyUpdate(msg.Tick, func(state *State) {
 		entity := state.Entities[msg.ID]
 		entity.Angle = msg.Angle
 		state.Entities[msg.ID] = entity
-		return state
 	})
 }
 
@@ -338,7 +336,7 @@ func (s *StateBuffer) AddBullet(msg *AddBullet) error {
 		return nil
 	}
 
-	return s.applyUpdate(msg.Tick, func(state State) State {
+	return s.applyUpdate(msg.Tick, func(state *State) {
 		// TODO: Validate can shoot etc. YOLO for now.
 		entity := state.Entities[msg.Source]
 		state.Bullets[msg.ID] = Bullet{
@@ -351,6 +349,5 @@ func (s *StateBuffer) AddBullet(msg *AddBullet) error {
 			},
 			Angle: entity.Angle,
 		}
-		return state
 	})
 }

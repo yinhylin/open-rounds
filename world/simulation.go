@@ -54,12 +54,12 @@ func updateBullet(b *Bullet) bool {
 
 var emptyUpdateBuffer *UpdateBuffer = &UpdateBuffer{}
 
-func Simulate(s State, u *UpdateBuffer) State {
+func Simulate(s *State, u *UpdateBuffer) *State {
 	if u == nil {
 		u = emptyUpdateBuffer
 	}
 
-	next := s
+	next := *s
 	next.Entities = make(map[string]Entity, len(s.Entities))
 	next.Bullets = make(map[string]Bullet, len(s.Bullets))
 
@@ -107,5 +107,5 @@ func Simulate(s State, u *UpdateBuffer) State {
 	}
 
 	next.Tick++
-	return next
+	return &next
 }
