@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ebiten/emoji"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -182,22 +181,22 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	g.state.ForEachPlayer(func(ID string, e *world.Player) {
 		// lol
-		image := emoji.Image("🥴")
+		image := g.Image("zany")
 		if ID == g.playerID {
-			image = emoji.Image("🤠")
+			image = g.Image("cowboy")
 		}
 
 		bodyOptions := &ebiten.DrawImageOptions{}
-		bodyOptions.GeoM.Scale(0.5, 0.5)
+		bodyOptions.GeoM.Scale(0.1, 0.1)
 		bodyOptions.GeoM.Translate(e.Coords.X, e.Coords.Y)
 		bodyOptions.Filter = ebiten.FilterLinear
 		_, height := image.Size()
-		height /= 2
+		height /= 10
 
-		gun := emoji.Image("🔫")
+		gun := g.Image("pistol")
 		gunOptions := &ebiten.DrawImageOptions{}
 		angle := e.Angle
-		scale := 0.4
+		scale := 0.1
 		x := float64(0)
 		if math.Abs(angle) > math.Pi/2 {
 			scale *= -1
@@ -205,10 +204,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			angle += math.Pi
 			x += 64
 		}
-		gunOptions.GeoM.Translate(-64, -64)
+
+		width, height := image.Size()
+		gunOptions.GeoM.Translate(float64(-width/2), float64(-height/2))
 		gunOptions.GeoM.Rotate(angle)
-		gunOptions.GeoM.Scale(scale, 0.4)
-		gunOptions.GeoM.Translate(e.Coords.X+x, e.Coords.Y+48)
+		gunOptions.GeoM.Scale(scale, 0.1)
+		gunOptions.GeoM.Translate(e.Coords.X+x, e.Coords.Y+32)
 		gunOptions.Filter = ebiten.FilterLinear
 
 		screen.DrawImage(image, bodyOptions)
