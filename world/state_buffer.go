@@ -9,7 +9,7 @@ import (
 
 type StateBuffer struct {
 	states       []*State
-	updateBuffer map[int64]*UpdateBuffer
+	futureEvents map[int64][]*pb.ServerEvent
 	index        int
 	currentTick  int64
 }
@@ -50,7 +50,7 @@ func (s *StateBuffer) Clear() {
 func NewStateBuffer(maxCapacity int) *StateBuffer {
 	return &StateBuffer{
 		states:       newRingBuffer(maxCapacity),
-		updateBuffer: make(map[int64]*UpdateBuffer),
+		futureEvents: make(map[int64][]*pb.ServerEvent),
 		currentTick:  NilTick,
 	}
 }
@@ -71,9 +71,12 @@ func (s *StateBuffer) Next() *State {
 		return nil
 	}
 
-	next := Simulate(current, s.updateBuffer[s.currentTick+1])
+	next := Simulate(current)
 	s.Add(next)
-	delete(s.updateBuffer, s.currentTick)
+	for _, event := range s.futureEvents[s.currentTick] {
+		s.OnEvent(event)
+	}
+	delete(s.futureEvents, s.currentTick)
 	return next
 }
 
@@ -108,7 +111,7 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(*State)) error {
 		currentState := s.states[i]
 		// Re-simulate.
 		s.walkNextStates(i, int(s.currentTick-state.Tick), func(index int) {
-			s.states[index] = Simulate(currentState, s.updateBuffer[currentState.Tick+1])
+			s.states[index] = Simulate(currentState)
 			currentState = s.states[index]
 		})
 		return nil
@@ -116,91 +119,59 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(*State)) error {
 	return fmt.Errorf("could not find tick. current=%d, server=%d", s.currentTick, tick)
 }
 
-func (s *StateBuffer) modifyUpdateBuffer(tick int64, callback func(*UpdateBuffer)) {
-	if _, ok := s.updateBuffer[tick]; !ok {
-		s.updateBuffer[tick] = NewUpdateBuffer()
-	}
-	callback(s.updateBuffer[tick])
-}
-
-func (s *StateBuffer) AddEntity(msg *AddEntity) error {
-	if msg.Tick > s.currentTick {
-		s.modifyUpdateBuffer(msg.Tick, func(buffer *UpdateBuffer) {
-			buffer.Add[msg.ID] = struct{}{}
-		})
+func (s *StateBuffer) OnEvent(e *pb.ServerEvent) error {
+	if e.Tick > s.currentTick {
+		s.futureEvents[e.Tick] = append(s.futureEvents[e.Tick], e)
 		return nil
 	}
 
-	return s.applyUpdate(msg.Tick, func(state *State) {
-		state.Entities[msg.ID] = Entity{ID: msg.ID}
-	})
-}
-
-func (s *StateBuffer) RemoveEntity(msg *RemoveEntity) error {
-	if msg.Tick > s.currentTick {
-		s.modifyUpdateBuffer(msg.Tick, func(buffer *UpdateBuffer) {
-			buffer.Remove[msg.ID] = struct{}{}
+	switch e.Event.(type) {
+	case *pb.ServerEvent_AddEntity:
+		ID := e.GetAddEntity().Entity.Id
+		return s.applyUpdate(e.Tick, func(state *State) {
+			state.Entities[ID] = Entity{ID: ID}
 		})
-		return nil
-	}
 
-	return s.applyUpdate(msg.Tick, func(state *State) {
-		delete(state.Entities, msg.ID)
-	})
-}
-
-func (s *StateBuffer) ApplyIntents(msg *IntentsUpdate) error {
-	if msg.Tick > s.currentTick {
-		s.modifyUpdateBuffer(msg.Tick, func(buffer *UpdateBuffer) {
-			buffer.Intents[msg.ID] = msg.Intents
+	case *pb.ServerEvent_RemoveEntity:
+		ID := e.GetRemoveEntity().Id
+		return s.applyUpdate(e.Tick, func(state *State) {
+			delete(state.Entities, ID)
 		})
-		return nil
-	}
 
-	return s.applyUpdate(msg.Tick, func(state *State) {
-		entity := state.Entities[msg.ID]
-		entity.Intents = msg.Intents
-		state.Entities[msg.ID] = entity
-	})
-}
-
-func (s *StateBuffer) ApplyAngle(msg *AngleUpdate) error {
-	if msg.Tick > s.currentTick {
-		s.modifyUpdateBuffer(msg.Tick, func(buffer *UpdateBuffer) {
-			buffer.Angles[msg.ID] = msg.Angle
+	case *pb.ServerEvent_EntityEvents:
+		msg := e.GetEntityEvents()
+		return s.applyUpdate(e.Tick, func(state *State) {
+			entity := state.Entities[msg.Id]
+			entity.Intents = IntentsFromProto(msg.Intents)
+			state.Entities[msg.Id] = entity
 		})
-		return nil
-	}
 
-	return s.applyUpdate(msg.Tick, func(state *State) {
-		entity := state.Entities[msg.ID]
-		entity.Angle = msg.Angle
-		state.Entities[msg.ID] = entity
-	})
-}
-
-func (s *StateBuffer) AddBullet(msg *AddBullet) error {
-	if msg.Tick > s.currentTick {
-		s.modifyUpdateBuffer(msg.Tick, func(buffer *UpdateBuffer) {
-			buffer.Shots[msg.Source] = append(buffer.Shots[msg.Source], msg.ID)
+	case *pb.ServerEvent_EntityAngle:
+		msg := e.GetEntityAngle()
+		return s.applyUpdate(e.Tick, func(state *State) {
+			entity := state.Entities[msg.Id]
+			entity.Angle = msg.Angle
+			state.Entities[msg.Id] = entity
 		})
-		return nil
-	}
 
-	return s.applyUpdate(msg.Tick, func(state *State) {
+	case *pb.ServerEvent_EntityShoot:
+		msg := e.GetEntityShoot()
 		// TODO: Validate can shoot etc. YOLO for now.
-		entity := state.Entities[msg.Source]
-		state.Bullets[msg.ID] = Bullet{
-			ID:     msg.ID,
-			Coords: entity.Coords,
-			Velocity: Vector{
-				// TODO: Use gun constants and stuff.
-				X: -math.Cos(entity.Angle)*30 + entity.Velocity.X,
-				Y: -math.Sin(entity.Angle)*30 + entity.Velocity.Y,
-			},
-			Angle: entity.Angle,
-		}
-	})
+		return s.applyUpdate(e.Tick, func(state *State) {
+			entity := state.Entities[msg.SourceId]
+			state.Bullets[msg.Id] = Bullet{
+				ID:     msg.Id,
+				Coords: entity.Coords,
+				Velocity: Vector{
+					// TODO: Use gun constants and stuff.
+					X: -math.Cos(entity.Angle)*30 + entity.Velocity.X,
+					Y: -math.Sin(entity.Angle)*30 + entity.Velocity.Y,
+				},
+				Angle: entity.Angle,
+			}
+		})
+	}
+	return fmt.Errorf("unhandled event=%+v\n", e)
 }
 
 func StateBufferFromProto(p *pb.StateBuffer) *StateBuffer {
@@ -216,13 +187,13 @@ func StateBufferFromProto(p *pb.StateBuffer) *StateBuffer {
 		}
 	}
 
-	updateBuffer := make(map[int64]*UpdateBuffer, len(p.UpdateBuffers))
-	for _, buffer := range p.UpdateBuffers {
-		updateBuffer[buffer.Tick] = UpdateBufferFromProto(buffer)
+	futureEvents := make(map[int64][]*pb.ServerEvent, len(p.FutureEvents))
+	for _, event := range p.FutureEvents {
+		futureEvents[event.Tick] = append(futureEvents[event.Tick], event)
 	}
 	return &StateBuffer{
 		states:       states,
-		updateBuffer: updateBuffer,
+		futureEvents: futureEvents,
 		index:        index,
 		currentTick:  currentTick,
 	}
@@ -230,15 +201,17 @@ func StateBufferFromProto(p *pb.StateBuffer) *StateBuffer {
 
 func (s *StateBuffer) ToProto() *pb.StateBuffer {
 	p := &pb.StateBuffer{
-		MaxCapacity:   int64(cap(s.states)),
-		States:        make([]*pb.State, 0, len(s.states)),
-		UpdateBuffers: make([]*pb.UpdateBuffer, 0, len(s.updateBuffer)),
+		MaxCapacity:  int64(cap(s.states)),
+		States:       make([]*pb.State, 0, len(s.states)),
+		FutureEvents: make([]*pb.ServerEvent, 0, len(s.futureEvents)),
 	}
 	for _, state := range s.states {
 		p.States = append(p.States, state.ToProto())
 	}
-	for tick, buffer := range s.updateBuffer {
-		p.UpdateBuffers = append(p.UpdateBuffers, buffer.ToProto(tick))
+	for _, events := range s.futureEvents {
+		for _, event := range events {
+			p.FutureEvents = append(p.FutureEvents, event)
+		}
 	}
 	return p
 }

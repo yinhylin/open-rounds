@@ -80,22 +80,6 @@ func NewServer() *Server {
 func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 	switch e.Event.(type) {
 	case *pb.ClientEvent_Intents:
-		if err := s.state.ApplyIntents(&world.IntentsUpdate{
-			ID:      e.Id,
-			Tick:    e.Tick,
-			Intents: world.IntentsFromProto(e.GetIntents()),
-		}); err != nil {
-			// Resync the client if there are any issues with their intents.
-			e.subscriber.Messages <- &pb.ServerEvent{
-				Tick:       s.state.CurrentTick(),
-				ServerTick: s.state.CurrentTick(),
-				Event: &pb.ServerEvent_State{
-					State: s.state.ToProto(),
-				},
-			}
-			return nil, nil
-		}
-
 		return &pb.ServerEvent{
 			Tick:       e.Tick,
 			ServerTick: s.state.CurrentTick(),
@@ -109,11 +93,6 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 
 	case *pb.ClientEvent_Connect:
 		e.subscriber.PlayerID = e.Id
-		s.state.AddEntity(&world.AddEntity{
-			Tick: s.state.CurrentTick(),
-			ID:   e.Id,
-		})
-
 		return &pb.ServerEvent{
 			Tick:       s.state.CurrentTick(),
 			ServerTick: s.state.CurrentTick(),
@@ -127,11 +106,6 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		}, nil
 
 	case *pb.ClientEvent_Angle:
-		s.state.ApplyAngle(&world.AngleUpdate{
-			ID:    e.Id,
-			Tick:  e.Tick,
-			Angle: e.GetAngle().Angle,
-		})
 		return &pb.ServerEvent{
 			Tick:       e.Tick,
 			ServerTick: s.state.CurrentTick(),
@@ -144,11 +118,6 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		}, nil
 
 	case *pb.ClientEvent_Shoot:
-		s.state.AddBullet(&world.AddBullet{
-			ID:     e.GetShoot().Id,
-			Tick:   e.Tick,
-			Source: e.Id,
-		})
 		return &pb.ServerEvent{
 			Tick:       e.Tick,
 			ServerTick: s.state.CurrentTick(),
@@ -184,6 +153,7 @@ func (s *Server) onTick() {
 			continue
 		}
 		if serverEvent != nil {
+			s.state.OnEvent(serverEvent)
 			serverEvents = append(serverEvents, serverEvent)
 		}
 	}
@@ -247,7 +217,7 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 				return
 			}
 			s.removeSubscriber(sub)
-			s.publish(&pb.ServerEvent{
+			event := &pb.ServerEvent{
 				Tick:       s.state.CurrentTick(),
 				ServerTick: s.state.CurrentTick(),
 				Event: &pb.ServerEvent_RemoveEntity{
@@ -255,11 +225,11 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 						Id: sub.PlayerID,
 					},
 				},
-			})
-			s.state.RemoveEntity(&world.RemoveEntity{
-				Tick: s.state.CurrentTick(),
-				ID:   sub.PlayerID,
-			})
+			}
+			if err := s.state.OnEvent(event); err != nil {
+				log.Println(err)
+			}
+			s.publish(event)
 		}()
 
 		for {

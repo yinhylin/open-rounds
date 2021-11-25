@@ -60,7 +60,7 @@ func NewGame(assets *Assets) *Game {
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
 		serverTick:      world.NilTick,
 		clientEvents:    clientEvents,
-		inputDelay:      3,
+		inputDelay:      6,
 		previousIntents: make(map[pb.Intents_Intent]struct{}),
 	}
 }
@@ -79,87 +79,45 @@ func (g *Game) requestState() {
 
 // handleServerEvents drains and applies server events every tick.
 func (g *Game) handleServerEvents() error {
+	requestState := false
+	defer func() {
+		if requestState {
+			g.requestState()
+		}
+	}()
+
 	for len(g.serverEvents) > 0 {
-		var err error
 		select {
 		case event := <-g.serverEvents:
 			g.serverTick = int64(math.Max(float64(g.serverTick), float64(event.ServerTick)))
-			if g.state.Current() == nil {
-				if _, ok := event.Event.(*pb.ServerEvent_State); !ok {
-					continue
-				}
-			}
-
-			switch event.Event.(type) {
-			case *pb.ServerEvent_AddEntity:
-				err = g.state.AddEntity(&world.AddEntity{
-					Tick: event.Tick,
-					ID:   event.GetAddEntity().Entity.Id,
-				})
-
-			case *pb.ServerEvent_RemoveEntity:
-				err = g.state.RemoveEntity(&world.RemoveEntity{
-					Tick: event.Tick,
-					ID:   event.GetRemoveEntity().Id,
-				})
-
-			case *pb.ServerEvent_EntityEvents:
-				msg := event.GetEntityEvents()
-				if msg.Id == g.playerID {
-					// TODO: Store a rolling buffer of input delay and ease instead of updating immediately.
-					difference := g.state.CurrentTick() - event.Tick
-					if difference > 2 {
-						g.inputDelay++
-					}
-					if difference < 1 {
-						g.inputDelay--
-					}
-					continue
-				}
-				err = g.state.ApplyIntents(&world.IntentsUpdate{
-					Tick:    event.Tick,
-					ID:      msg.Id,
-					Intents: world.IntentsFromProto(msg.Intents),
-				})
-
-			case *pb.ServerEvent_State:
+			if _, ok := event.Event.(*pb.ServerEvent_State); ok {
 				g.state = world.StateBufferFromProto(event.GetState())
 				// Simulate next N states.
 				for i := 0; i <= futureStates; i++ {
 					g.state.Next()
 				}
-
-			case *pb.ServerEvent_EntityAngle:
-				msg := event.GetEntityAngle()
-				if msg.Id == g.playerID {
-					continue
-				}
-				g.state.ApplyAngle(&world.AngleUpdate{
-					Tick:  event.Tick,
-					ID:    msg.Id,
-					Angle: msg.Angle,
-				})
-
-			case *pb.ServerEvent_EntityShoot:
-				msg := event.GetEntityShoot()
-				if msg.SourceId == g.playerID {
-					continue
-				}
-				g.state.AddBullet(&world.AddBullet{
-					Tick:   event.Tick,
-					Source: msg.SourceId,
-					ID:     msg.Id,
-				})
+				continue
 			}
+
+			switch event.Event.(type) {
+			case *pb.ServerEvent_State:
+				g.state = world.StateBufferFromProto(event.GetState())
+				for i := 0; i <= futureStates; i++ {
+					g.state.Next()
+				}
+
+			case *pb.ServerEvent_AddEntity, *pb.ServerEvent_EntityAngle, *pb.ServerEvent_RemoveEntity, *pb.ServerEvent_EntityShoot, *pb.ServerEvent_EntityEvents:
+				if err := g.state.OnEvent(event); err != nil {
+					log.Println(err)
+					requestState = true
+				}
+			}
+
 		default:
 			return errors.New("should never block")
 
 		}
 
-		if err != nil {
-			log.Println(err)
-			g.requestState()
-		}
 	}
 	return nil
 }
@@ -312,10 +270,14 @@ func (g *Game) handleInput() {
 		// TODO: Lower threshold with lerping.
 		if shoot || math.Abs(g.previousAngle-angle) > math.Pi/32 {
 			g.previousAngle = angle
-			g.state.ApplyAngle(&world.AngleUpdate{
-				Tick:  delayedTick,
-				ID:    g.playerID,
-				Angle: angle,
+			g.state.OnEvent(&pb.ServerEvent{
+				Tick: delayedTick,
+				Event: &pb.ServerEvent_EntityAngle{
+					EntityAngle: &pb.EntityAngle{
+						Id:    g.playerID,
+						Angle: angle,
+					},
+				},
 			})
 			g.clientEvents <- &pb.ClientEvent{
 				Id: g.playerID,
@@ -330,10 +292,14 @@ func (g *Game) handleInput() {
 
 		if shoot {
 			shotID := ksuid.New().String()
-			g.state.AddBullet(&world.AddBullet{
-				Source: g.playerID,
-				ID:     shotID,
-				Tick:   delayedTick,
+			g.state.OnEvent(&pb.ServerEvent{
+				Tick: delayedTick,
+				Event: &pb.ServerEvent_EntityShoot{
+					EntityShoot: &pb.EntityShoot{
+						Id:       shotID,
+						SourceId: g.playerID,
+					},
+				},
 			})
 			g.clientEvents <- &pb.ClientEvent{
 				Id: g.playerID,
@@ -353,10 +319,14 @@ func (g *Game) handleInput() {
 	}
 	g.previousIntents = intents
 
-	g.state.ApplyIntents(&world.IntentsUpdate{
-		ID:      g.playerID,
-		Intents: intents,
-		Tick:    delayedTick,
+	g.state.OnEvent(&pb.ServerEvent{
+		Tick: delayedTick,
+		Event: &pb.ServerEvent_EntityEvents{
+			EntityEvents: &pb.EntityEvents{
+				Id:      g.playerID,
+				Intents: world.IntentsToProto(intents),
+			},
+		},
 	})
 	g.clientEvents <- &pb.ClientEvent{
 		Id: g.playerID,

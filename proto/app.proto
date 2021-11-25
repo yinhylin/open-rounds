@@ -20,15 +20,6 @@ message EntityIntents {
   Intents intents = 2;
 }
 
-message UpdateBuffer {
-  int64 tick = 1;
-  repeated EntityIntents intents = 2;
-  repeated string add = 3;
-  repeated string remove = 4;
-  repeated EntityAngle angles = 5;
-  repeated EntityShoot shots = 6;
-}
-
 message State {
   int64 tick = 1;
   repeated Entity entity_states = 2;
@@ -36,8 +27,8 @@ message State {
 
 message StateBuffer {
   repeated State states = 1;
-  repeated UpdateBuffer update_buffers = 2;
-  int64 max_capacity = 4;
+  repeated ServerEvent future_events = 2;
+  int64 max_capacity = 3;
 }
 
 message Intents {
