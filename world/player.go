@@ -2,10 +2,6 @@ package world
 
 import "rounds/pb"
 
-type Vector struct {
-	X, Y float64
-}
-
 // TODO: This all needs a giant refactor to dedupe things. :(
 type Player struct {
 	ID       string
@@ -13,27 +9,6 @@ type Player struct {
 	Velocity Vector
 	Intents  map[pb.Intents_Intent]struct{}
 	Angle    float64
-}
-
-type Bullet struct {
-	ID       string
-	Coords   Vector
-	Velocity Vector
-	Angle    float64
-}
-
-func (v *Vector) ToProto() *pb.Vector {
-	return &pb.Vector{
-		X: v.X,
-		Y: v.Y,
-	}
-}
-
-func VectorFromProto(v *pb.Vector) Vector {
-	return Vector{
-		X: v.X,
-		Y: v.Y,
-	}
 }
 
 func IntentsToProto(actions map[pb.Intents_Intent]struct{}) *pb.Intents {

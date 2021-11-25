@@ -20,10 +20,6 @@ func NewState() *State {
 	}
 }
 
-func (s *State) Next() {
-
-}
-
 func StateFromProto(p *pb.State) *State {
 	return &State{
 		Tick:    p.Tick,

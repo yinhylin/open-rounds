@@ -57,8 +57,6 @@ func Simulate(s *State) *State {
 		Bullets: make(map[string]Bullet, len(s.Bullets)),
 		Tick:    s.Tick + 1,
 	}
-
-	// Update
 	for ID, bullet := range s.Bullets {
 		if updateBullet(&bullet) {
 			next.Bullets[ID] = bullet
