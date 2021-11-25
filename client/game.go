@@ -220,7 +220,7 @@ func (g *Game) handleInput() {
 
 		e := g.state.Current().Players[g.playerID]
 		cX, cY := ebiten.CursorPosition()
-		angle := math.Atan2(e.Coords.Y-float64(cY), e.Coords.X-float64(cX))
+		angle := math.Atan2(e.Coords.Y+16-float64(cY), e.Coords.X+16-float64(cX))
 
 		shoot := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 		// TODO: Lower threshold with lerping.
