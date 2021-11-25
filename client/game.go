@@ -27,7 +27,6 @@ const (
 type Game struct {
 	*Assets
 	state           *world.StateBuffer
-	m               *world.Map
 	playerID        string
 	serverEvents    chan *pb.ServerEvent
 	clientEvents    chan *pb.ClientEvent
@@ -53,8 +52,7 @@ func NewGame(assets *Assets) *Game {
 
 	return &Game{
 		Assets:          assets,
-		m:               assets.Map("basic"),
-		state:           world.NewStateBuffer(20),
+		state:           nil,
 		playerID:        playerID,
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
 		serverTick:      world.NilTick,
@@ -65,15 +63,15 @@ func NewGame(assets *Assets) *Game {
 }
 
 func (g *Game) requestState() {
-	if g.state.CurrentTick() == world.NilTick {
+	if g.state == nil {
 		return
 	}
-	g.state.Clear()
 	g.clientEvents <- &pb.ClientEvent{
 		Id:    g.playerID,
 		Tick:  g.state.CurrentTick(),
 		Event: &pb.ClientEvent_RequestState{},
 	}
+	g.state = nil
 }
 
 // handleServerEvents drains and applies server events every tick.
@@ -84,7 +82,7 @@ func (g *Game) handleServerEvents() error {
 		case event := <-g.serverEvents:
 			g.serverTick = int64(math.Max(float64(g.serverTick), float64(event.Tick)))
 			if player := event.GetPlayer(); player != nil {
-				if player.Id == g.playerID {
+				if g.state == nil || player.Id == g.playerID {
 					continue
 				}
 				if err := g.state.OnEvent(event); err != nil {
@@ -125,7 +123,7 @@ func (g *Game) Update() error {
 		return err
 	}
 
-	if g.state.CurrentTick() == world.NilTick || g.serverTick == world.NilTick {
+	if g.state == nil || g.serverTick == world.NilTick {
 		return nil
 	}
 
@@ -166,7 +164,7 @@ func (g *Game) debugString() string {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	if g.state.Current() == nil {
+	if g.state == nil {
 		screen.Fill(color.RGBA{
 			0,
 			0,
@@ -177,7 +175,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		return
 	}
 
-	g.m.ForEach(func(x, y int, tile world.Tile) {
+	g.state.Map().ForEach(func(x, y int64, tile world.Tile) {
 		image := g.Image(tile.Image)
 		options := &ebiten.DrawImageOptions{}
 		options.GeoM.Translate(float64(x*32), float64(y*32))

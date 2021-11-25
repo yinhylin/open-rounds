@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"image"
 	_ "image/png"
-	"io/ioutil"
 	"log"
 	"path/filepath"
-	"rounds/world"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -26,7 +24,6 @@ var Version string
 
 type Assets struct {
 	images map[string]*ebiten.Image
-	maps   map[string]*world.Map
 }
 
 func (a *Assets) Image(name string) *ebiten.Image {
@@ -37,18 +34,9 @@ func (a *Assets) Image(name string) *ebiten.Image {
 	return image
 }
 
-func (a *Assets) Map(name string) *world.Map {
-	m := a.maps[name]
-	if m == nil {
-		log.Fatalf("invalid map name: %s", name)
-	}
-	return m
-}
-
 func LoadAssets() (*Assets, error) {
 	a := &Assets{
 		images: make(map[string]*ebiten.Image),
-		maps:   make(map[string]*world.Map),
 	}
 
 	files, err := assets.ReadDir(dir)
@@ -79,23 +67,6 @@ func LoadAssets() (*Assets, error) {
 				return nil, err
 			}
 			a.images[name] = ebiten.NewImageFromImage(decoded)
-		case ".map":
-			if _, ok := a.maps[name]; ok {
-				return nil, fmt.Errorf("duplicate filename: %s", name)
-			}
-			file, err := assets.Open(strings.Join([]string{dir, f.Name()}, "/"))
-			if err != nil {
-				return nil, err
-			}
-			contents, err := ioutil.ReadAll(file)
-			if err != nil {
-				return nil, err
-			}
-			m, err := world.LoadMap(string(contents))
-			if err != nil {
-				return nil, err
-			}
-			a.maps[name] = m
 		}
 	}
 	return a, nil

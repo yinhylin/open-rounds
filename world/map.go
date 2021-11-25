@@ -3,6 +3,7 @@ package world
 import (
 	"bufio"
 	"errors"
+	"rounds/pb"
 	"strconv"
 	"strings"
 )
@@ -34,20 +35,44 @@ type Tile struct {
 
 type Map struct {
 	Tiles  []tileIndex
-	Width  int
-	Height int
+	Width  int64
+	Height int64
 }
 
-func (m *Map) At(x, y int) (*Tile, error) {
+func (m *Map) ToProto() *pb.Map {
+	tiles := make([]int64, len(m.Tiles))
+	for i, tile := range m.Tiles {
+		tiles[i] = int64(tile)
+	}
+	return &pb.Map{
+		Tiles:  tiles,
+		Width:  int64(m.Width),
+		Height: int64(m.Height),
+	}
+}
+
+func MapFromProto(p *pb.Map) *Map {
+	tiles := make([]tileIndex, len(p.Tiles))
+	for i, tile := range p.Tiles {
+		tiles[i] = tileIndex(tile)
+	}
+	return &Map{
+		Tiles:  tiles,
+		Width:  p.Width,
+		Height: p.Height,
+	}
+}
+
+func (m *Map) At(x, y int64) (*Tile, error) {
 	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
 		return nil, errors.New("out of bounds")
 	}
 	return &tileIndices[m.Tiles[m.Width*y+x]], nil
 }
 
-func (m *Map) ForEach(callback func(x, y int, tile Tile)) {
-	for y := 0; y < m.Height; y++ {
-		for x := 0; x < m.Width; x++ {
+func (m *Map) ForEach(callback func(x, y int64, tile Tile)) {
+	for y := int64(0); y < m.Height; y++ {
+		for x := int64(0); x < m.Width; x++ {
 			callback(x, y, tileIndices[m.Tiles[m.Width*y+x]])
 		}
 	}
@@ -82,7 +107,7 @@ func LoadMap(contents string) (*Map, error) {
 
 	return &Map{
 		Tiles:  tiles,
-		Width:  width,
-		Height: height,
+		Width:  int64(width),
+		Height: int64(height),
 	}, nil
 }

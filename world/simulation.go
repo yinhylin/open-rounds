@@ -5,7 +5,7 @@ import (
 	"rounds/pb"
 )
 
-func updatePlayer(e *Player, s *State) {
+func updatePlayer(e *Player, s *State, m *Map) {
 	const speed = 10
 	// TODO: Don't overwrite velocity.
 	jump := false
@@ -27,22 +27,49 @@ func updatePlayer(e *Player, s *State) {
 	// gravity
 	velocity.Y = math.Min(e.Velocity.Y+2, 16)
 	e.Velocity = velocity
-	e.Coords.X += e.Velocity.X
-	e.Coords.Y += e.Velocity.Y
+	coords := Vector{
+		X: e.Coords.X + e.Velocity.X,
+		Y: e.Coords.Y + e.Velocity.Y,
+	}
+	toCheck := []Vector{
+		{0, 32},
+		{32, 0},
+		{32, 32},
+	}
+	grounded := false
+	for _, d := range toCheck {
+		c := Vector{
+			X: coords.X + d.X,
+			Y: coords.Y + d.Y,
+		}
+		x := int64(c.X / 32)
+		y := int64(c.Y / 32)
+
+		tile, err := m.At(x, y)
+		if err != nil {
+			continue
+		}
+
+		if tile.Dense {
+			if d.Y > 0 {
+				coords = Vector{
+					X: coords.X,
+					Y: float64((y - 1) * 32),
+				}
+			}
+			grounded = true
+			continue
+		}
+	}
+	e.Coords = coords
 
 	// TODO: This needs to be proper collision detection but yolo prototyping.
 	// TODO: Finish Map.
-	if e.Coords.Y > 500 {
-		e.Coords.Y = 500
-		if !jump {
-			// lol bounce
-			e.Velocity.Y = -math.Abs(e.Velocity.Y / 1.25)
-		} else {
-			e.Velocity.Y = 0
-		}
+	if grounded {
+		e.Velocity.Y = 0
 	}
 
-	if e.Coords.Y == 500 && jump {
+	if grounded && jump {
 		e.Velocity.Y -= 32
 	}
 
@@ -65,7 +92,7 @@ func updateBullet(b *Bullet) bool {
 	return b.Coords.Y < 720
 }
 
-func Simulate(s *State) *State {
+func Simulate(s *State, m *Map) *State {
 	next := &State{
 		Players: make(map[string]Player, len(s.Players)),
 		Bullets: make([]Bullet, 0, len(s.Bullets)),
@@ -77,7 +104,7 @@ func Simulate(s *State) *State {
 		}
 	}
 	for ID, player := range s.Players {
-		updatePlayer(&player, next)
+		updatePlayer(&player, next, m)
 		next.Players[ID] = player
 	}
 	return next

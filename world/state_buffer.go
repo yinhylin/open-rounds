@@ -13,13 +13,15 @@ type StateBuffer struct {
 	futureEvents map[int64][]*pb.ServerEvent
 	index        int
 	currentTick  int64
+	m            *Map
 }
 
-func NewStateBuffer(maxCapacity int) *StateBuffer {
+func NewStateBuffer(maxCapacity int, m *Map) *StateBuffer {
 	return &StateBuffer{
 		states:       newRingBuffer(maxCapacity),
 		futureEvents: make(map[int64][]*pb.ServerEvent),
 		currentTick:  NilTick,
+		m:            m,
 	}
 }
 
@@ -70,7 +72,7 @@ func (s *StateBuffer) Next() *State {
 		return nil
 	}
 
-	next := Simulate(current)
+	next := Simulate(current, s.m)
 	s.Add(next)
 	for _, event := range s.futureEvents[s.currentTick] {
 		s.OnEvent(event)
@@ -84,6 +86,10 @@ func (s *StateBuffer) Current() *State {
 		return current
 	}
 	return nil
+}
+
+func (s *StateBuffer) Map() *Map {
+	return s.m
 }
 
 func (s *StateBuffer) Clear() {
@@ -168,7 +174,7 @@ func (s *StateBuffer) applyUpdate(tick int64, callback func(*State)) error {
 		currentState := s.states[i]
 		// Re-simulate.
 		s.walkNextStates(i, int(s.currentTick-state.Tick), func(index int) {
-			s.states[index] = Simulate(currentState)
+			s.states[index] = Simulate(currentState, s.m)
 			currentState = s.states[index]
 		})
 		return nil
@@ -198,6 +204,7 @@ func StateBufferFromProto(p *pb.StateBuffer) *StateBuffer {
 		futureEvents: futureEvents,
 		index:        index,
 		currentTick:  currentTick,
+		m:            MapFromProto(p.Map),
 	}
 }
 
@@ -206,6 +213,7 @@ func (s *StateBuffer) ToProto() *pb.StateBuffer {
 		MaxCapacity:  int64(cap(s.states)),
 		States:       make([]*pb.State, 0, len(s.states)),
 		FutureEvents: make([]*pb.ServerEvent, 0, len(s.futureEvents)),
+		Map:          s.m.ToProto(),
 	}
 	for _, state := range s.states {
 		p.States = append(p.States, state.ToProto())

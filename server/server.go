@@ -2,7 +2,10 @@ package server
 
 import (
 	"context"
+	"embed"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -11,12 +14,50 @@ import (
 	"os/signal"
 	"rounds/pb"
 	"rounds/world"
+	"strings"
 	"sync"
 	"time"
 
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wspb"
 )
+
+//go:embed maps/*
+var mapsFS embed.FS
+
+func loadMaps() (map[string]*world.Map, error) {
+	maps := make(map[string]*world.Map)
+	files, err := mapsFS.ReadDir("maps")
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range files {
+		if f.IsDir() {
+			return nil, errors.New("directories not supported")
+		}
+
+		if _, ok := maps[f.Name()]; ok {
+			return nil, fmt.Errorf("already seen %s", f.Name())
+		}
+
+		file, err := mapsFS.Open(strings.Join([]string{"maps", f.Name()}, "/"))
+		if err != nil {
+			return nil, err
+		}
+
+		contents, err := ioutil.ReadAll(file)
+		if err != nil {
+			return nil, err
+		}
+
+		m, err := world.LoadMap(string(contents))
+		if err != nil {
+			return nil, err
+		}
+		maps[f.Name()] = m
+	}
+	return maps, nil
+}
 
 // TODO: non-global subscribers. rooms or something?
 type subscriber struct {
@@ -36,13 +77,20 @@ type Server struct {
 	serveMux    http.ServeMux
 	events      chan *event
 	state       *world.StateBuffer
+	maps        map[string]*world.Map
 }
 
 func NewServer() *Server {
+	maps, err := loadMaps()
+	log.Printf("%+v\n", maps)
+	if err != nil {
+		log.Fatal(err)
+	}
 	s := &Server{
 		subscribers: make(map[*subscriber]struct{}),
 		events:      make(chan *event, 1024),
-		state:       world.NewStateBuffer(32),
+		state:       world.NewStateBuffer(32, maps["basic"]),
+		maps:        maps,
 	}
 
 	s.state.Add(&world.State{

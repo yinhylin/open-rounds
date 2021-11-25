@@ -20,6 +20,12 @@ message Bullet {
   Vector position = 2;
 }
 
+message Map {
+  int64 width = 1;
+  int64 height = 2;
+  repeated int64 tiles = 3;
+}
+
 message State {
   int64 tick = 1;
   repeated Player player_states = 2;
@@ -30,6 +36,7 @@ message StateBuffer {
   repeated State states = 1;
   repeated ServerEvent future_events = 2;
   int64 max_capacity = 3;
+  Map map = 4;
 }
 
 message Intents {
