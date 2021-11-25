@@ -77,19 +77,10 @@ func NewServer() *Server {
 	return s
 }
 
-func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
+func (s *Server) onEvent(e *event) *pb.ServerEvent {
 	switch e.Event.(type) {
-	case *pb.ClientEvent_Intents:
-		return &pb.ServerEvent{
-			Tick:       e.Tick,
-			ServerTick: s.state.CurrentTick(),
-			Event: &pb.ServerEvent_PlayerIntents{
-				PlayerIntents: &pb.PlayerIntents{
-					Id:      e.Id,
-					Intents: e.GetIntents(),
-				},
-			},
-		}, nil
+	case *pb.ClientEvent_Intents, *pb.ClientEvent_Angle, *pb.ClientEvent_Shoot:
+		return world.ClientEventToServerEvent(s.state.CurrentTick(), e.ClientEvent)
 
 	case *pb.ClientEvent_Connect:
 		e.subscriber.PlayerID = e.Id
@@ -101,31 +92,7 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 					Id: e.Id,
 				},
 			},
-		}, nil
-
-	case *pb.ClientEvent_Angle:
-		return &pb.ServerEvent{
-			Tick:       e.Tick,
-			ServerTick: s.state.CurrentTick(),
-			Event: &pb.ServerEvent_PlayerAngle{
-				PlayerAngle: &pb.PlayerAngle{
-					Id:    e.Id,
-					Angle: e.GetAngle().Angle,
-				},
-			},
-		}, nil
-
-	case *pb.ClientEvent_Shoot:
-		return &pb.ServerEvent{
-			Tick:       e.Tick,
-			ServerTick: s.state.CurrentTick(),
-			Event: &pb.ServerEvent_PlayerShoot{
-				PlayerShoot: &pb.PlayerShoot{
-					Id:       e.GetShoot().Id,
-					SourceId: e.Id,
-				},
-			},
-		}, nil
+		}
 
 	case *pb.ClientEvent_RequestState:
 		e.subscriber.Messages <- &pb.ServerEvent{
@@ -137,7 +104,7 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		}
 
 	}
-	return nil, nil
+	return nil
 }
 
 func (s *Server) onTick() {
@@ -146,11 +113,7 @@ func (s *Server) onTick() {
 
 	for len(s.events) > 0 {
 		event := <-s.events
-		serverEvent, err := s.onEvent(event)
-		if err != nil {
-			continue
-		}
-		if serverEvent != nil {
+		if serverEvent := s.onEvent(event); serverEvent != nil {
 			s.state.OnEvent(serverEvent)
 			serverEvents = append(serverEvents, serverEvent)
 		}

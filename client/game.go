@@ -80,12 +80,6 @@ func (g *Game) requestState() {
 // handleServerEvents drains and applies server events every tick.
 func (g *Game) handleServerEvents() error {
 	requestState := false
-	defer func() {
-		if requestState {
-			g.requestState()
-		}
-	}()
-
 	for len(g.serverEvents) > 0 {
 		select {
 		case event := <-g.serverEvents:
@@ -108,7 +102,9 @@ func (g *Game) handleServerEvents() error {
 			return errors.New("should never block")
 
 		}
-
+	}
+	if requestState {
+		g.requestState()
 	}
 	return nil
 }
@@ -261,16 +257,7 @@ func (g *Game) handleInput() {
 		// TODO: Lower threshold with lerping.
 		if shoot || math.Abs(g.previousAngle-angle) > math.Pi/32 {
 			g.previousAngle = angle
-			g.state.OnEvent(&pb.ServerEvent{
-				Tick: delayedTick,
-				Event: &pb.ServerEvent_PlayerAngle{
-					PlayerAngle: &pb.PlayerAngle{
-						Id:    g.playerID,
-						Angle: angle,
-					},
-				},
-			})
-			g.clientEvents <- &pb.ClientEvent{
+			g.processClientEvent(&pb.ClientEvent{
 				Id: g.playerID,
 				Event: &pb.ClientEvent_Angle{
 					Angle: &pb.Angle{
@@ -278,29 +265,19 @@ func (g *Game) handleInput() {
 					},
 				},
 				Tick: delayedTick,
-			}
+			})
 		}
 
 		if shoot {
-			shotID := ksuid.New().String()
-			g.state.OnEvent(&pb.ServerEvent{
-				Tick: delayedTick,
-				Event: &pb.ServerEvent_PlayerShoot{
-					PlayerShoot: &pb.PlayerShoot{
-						Id:       shotID,
-						SourceId: g.playerID,
-					},
-				},
-			})
-			g.clientEvents <- &pb.ClientEvent{
+			g.processClientEvent(&pb.ClientEvent{
 				Id: g.playerID,
 				Event: &pb.ClientEvent_Shoot{
 					Shoot: &pb.Shoot{
-						Id: shotID,
+						Id: ksuid.New().String(),
 					},
 				},
 				Tick: delayedTick,
-			}
+			})
 		}
 	}
 
@@ -309,23 +286,20 @@ func (g *Game) handleInput() {
 		return
 	}
 	g.previousIntents = intents
-
-	g.state.OnEvent(&pb.ServerEvent{
-		Tick: delayedTick,
-		Event: &pb.ServerEvent_PlayerIntents{
-			PlayerIntents: &pb.PlayerIntents{
-				Id:      g.playerID,
-				Intents: world.IntentsToProto(intents),
-			},
-		},
-	})
-	g.clientEvents <- &pb.ClientEvent{
+	g.processClientEvent(&pb.ClientEvent{
 		Id: g.playerID,
 		Event: &pb.ClientEvent_Intents{
 			Intents: world.IntentsToProto(intents),
 		},
 		Tick: delayedTick,
+	})
+}
+
+func (g *Game) processClientEvent(event *pb.ClientEvent) {
+	if serverEvent := world.ClientEventToServerEvent(world.NilTick, event); serverEvent != nil {
+		g.serverEvents <- serverEvent
 	}
+	g.clientEvents <- event
 }
 
 // ReadMessages reads the server messages so the game can update accordingly.
