@@ -78,10 +78,11 @@ func NewServer() *Server {
 }
 
 func (s *Server) onEvent(e *event) *pb.ServerEvent {
-	switch e.Event.(type) {
-	case *pb.ClientEvent_Intents, *pb.ClientEvent_Angle, *pb.ClientEvent_Shoot:
-		return world.ClientEventToServerEvent(s.state.CurrentTick(), e.ClientEvent)
+	if event := world.ClientEventToServerEvent(s.state.CurrentTick(), e.ClientEvent); event != nil {
+		return event
+	}
 
+	switch e.Event.(type) {
 	case *pb.ClientEvent_Connect:
 		e.subscriber.PlayerID = e.Id
 		return &pb.ServerEvent{

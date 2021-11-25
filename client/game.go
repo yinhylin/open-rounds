@@ -84,6 +84,9 @@ func (g *Game) handleServerEvents() error {
 		case event := <-g.serverEvents:
 			g.serverTick = int64(math.Max(float64(g.serverTick), float64(event.Tick)))
 			if player := event.GetPlayer(); player != nil {
+				if player.Id == g.playerID {
+					continue
+				}
 				if err := g.state.OnEvent(event); err != nil {
 					log.Println(err)
 					requestState = true
@@ -263,7 +266,7 @@ func (g *Game) handleInput() {
 
 func (g *Game) processClientEvent(event *pb.ClientEvent) {
 	if serverEvent := world.ClientEventToServerEvent(world.NilTick, event); serverEvent != nil {
-		g.serverEvents <- serverEvent
+		g.state.OnEvent(serverEvent)
 	}
 	g.clientEvents <- event
 }
