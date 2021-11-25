@@ -113,6 +113,7 @@ type UpdateBuffer struct {
 	Angles  map[string]float64
 	Add     map[string]struct{}
 	Remove  map[string]struct{}
+	Shots   map[string][]string
 }
 
 func UpdateBufferFromProto(p *pb.UpdateBuffer) UpdateBuffer {
@@ -128,6 +129,9 @@ func UpdateBufferFromProto(p *pb.UpdateBuffer) UpdateBuffer {
 	}
 	for _, angle := range p.Angles {
 		u.Angles[angle.Id] = angle.Angle
+	}
+	for _, shot := range p.Shots {
+		u.Shots[shot.SourceId] = append(u.Shots[shot.SourceId], shot.Id)
 	}
 	return u
 }
@@ -154,6 +158,14 @@ func (u *UpdateBuffer) ToProto(tick int64) *pb.UpdateBuffer {
 			Angle: angle,
 		})
 	}
+	for source, shots := range u.Shots {
+		for _, ID := range shots {
+			p.Shots = append(p.Shots, &pb.EntityShoot{
+				Id:       ID,
+				SourceId: source,
+			})
+		}
+	}
 	return p
 }
 
@@ -163,6 +175,7 @@ func NewUpdateBuffer() UpdateBuffer {
 		Angles:  make(map[string]float64),
 		Add:     make(map[string]struct{}),
 		Remove:  make(map[string]struct{}),
+		Shots:   make(map[string][]string),
 	}
 }
 
@@ -394,7 +407,10 @@ func (s *StateBuffer) ApplyAngle(msg *AngleUpdate) error {
 
 func (s *StateBuffer) AddBullet(msg *AddBullet) error {
 	if msg.Tick > s.currentTick {
-		// TODO: future states
+		s.modifyUpdateBuffer(msg.Tick, func(buffer UpdateBuffer) UpdateBuffer {
+			buffer.Shots[msg.Source] = append(buffer.Shots[msg.Source], msg.ID)
+			return buffer
+		})
 		return nil
 	}
 

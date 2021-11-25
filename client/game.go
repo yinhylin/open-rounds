@@ -145,6 +145,20 @@ func (g *Game) handleServerEvents() error {
 					ID:    msg.Id,
 					Angle: msg.Angle,
 				})
+
+			case *pb.ServerEvent_EntityShoot:
+				if g.state.Current() == nil {
+					continue
+				}
+				msg := event.GetEntityShoot()
+				if msg.SourceId == g.playerID {
+					continue
+				}
+				g.state.AddBullet(&world.AddBullet{
+					Tick:   event.Tick,
+					Source: msg.SourceId,
+					ID:     msg.Id,
+				})
 			}
 		default:
 			return errors.New("should never block")
@@ -324,15 +338,20 @@ func (g *Game) handleInput() {
 		}
 
 		if shoot {
+			shotID := ksuid.New().String()
 			g.state.AddBullet(&world.AddBullet{
 				Source: g.playerID,
-				ID:     ksuid.New().String(),
-				Tick:   g.state.CurrentTick(),
+				ID:     shotID,
+				Tick:   delayedTick,
 			})
 			g.clientEvents <- &pb.ClientEvent{
-				Id:    g.playerID,
-				Event: &pb.ClientEvent_Shoot{},
-				Tick:  delayedTick,
+				Id: g.playerID,
+				Event: &pb.ClientEvent_Shoot{
+					Shoot: &pb.Shoot{
+						Id: shotID,
+					},
+				},
+				Tick: delayedTick,
 			}
 		}
 	}

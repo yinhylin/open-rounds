@@ -68,6 +68,21 @@ func Simulate(s State, u UpdateBuffer) State {
 			next.Bullets[ID] = bullet
 		}
 	}
+	for source, shots := range u.Shots {
+		entity := s.Entities[source]
+		for _, ID := range shots {
+			next.Bullets[ID] = Bullet{
+				ID:     ID,
+				Coords: entity.Coords,
+				Velocity: Vector{
+					// TODO: Use gun constants and stuff.
+					X: -math.Cos(entity.Angle)*30 + entity.Velocity.X,
+					Y: -math.Sin(entity.Angle)*30 + entity.Velocity.Y,
+				},
+				Angle: entity.Angle,
+			}
+		}
+	}
 	for ID, entity := range s.Entities {
 		if _, ok := u.Remove[ID]; ok {
 			log.Println("remove ", ID)

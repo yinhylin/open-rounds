@@ -143,6 +143,23 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 			},
 		}, nil
 
+	case *pb.ClientEvent_Shoot:
+		s.state.AddBullet(&world.AddBullet{
+			ID:     e.GetShoot().Id,
+			Tick:   e.Tick,
+			Source: e.Id,
+		})
+		return &pb.ServerEvent{
+			Tick:       e.Tick,
+			ServerTick: s.state.CurrentTick(),
+			Event: &pb.ServerEvent_EntityShoot{
+				EntityShoot: &pb.EntityShoot{
+					Id:       e.GetShoot().Id,
+					SourceId: e.Id,
+				},
+			},
+		}, nil
+
 	case *pb.ClientEvent_RequestState:
 		e.subscriber.Messages <- &pb.ServerEvent{
 			Tick:       s.state.CurrentTick(),

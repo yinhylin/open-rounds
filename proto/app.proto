@@ -26,6 +26,7 @@ message UpdateBuffer {
   repeated string add = 3;
   repeated string remove = 4;
   repeated EntityAngle angles = 5;
+  repeated EntityShoot shots = 6;
 }
 
 message State {
@@ -60,6 +61,11 @@ message RequestState {}
 
 message Shoot {
   string id = 1;
+}
+
+message EntityShoot {
+  string source_id = 1;
+  string id = 2;
 }
 
 message AddEntity {
@@ -100,5 +106,6 @@ message ServerEvent {
     EntityEvents entity_events = 5;
     StateBuffer state = 6;
     EntityAngle entity_angle = 7;
+    EntityShoot entity_shoot = 8;
   }
 }
