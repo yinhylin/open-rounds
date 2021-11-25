@@ -28,52 +28,52 @@ func (s *StateBuffer) OnEvent(e *pb.ServerEvent) error {
 	if e.GetPlayer() == nil {
 		return errors.New("no player details")
 	}
-	player := e.Player
+	details := e.Player
 
-	if player.Tick > s.currentTick {
-		s.futureEvents[player.Tick] = append(s.futureEvents[player.Tick], e)
+	if details.Tick > s.currentTick {
+		s.futureEvents[details.Tick] = append(s.futureEvents[details.Tick], e)
 		return nil
 	}
 
 	switch e.Event.(type) {
 	case *pb.ServerEvent_AddPlayer:
-		return s.applyUpdate(player.Tick, func(state *State) {
-			state.Players[player.Id] = Player{ID: player.Id}
+		return s.applyUpdate(details.Tick, func(state *State) {
+			state.Players[details.Id] = Player{ID: details.Id}
 		})
 
 	case *pb.ServerEvent_RemovePlayer:
-		return s.applyUpdate(player.Tick, func(state *State) {
-			delete(state.Players, player.Id)
+		return s.applyUpdate(details.Tick, func(state *State) {
+			delete(state.Players, details.Id)
 		})
 
 	case *pb.ServerEvent_Intents:
 		msg := e.GetIntents()
-		return s.applyUpdate(player.Tick, func(state *State) {
-			entity := state.Players[player.Id]
-			entity.Intents = IntentsFromProtoSlice(msg.Intents)
-			state.Players[player.Id] = entity
+		return s.applyUpdate(details.Tick, func(state *State) {
+			player := state.Players[details.Id]
+			player.Intents = IntentsFromProtoSlice(msg.Intents)
+			state.Players[details.Id] = player
 		})
 
 	case *pb.ServerEvent_Angle:
 		msg := e.GetAngle()
-		return s.applyUpdate(player.Tick, func(state *State) {
-			entity := state.Players[player.Id]
-			entity.Angle = msg.Angle
-			state.Players[player.Id] = entity
+		return s.applyUpdate(details.Tick, func(state *State) {
+			player := state.Players[details.Id]
+			player.Angle = msg.Angle
+			state.Players[details.Id] = player
 		})
 
 	case *pb.ServerEvent_Shoot:
 		msg := e.GetShoot()
 		// TODO: Validate can shoot etc. YOLO for now.
-		return s.applyUpdate(player.Tick, func(state *State) {
-			entity := state.Players[player.Id]
+		return s.applyUpdate(details.Tick, func(state *State) {
+			player := state.Players[details.Id]
 			state.Bullets[msg.Id] = Bullet{
 				ID:     msg.Id,
-				Coords: entity.Coords,
+				Coords: player.Coords,
 				Velocity: Vector{
 					// TODO: Use gun constants and stuff.
-					X: -math.Cos(entity.Angle)*30 + entity.Velocity.X,
-					Y: -math.Sin(entity.Angle)*30 + entity.Velocity.Y,
+					X: -math.Cos(player.Angle)*30 + player.Velocity.X,
+					Y: -math.Sin(player.Angle)*30 + player.Velocity.Y,
 				},
 			}
 		})

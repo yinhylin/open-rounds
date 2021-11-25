@@ -69,17 +69,17 @@ func PlayerFromProto(e *pb.Player) *Player {
 }
 
 func PlayersFromProto(p []*pb.Player) map[string]Player {
-	entities := make(map[string]Player, len(p))
-	for _, entity := range p {
-		entities[entity.Id] = *PlayerFromProto(entity)
+	players := make(map[string]Player, len(p))
+	for _, player := range p {
+		players[player.Id] = *PlayerFromProto(player)
 	}
-	return entities
+	return players
 }
 
 func PlayersToProto(e map[string]Player) []*pb.Player {
 	p := make([]*pb.Player, 0, len(e))
-	for _, entity := range e {
-		p = append(p, entity.ToProto())
+	for _, player := range e {
+		p = append(p, player.ToProto())
 	}
 	return p
 }

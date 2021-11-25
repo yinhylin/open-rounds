@@ -62,9 +62,9 @@ func Simulate(s *State) *State {
 			next.Bullets[ID] = bullet
 		}
 	}
-	for ID, entity := range s.Players {
-		updatePlayer(&entity)
-		next.Players[ID] = entity
+	for ID, player := range s.Players {
+		updatePlayer(&player)
+		next.Players[ID] = player
 	}
 	return next
 }
