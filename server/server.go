@@ -6,14 +6,13 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"rounds/pb"
 	"rounds/world"
 	"sync"
 	"time"
-
-	"net/http/pprof"
 
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wspb"
