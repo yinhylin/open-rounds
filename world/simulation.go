@@ -60,8 +60,8 @@ func Simulate(s *State, u *UpdateBuffer) *State {
 	}
 
 	next := &State{
-		Entities: make(map[string]Entity, len(s.Entities)),
-		Bullets:  make(map[string]Bullet, len(s.Bullets)),
+		Entities: make(map[string]Entity, len(s.Entities)+len(u.Add)-len(u.Remove)),
+		Bullets:  make(map[string]Bullet, len(s.Bullets)+len(u.Shots)),
 		Tick:     s.Tick + 1,
 	}
 
