@@ -8,7 +8,7 @@ const NilTick int64 = -1
 
 type State struct {
 	Players map[string]Player
-	Bullets map[string]Bullet
+	Bullets []Bullet
 	Tick    int64
 }
 
@@ -16,7 +16,6 @@ func NewState() *State {
 	return &State{
 		Tick:    NilTick,
 		Players: make(map[string]Player),
-		Bullets: make(map[string]Bullet),
 	}
 }
 

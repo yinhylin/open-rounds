@@ -193,7 +193,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		RenderGun(screen, g.Assets, p.Coords, p.Angle)
 	})
 
-	g.state.ForEachBullet(func(ID string, bullet *world.Bullet) {
+	g.state.ForEachBullet(func(bullet *world.Bullet) {
 		RenderBullet(screen, g.Assets, bullet)
 	})
 	ebitenutil.DebugPrint(screen, g.debugString())
@@ -238,15 +238,7 @@ func (g *Game) handleInput() {
 		}
 
 		if shoot {
-			g.processClientEvent(&pb.ClientEvent{
-				Id: g.playerID,
-				Event: &pb.ClientEvent_Shoot{
-					Shoot: &pb.Shoot{
-						Id: ksuid.New().String(),
-					},
-				},
-				Tick: delayedTick,
-			})
+			intents[pb.Intents_SHOOT] = struct{}{}
 		}
 	}
 

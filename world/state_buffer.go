@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math"
 	"rounds/pb"
 	"sort"
 )
@@ -61,22 +60,6 @@ func (s *StateBuffer) OnEvent(e *pb.ServerEvent) error {
 			player.Angle = msg.Angle
 			state.Players[details.Id] = player
 		})
-
-	case *pb.ServerEvent_Shoot:
-		msg := e.GetShoot()
-		// TODO: Validate can shoot etc. YOLO for now.
-		return s.applyUpdate(details.Tick, func(state *State) {
-			player := state.Players[details.Id]
-			state.Bullets[msg.Id] = Bullet{
-				ID:     msg.Id,
-				Coords: player.Coords,
-				Velocity: Vector{
-					// TODO: Use gun constants and stuff.
-					X: -math.Cos(player.Angle)*30 + player.Velocity.X,
-					Y: -math.Sin(player.Angle)*30 + player.Velocity.Y,
-				},
-			}
-		})
 	}
 	return fmt.Errorf("unhandled event=%+v\n", e)
 }
@@ -118,10 +101,10 @@ func (s *StateBuffer) Add(state *State) {
 	s.currentTick = state.Tick
 }
 
-func (s *StateBuffer) ForEachBullet(callback func(string, *Bullet)) {
+func (s *StateBuffer) ForEachBullet(callback func(*Bullet)) {
 	if current := s.Current(); current != nil {
-		for ID, bullet := range current.Bullets {
-			callback(ID, &bullet)
+		for _, bullet := range current.Bullets {
+			callback(&bullet)
 		}
 	}
 }

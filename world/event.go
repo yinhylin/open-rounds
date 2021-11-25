@@ -27,18 +27,6 @@ func ClientEventToServerEvent(serverTick int64, e *pb.ClientEvent) *pb.ServerEve
 				Angle: e.GetAngle(),
 			},
 		}
-
-	case *pb.ClientEvent_Shoot:
-		return &pb.ServerEvent{
-			Tick: serverTick,
-			Player: &pb.PlayerDetails{
-				Tick: e.Tick,
-				Id:   e.Id,
-			},
-			Event: &pb.ServerEvent_Shoot{
-				Shoot: e.GetShoot(),
-			},
-		}
 	}
 	return nil
 }

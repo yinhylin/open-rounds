@@ -32,6 +32,7 @@ message Intents {
     JUMP = 1;
     MOVE_LEFT = 2;
     MOVE_RIGHT = 3;
+    SHOOT = 4;
   }
   repeated Intent intents = 1;
 }
@@ -65,7 +66,6 @@ message ClientEvent {
     Intents intents = 4;
     RequestState request_state = 5;
     Angle angle = 6;
-    Shoot shoot = 7;
   }
 }
 
@@ -78,6 +78,5 @@ message ServerEvent {
     Intents intents = 5;
     StateBuffer state = 6;
     Angle angle = 7;
-    Shoot shoot = 8;
   }
 }

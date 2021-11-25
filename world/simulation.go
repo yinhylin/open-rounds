@@ -5,15 +5,18 @@ import (
 	"rounds/pb"
 )
 
-func updatePlayer(e *Player) {
+func updatePlayer(e *Player, s *State) {
 	const speed = 10
 	// TODO: Don't overwrite velocity.
 	jump := false
+	shoot := false
 	var velocity Vector
 	for action := range e.Intents {
 		switch action {
 		case pb.Intents_JUMP:
 			jump = true
+		case pb.Intents_SHOOT:
+			shoot = true
 		case pb.Intents_MOVE_LEFT:
 			velocity.X -= speed
 		case pb.Intents_MOVE_RIGHT:
@@ -42,6 +45,17 @@ func updatePlayer(e *Player) {
 	if e.Coords.Y == 500 && jump {
 		e.Velocity.Y -= 32
 	}
+
+	if shoot {
+		s.Bullets = append(s.Bullets, Bullet{
+			Coords: e.Coords,
+			Velocity: Vector{
+				// TODO: Use gun constants and stuff.
+				X: -math.Cos(e.Angle) * 30,
+				Y: -math.Sin(e.Angle) * 30,
+			},
+		})
+	}
 }
 
 func updateBullet(b *Bullet) bool {
@@ -54,16 +68,16 @@ func updateBullet(b *Bullet) bool {
 func Simulate(s *State) *State {
 	next := &State{
 		Players: make(map[string]Player, len(s.Players)),
-		Bullets: make(map[string]Bullet, len(s.Bullets)),
+		Bullets: make([]Bullet, 0, len(s.Bullets)),
 		Tick:    s.Tick + 1,
 	}
-	for ID, bullet := range s.Bullets {
+	for _, bullet := range s.Bullets {
 		if updateBullet(&bullet) {
-			next.Bullets[ID] = bullet
+			next.Bullets = append(next.Bullets, bullet)
 		}
 	}
 	for ID, player := range s.Players {
-		updatePlayer(&player)
+		updatePlayer(&player, next)
 		next.Players[ID] = player
 	}
 	return next
