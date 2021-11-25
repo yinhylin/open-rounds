@@ -7,7 +7,7 @@ message Vector {
   double y = 2;
 }
 
-message Entity {
+message Player {
   string id = 1;
   Vector velocity = 2;
   Vector position = 3;
@@ -15,14 +15,14 @@ message Entity {
   double angle = 5;
 }
 
-message EntityIntents {
+message PlayerIntents {
   string id = 1;
   Intents intents = 2;
 }
 
 message State {
   int64 tick = 1;
-  repeated Entity entity_states = 2;
+  repeated Player player_states = 2;
 }
 
 message StateBuffer {
@@ -41,11 +41,6 @@ message Intents {
   repeated Intent intents = 1;
 }
 
-message EntityEvents {
-  string id = 1;
-  Intents intents = 2;
-}
-
 message Connect {}
 
 message RequestState {}
@@ -54,16 +49,16 @@ message Shoot {
   string id = 1;
 }
 
-message EntityShoot {
+message PlayerShoot {
   string source_id = 1;
   string id = 2;
 }
 
-message AddEntity {
-  Entity entity = 1;
+message AddPlayer {
+  string id = 1;
 }
 
-message RemoveEntity {
+message RemovePlayer {
   string id = 1;
 }
 
@@ -71,7 +66,7 @@ message Angle {
   double angle = 1;
 }
 
-message EntityAngle {
+message PlayerAngle {
   string id = 1;
   double angle = 2;
 }
@@ -92,11 +87,11 @@ message ServerEvent {
   int64 tick = 1;
   int64 server_tick = 2;
   oneof event {
-    AddEntity add_entity = 3;
-    RemoveEntity remove_entity = 4;
-    EntityEvents entity_events = 5;
+    AddPlayer add_player = 3;
+    RemovePlayer remove_player = 4;
+    PlayerIntents player_intents = 5;
     StateBuffer state = 6;
-    EntityAngle entity_angle = 7;
-    EntityShoot entity_shoot = 8;
+    PlayerAngle player_angle = 7;
+    PlayerShoot player_shoot = 8;
   }
 }

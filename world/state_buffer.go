@@ -22,9 +22,9 @@ func (s *StateBuffer) ForEachBullet(callback func(string, *Bullet)) {
 	}
 }
 
-func (s *StateBuffer) ForEachEntity(callback func(string, *Entity)) {
+func (s *StateBuffer) ForEachPlayer(callback func(string, *Player)) {
 	if current := s.Current(); current != nil {
-		for ID, entity := range current.Entities {
+		for ID, entity := range current.Players {
 			callback(ID, &entity)
 		}
 	}
@@ -126,39 +126,39 @@ func (s *StateBuffer) OnEvent(e *pb.ServerEvent) error {
 	}
 
 	switch e.Event.(type) {
-	case *pb.ServerEvent_AddEntity:
-		ID := e.GetAddEntity().Entity.Id
+	case *pb.ServerEvent_AddPlayer:
+		ID := e.GetAddPlayer().Id
 		return s.applyUpdate(e.Tick, func(state *State) {
-			state.Entities[ID] = Entity{ID: ID}
+			state.Players[ID] = Player{ID: ID}
 		})
 
-	case *pb.ServerEvent_RemoveEntity:
-		ID := e.GetRemoveEntity().Id
+	case *pb.ServerEvent_RemovePlayer:
+		ID := e.GetRemovePlayer().Id
 		return s.applyUpdate(e.Tick, func(state *State) {
-			delete(state.Entities, ID)
+			delete(state.Players, ID)
 		})
 
-	case *pb.ServerEvent_EntityEvents:
-		msg := e.GetEntityEvents()
+	case *pb.ServerEvent_PlayerIntents:
+		msg := e.GetPlayerIntents()
 		return s.applyUpdate(e.Tick, func(state *State) {
-			entity := state.Entities[msg.Id]
+			entity := state.Players[msg.Id]
 			entity.Intents = IntentsFromProto(msg.Intents)
-			state.Entities[msg.Id] = entity
+			state.Players[msg.Id] = entity
 		})
 
-	case *pb.ServerEvent_EntityAngle:
-		msg := e.GetEntityAngle()
+	case *pb.ServerEvent_PlayerAngle:
+		msg := e.GetPlayerAngle()
 		return s.applyUpdate(e.Tick, func(state *State) {
-			entity := state.Entities[msg.Id]
+			entity := state.Players[msg.Id]
 			entity.Angle = msg.Angle
-			state.Entities[msg.Id] = entity
+			state.Players[msg.Id] = entity
 		})
 
-	case *pb.ServerEvent_EntityShoot:
-		msg := e.GetEntityShoot()
+	case *pb.ServerEvent_PlayerShoot:
+		msg := e.GetPlayerShoot()
 		// TODO: Validate can shoot etc. YOLO for now.
 		return s.applyUpdate(e.Tick, func(state *State) {
-			entity := state.Entities[msg.SourceId]
+			entity := state.Players[msg.SourceId]
 			state.Bullets[msg.Id] = Bullet{
 				ID:     msg.Id,
 				Coords: entity.Coords,

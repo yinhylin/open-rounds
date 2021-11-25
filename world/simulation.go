@@ -5,7 +5,7 @@ import (
 	"rounds/pb"
 )
 
-func updateEntity(e *Entity) {
+func updatePlayer(e *Player) {
 	const speed = 10
 	// TODO: Don't overwrite velocity.
 	jump := false
@@ -53,9 +53,9 @@ func updateBullet(b *Bullet) bool {
 
 func Simulate(s *State) *State {
 	next := &State{
-		Entities: make(map[string]Entity, len(s.Entities)),
-		Bullets:  make(map[string]Bullet, len(s.Bullets)),
-		Tick:     s.Tick + 1,
+		Players: make(map[string]Player, len(s.Players)),
+		Bullets: make(map[string]Bullet, len(s.Bullets)),
+		Tick:    s.Tick + 1,
 	}
 
 	// Update
@@ -64,9 +64,9 @@ func Simulate(s *State) *State {
 			next.Bullets[ID] = bullet
 		}
 	}
-	for ID, entity := range s.Entities {
-		updateEntity(&entity)
-		next.Entities[ID] = entity
+	for ID, entity := range s.Players {
+		updatePlayer(&entity)
+		next.Players[ID] = entity
 	}
 	return next
 }

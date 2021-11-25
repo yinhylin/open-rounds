@@ -47,8 +47,8 @@ func NewServer() *Server {
 	}
 
 	s.state.Add(&world.State{
-		Entities: make(map[string]world.Entity),
-		Tick:     0,
+		Players: make(map[string]world.Player),
+		Tick:    0,
 	})
 
 	go func() {
@@ -83,8 +83,8 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		return &pb.ServerEvent{
 			Tick:       e.Tick,
 			ServerTick: s.state.CurrentTick(),
-			Event: &pb.ServerEvent_EntityEvents{
-				EntityEvents: &pb.EntityEvents{
+			Event: &pb.ServerEvent_PlayerIntents{
+				PlayerIntents: &pb.PlayerIntents{
 					Id:      e.Id,
 					Intents: e.GetIntents(),
 				},
@@ -96,11 +96,9 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		return &pb.ServerEvent{
 			Tick:       s.state.CurrentTick(),
 			ServerTick: s.state.CurrentTick(),
-			Event: &pb.ServerEvent_AddEntity{
-				AddEntity: &pb.AddEntity{
-					Entity: &pb.Entity{
-						Id: e.Id,
-					},
+			Event: &pb.ServerEvent_AddPlayer{
+				AddPlayer: &pb.AddPlayer{
+					Id: e.Id,
 				},
 			},
 		}, nil
@@ -109,8 +107,8 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		return &pb.ServerEvent{
 			Tick:       e.Tick,
 			ServerTick: s.state.CurrentTick(),
-			Event: &pb.ServerEvent_EntityAngle{
-				EntityAngle: &pb.EntityAngle{
+			Event: &pb.ServerEvent_PlayerAngle{
+				PlayerAngle: &pb.PlayerAngle{
 					Id:    e.Id,
 					Angle: e.GetAngle().Angle,
 				},
@@ -121,8 +119,8 @@ func (s *Server) onEvent(e *event) (*pb.ServerEvent, error) {
 		return &pb.ServerEvent{
 			Tick:       e.Tick,
 			ServerTick: s.state.CurrentTick(),
-			Event: &pb.ServerEvent_EntityShoot{
-				EntityShoot: &pb.EntityShoot{
+			Event: &pb.ServerEvent_PlayerShoot{
+				PlayerShoot: &pb.PlayerShoot{
 					Id:       e.GetShoot().Id,
 					SourceId: e.Id,
 				},
@@ -220,8 +218,8 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 			event := &pb.ServerEvent{
 				Tick:       s.state.CurrentTick(),
 				ServerTick: s.state.CurrentTick(),
-				Event: &pb.ServerEvent_RemoveEntity{
-					RemoveEntity: &pb.RemoveEntity{
+				Event: &pb.ServerEvent_RemovePlayer{
+					RemovePlayer: &pb.RemovePlayer{
 						Id: sub.PlayerID,
 					},
 				},

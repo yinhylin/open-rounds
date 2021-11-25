@@ -127,7 +127,7 @@ func (x *Vector) GetY() float64 {
 	return 0
 }
 
-type Entity struct {
+type Player struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -139,8 +139,8 @@ type Entity struct {
 	Angle    float64  `protobuf:"fixed64,5,opt,name=angle,proto3" json:"angle,omitempty"`
 }
 
-func (x *Entity) Reset() {
-	*x = Entity{}
+func (x *Player) Reset() {
+	*x = Player{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_app_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -148,13 +148,13 @@ func (x *Entity) Reset() {
 	}
 }
 
-func (x *Entity) String() string {
+func (x *Player) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Entity) ProtoMessage() {}
+func (*Player) ProtoMessage() {}
 
-func (x *Entity) ProtoReflect() protoreflect.Message {
+func (x *Player) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_app_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -166,47 +166,47 @@ func (x *Entity) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Entity.ProtoReflect.Descriptor instead.
-func (*Entity) Descriptor() ([]byte, []int) {
+// Deprecated: Use Player.ProtoReflect.Descriptor instead.
+func (*Player) Descriptor() ([]byte, []int) {
 	return file_proto_app_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *Entity) GetId() string {
+func (x *Player) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *Entity) GetVelocity() *Vector {
+func (x *Player) GetVelocity() *Vector {
 	if x != nil {
 		return x.Velocity
 	}
 	return nil
 }
 
-func (x *Entity) GetPosition() *Vector {
+func (x *Player) GetPosition() *Vector {
 	if x != nil {
 		return x.Position
 	}
 	return nil
 }
 
-func (x *Entity) GetIntents() *Intents {
+func (x *Player) GetIntents() *Intents {
 	if x != nil {
 		return x.Intents
 	}
 	return nil
 }
 
-func (x *Entity) GetAngle() float64 {
+func (x *Player) GetAngle() float64 {
 	if x != nil {
 		return x.Angle
 	}
 	return 0
 }
 
-type EntityIntents struct {
+type PlayerIntents struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -215,8 +215,8 @@ type EntityIntents struct {
 	Intents *Intents `protobuf:"bytes,2,opt,name=intents,proto3" json:"intents,omitempty"`
 }
 
-func (x *EntityIntents) Reset() {
-	*x = EntityIntents{}
+func (x *PlayerIntents) Reset() {
+	*x = PlayerIntents{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_app_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -224,13 +224,13 @@ func (x *EntityIntents) Reset() {
 	}
 }
 
-func (x *EntityIntents) String() string {
+func (x *PlayerIntents) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EntityIntents) ProtoMessage() {}
+func (*PlayerIntents) ProtoMessage() {}
 
-func (x *EntityIntents) ProtoReflect() protoreflect.Message {
+func (x *PlayerIntents) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_app_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -242,19 +242,19 @@ func (x *EntityIntents) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EntityIntents.ProtoReflect.Descriptor instead.
-func (*EntityIntents) Descriptor() ([]byte, []int) {
+// Deprecated: Use PlayerIntents.ProtoReflect.Descriptor instead.
+func (*PlayerIntents) Descriptor() ([]byte, []int) {
 	return file_proto_app_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *EntityIntents) GetId() string {
+func (x *PlayerIntents) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *EntityIntents) GetIntents() *Intents {
+func (x *PlayerIntents) GetIntents() *Intents {
 	if x != nil {
 		return x.Intents
 	}
@@ -267,7 +267,7 @@ type State struct {
 	unknownFields protoimpl.UnknownFields
 
 	Tick         int64     `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
-	EntityStates []*Entity `protobuf:"bytes,2,rep,name=entity_states,json=entityStates,proto3" json:"entity_states,omitempty"`
+	PlayerStates []*Player `protobuf:"bytes,2,rep,name=player_states,json=playerStates,proto3" json:"player_states,omitempty"`
 }
 
 func (x *State) Reset() {
@@ -309,9 +309,9 @@ func (x *State) GetTick() int64 {
 	return 0
 }
 
-func (x *State) GetEntityStates() []*Entity {
+func (x *State) GetPlayerStates() []*Player {
 	if x != nil {
-		return x.EntityStates
+		return x.PlayerStates
 	}
 	return nil
 }
@@ -426,61 +426,6 @@ func (x *Intents) GetIntents() []Intents_Intent {
 	return nil
 }
 
-type EntityEvents struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Id      string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Intents *Intents `protobuf:"bytes,2,opt,name=intents,proto3" json:"intents,omitempty"`
-}
-
-func (x *EntityEvents) Reset() {
-	*x = EntityEvents{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *EntityEvents) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EntityEvents) ProtoMessage() {}
-
-func (x *EntityEvents) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EntityEvents.ProtoReflect.Descriptor instead.
-func (*EntityEvents) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *EntityEvents) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *EntityEvents) GetIntents() *Intents {
-	if x != nil {
-		return x.Intents
-	}
-	return nil
-}
-
 type Connect struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -490,7 +435,7 @@ type Connect struct {
 func (x *Connect) Reset() {
 	*x = Connect{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[7]
+		mi := &file_proto_app_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -503,7 +448,7 @@ func (x *Connect) String() string {
 func (*Connect) ProtoMessage() {}
 
 func (x *Connect) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[7]
+	mi := &file_proto_app_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -516,7 +461,7 @@ func (x *Connect) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Connect.ProtoReflect.Descriptor instead.
 func (*Connect) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{7}
+	return file_proto_app_proto_rawDescGZIP(), []int{6}
 }
 
 type RequestState struct {
@@ -528,7 +473,7 @@ type RequestState struct {
 func (x *RequestState) Reset() {
 	*x = RequestState{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[8]
+		mi := &file_proto_app_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -541,7 +486,7 @@ func (x *RequestState) String() string {
 func (*RequestState) ProtoMessage() {}
 
 func (x *RequestState) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[8]
+	mi := &file_proto_app_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -554,7 +499,7 @@ func (x *RequestState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestState.ProtoReflect.Descriptor instead.
 func (*RequestState) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{8}
+	return file_proto_app_proto_rawDescGZIP(), []int{7}
 }
 
 type Shoot struct {
@@ -568,7 +513,7 @@ type Shoot struct {
 func (x *Shoot) Reset() {
 	*x = Shoot{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[9]
+		mi := &file_proto_app_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -581,7 +526,7 @@ func (x *Shoot) String() string {
 func (*Shoot) ProtoMessage() {}
 
 func (x *Shoot) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[9]
+	mi := &file_proto_app_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -594,7 +539,7 @@ func (x *Shoot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Shoot.ProtoReflect.Descriptor instead.
 func (*Shoot) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{9}
+	return file_proto_app_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Shoot) GetId() string {
@@ -604,7 +549,7 @@ func (x *Shoot) GetId() string {
 	return ""
 }
 
-type EntityShoot struct {
+type PlayerShoot struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -613,8 +558,62 @@ type EntityShoot struct {
 	Id       string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 }
 
-func (x *EntityShoot) Reset() {
-	*x = EntityShoot{}
+func (x *PlayerShoot) Reset() {
+	*x = PlayerShoot{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_app_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PlayerShoot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlayerShoot) ProtoMessage() {}
+
+func (x *PlayerShoot) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_app_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlayerShoot.ProtoReflect.Descriptor instead.
+func (*PlayerShoot) Descriptor() ([]byte, []int) {
+	return file_proto_app_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *PlayerShoot) GetSourceId() string {
+	if x != nil {
+		return x.SourceId
+	}
+	return ""
+}
+
+func (x *PlayerShoot) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type AddPlayer struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *AddPlayer) Reset() {
+	*x = AddPlayer{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_app_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -622,13 +621,13 @@ func (x *EntityShoot) Reset() {
 	}
 }
 
-func (x *EntityShoot) String() string {
+func (x *AddPlayer) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EntityShoot) ProtoMessage() {}
+func (*AddPlayer) ProtoMessage() {}
 
-func (x *EntityShoot) ProtoReflect() protoreflect.Message {
+func (x *AddPlayer) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_app_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -640,35 +639,28 @@ func (x *EntityShoot) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EntityShoot.ProtoReflect.Descriptor instead.
-func (*EntityShoot) Descriptor() ([]byte, []int) {
+// Deprecated: Use AddPlayer.ProtoReflect.Descriptor instead.
+func (*AddPlayer) Descriptor() ([]byte, []int) {
 	return file_proto_app_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *EntityShoot) GetSourceId() string {
-	if x != nil {
-		return x.SourceId
-	}
-	return ""
-}
-
-func (x *EntityShoot) GetId() string {
+func (x *AddPlayer) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-type AddEntity struct {
+type RemovePlayer struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Entity *Entity `protobuf:"bytes,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
-func (x *AddEntity) Reset() {
-	*x = AddEntity{}
+func (x *RemovePlayer) Reset() {
+	*x = RemovePlayer{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_app_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -676,13 +668,13 @@ func (x *AddEntity) Reset() {
 	}
 }
 
-func (x *AddEntity) String() string {
+func (x *RemovePlayer) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AddEntity) ProtoMessage() {}
+func (*RemovePlayer) ProtoMessage() {}
 
-func (x *AddEntity) ProtoReflect() protoreflect.Message {
+func (x *RemovePlayer) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_app_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -694,59 +686,12 @@ func (x *AddEntity) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AddEntity.ProtoReflect.Descriptor instead.
-func (*AddEntity) Descriptor() ([]byte, []int) {
+// Deprecated: Use RemovePlayer.ProtoReflect.Descriptor instead.
+func (*RemovePlayer) Descriptor() ([]byte, []int) {
 	return file_proto_app_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *AddEntity) GetEntity() *Entity {
-	if x != nil {
-		return x.Entity
-	}
-	return nil
-}
-
-type RemoveEntity struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-}
-
-func (x *RemoveEntity) Reset() {
-	*x = RemoveEntity{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[12]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *RemoveEntity) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoveEntity) ProtoMessage() {}
-
-func (x *RemoveEntity) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[12]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoveEntity.ProtoReflect.Descriptor instead.
-func (*RemoveEntity) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *RemoveEntity) GetId() string {
+func (x *RemovePlayer) GetId() string {
 	if x != nil {
 		return x.Id
 	}
@@ -764,7 +709,7 @@ type Angle struct {
 func (x *Angle) Reset() {
 	*x = Angle{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[13]
+		mi := &file_proto_app_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -777,7 +722,7 @@ func (x *Angle) String() string {
 func (*Angle) ProtoMessage() {}
 
 func (x *Angle) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[13]
+	mi := &file_proto_app_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -790,7 +735,7 @@ func (x *Angle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Angle.ProtoReflect.Descriptor instead.
 func (*Angle) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{13}
+	return file_proto_app_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Angle) GetAngle() float64 {
@@ -800,7 +745,7 @@ func (x *Angle) GetAngle() float64 {
 	return 0
 }
 
-type EntityAngle struct {
+type PlayerAngle struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -809,23 +754,23 @@ type EntityAngle struct {
 	Angle float64 `protobuf:"fixed64,2,opt,name=angle,proto3" json:"angle,omitempty"`
 }
 
-func (x *EntityAngle) Reset() {
-	*x = EntityAngle{}
+func (x *PlayerAngle) Reset() {
+	*x = PlayerAngle{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[14]
+		mi := &file_proto_app_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *EntityAngle) String() string {
+func (x *PlayerAngle) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EntityAngle) ProtoMessage() {}
+func (*PlayerAngle) ProtoMessage() {}
 
-func (x *EntityAngle) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[14]
+func (x *PlayerAngle) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_app_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -836,19 +781,19 @@ func (x *EntityAngle) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EntityAngle.ProtoReflect.Descriptor instead.
-func (*EntityAngle) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{14}
+// Deprecated: Use PlayerAngle.ProtoReflect.Descriptor instead.
+func (*PlayerAngle) Descriptor() ([]byte, []int) {
+	return file_proto_app_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *EntityAngle) GetId() string {
+func (x *PlayerAngle) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *EntityAngle) GetAngle() float64 {
+func (x *PlayerAngle) GetAngle() float64 {
 	if x != nil {
 		return x.Angle
 	}
@@ -874,7 +819,7 @@ type ClientEvent struct {
 func (x *ClientEvent) Reset() {
 	*x = ClientEvent{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[15]
+		mi := &file_proto_app_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -887,7 +832,7 @@ func (x *ClientEvent) String() string {
 func (*ClientEvent) ProtoMessage() {}
 
 func (x *ClientEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[15]
+	mi := &file_proto_app_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -900,7 +845,7 @@ func (x *ClientEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientEvent.ProtoReflect.Descriptor instead.
 func (*ClientEvent) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{15}
+	return file_proto_app_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ClientEvent) GetId() string {
@@ -1001,19 +946,19 @@ type ServerEvent struct {
 	Tick       int64 `protobuf:"varint,1,opt,name=tick,proto3" json:"tick,omitempty"`
 	ServerTick int64 `protobuf:"varint,2,opt,name=server_tick,json=serverTick,proto3" json:"server_tick,omitempty"`
 	// Types that are assignable to Event:
-	//	*ServerEvent_AddEntity
-	//	*ServerEvent_RemoveEntity
-	//	*ServerEvent_EntityEvents
+	//	*ServerEvent_AddPlayer
+	//	*ServerEvent_RemovePlayer
+	//	*ServerEvent_PlayerIntents
 	//	*ServerEvent_State
-	//	*ServerEvent_EntityAngle
-	//	*ServerEvent_EntityShoot
+	//	*ServerEvent_PlayerAngle
+	//	*ServerEvent_PlayerShoot
 	Event isServerEvent_Event `protobuf_oneof:"event"`
 }
 
 func (x *ServerEvent) Reset() {
 	*x = ServerEvent{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_app_proto_msgTypes[16]
+		mi := &file_proto_app_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1026,7 +971,7 @@ func (x *ServerEvent) String() string {
 func (*ServerEvent) ProtoMessage() {}
 
 func (x *ServerEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_app_proto_msgTypes[16]
+	mi := &file_proto_app_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1039,7 +984,7 @@ func (x *ServerEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerEvent.ProtoReflect.Descriptor instead.
 func (*ServerEvent) Descriptor() ([]byte, []int) {
-	return file_proto_app_proto_rawDescGZIP(), []int{16}
+	return file_proto_app_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ServerEvent) GetTick() int64 {
@@ -1063,23 +1008,23 @@ func (m *ServerEvent) GetEvent() isServerEvent_Event {
 	return nil
 }
 
-func (x *ServerEvent) GetAddEntity() *AddEntity {
-	if x, ok := x.GetEvent().(*ServerEvent_AddEntity); ok {
-		return x.AddEntity
+func (x *ServerEvent) GetAddPlayer() *AddPlayer {
+	if x, ok := x.GetEvent().(*ServerEvent_AddPlayer); ok {
+		return x.AddPlayer
 	}
 	return nil
 }
 
-func (x *ServerEvent) GetRemoveEntity() *RemoveEntity {
-	if x, ok := x.GetEvent().(*ServerEvent_RemoveEntity); ok {
-		return x.RemoveEntity
+func (x *ServerEvent) GetRemovePlayer() *RemovePlayer {
+	if x, ok := x.GetEvent().(*ServerEvent_RemovePlayer); ok {
+		return x.RemovePlayer
 	}
 	return nil
 }
 
-func (x *ServerEvent) GetEntityEvents() *EntityEvents {
-	if x, ok := x.GetEvent().(*ServerEvent_EntityEvents); ok {
-		return x.EntityEvents
+func (x *ServerEvent) GetPlayerIntents() *PlayerIntents {
+	if x, ok := x.GetEvent().(*ServerEvent_PlayerIntents); ok {
+		return x.PlayerIntents
 	}
 	return nil
 }
@@ -1091,16 +1036,16 @@ func (x *ServerEvent) GetState() *StateBuffer {
 	return nil
 }
 
-func (x *ServerEvent) GetEntityAngle() *EntityAngle {
-	if x, ok := x.GetEvent().(*ServerEvent_EntityAngle); ok {
-		return x.EntityAngle
+func (x *ServerEvent) GetPlayerAngle() *PlayerAngle {
+	if x, ok := x.GetEvent().(*ServerEvent_PlayerAngle); ok {
+		return x.PlayerAngle
 	}
 	return nil
 }
 
-func (x *ServerEvent) GetEntityShoot() *EntityShoot {
-	if x, ok := x.GetEvent().(*ServerEvent_EntityShoot); ok {
-		return x.EntityShoot
+func (x *ServerEvent) GetPlayerShoot() *PlayerShoot {
+	if x, ok := x.GetEvent().(*ServerEvent_PlayerShoot); ok {
+		return x.PlayerShoot
 	}
 	return nil
 }
@@ -1109,41 +1054,41 @@ type isServerEvent_Event interface {
 	isServerEvent_Event()
 }
 
-type ServerEvent_AddEntity struct {
-	AddEntity *AddEntity `protobuf:"bytes,3,opt,name=add_entity,json=addEntity,proto3,oneof"`
+type ServerEvent_AddPlayer struct {
+	AddPlayer *AddPlayer `protobuf:"bytes,3,opt,name=add_player,json=addPlayer,proto3,oneof"`
 }
 
-type ServerEvent_RemoveEntity struct {
-	RemoveEntity *RemoveEntity `protobuf:"bytes,4,opt,name=remove_entity,json=removeEntity,proto3,oneof"`
+type ServerEvent_RemovePlayer struct {
+	RemovePlayer *RemovePlayer `protobuf:"bytes,4,opt,name=remove_player,json=removePlayer,proto3,oneof"`
 }
 
-type ServerEvent_EntityEvents struct {
-	EntityEvents *EntityEvents `protobuf:"bytes,5,opt,name=entity_events,json=entityEvents,proto3,oneof"`
+type ServerEvent_PlayerIntents struct {
+	PlayerIntents *PlayerIntents `protobuf:"bytes,5,opt,name=player_intents,json=playerIntents,proto3,oneof"`
 }
 
 type ServerEvent_State struct {
 	State *StateBuffer `protobuf:"bytes,6,opt,name=state,proto3,oneof"`
 }
 
-type ServerEvent_EntityAngle struct {
-	EntityAngle *EntityAngle `protobuf:"bytes,7,opt,name=entity_angle,json=entityAngle,proto3,oneof"`
+type ServerEvent_PlayerAngle struct {
+	PlayerAngle *PlayerAngle `protobuf:"bytes,7,opt,name=player_angle,json=playerAngle,proto3,oneof"`
 }
 
-type ServerEvent_EntityShoot struct {
-	EntityShoot *EntityShoot `protobuf:"bytes,8,opt,name=entity_shoot,json=entityShoot,proto3,oneof"`
+type ServerEvent_PlayerShoot struct {
+	PlayerShoot *PlayerShoot `protobuf:"bytes,8,opt,name=player_shoot,json=playerShoot,proto3,oneof"`
 }
 
-func (*ServerEvent_AddEntity) isServerEvent_Event() {}
+func (*ServerEvent_AddPlayer) isServerEvent_Event() {}
 
-func (*ServerEvent_RemoveEntity) isServerEvent_Event() {}
+func (*ServerEvent_RemovePlayer) isServerEvent_Event() {}
 
-func (*ServerEvent_EntityEvents) isServerEvent_Event() {}
+func (*ServerEvent_PlayerIntents) isServerEvent_Event() {}
 
 func (*ServerEvent_State) isServerEvent_Event() {}
 
-func (*ServerEvent_EntityAngle) isServerEvent_Event() {}
+func (*ServerEvent_PlayerAngle) isServerEvent_Event() {}
 
-func (*ServerEvent_EntityShoot) isServerEvent_Event() {}
+func (*ServerEvent_PlayerShoot) isServerEvent_Event() {}
 
 var File_proto_app_proto protoreflect.FileDescriptor
 
@@ -1151,8 +1096,8 @@ var file_proto_app_proto_rawDesc = []byte{
 	0x0a, 0x0f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x70, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x22, 0x24, 0x0a, 0x06, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x12, 0x0c, 0x0a, 0x01, 0x78,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x01, 0x52, 0x01, 0x78, 0x12, 0x0c, 0x0a, 0x01, 0x79, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x01, 0x52, 0x01, 0x79, 0x22, 0x9c, 0x01, 0x0a, 0x06, 0x45, 0x6e, 0x74, 0x69,
-	0x74, 0x79, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02,
+	0x20, 0x01, 0x28, 0x01, 0x52, 0x01, 0x79, 0x22, 0x9c, 0x01, 0x0a, 0x06, 0x50, 0x6c, 0x61, 0x79,
+	0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02,
 	0x69, 0x64, 0x12, 0x23, 0x0a, 0x08, 0x76, 0x65, 0x6c, 0x6f, 0x63, 0x69, 0x74, 0x79, 0x18, 0x02,
 	0x20, 0x01, 0x28, 0x0b, 0x32, 0x07, 0x2e, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x52, 0x08, 0x76,
 	0x65, 0x6c, 0x6f, 0x63, 0x69, 0x74, 0x79, 0x12, 0x23, 0x0a, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74,
@@ -1161,15 +1106,15 @@ var file_proto_app_proto_rawDesc = []byte{
 	0x69, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x08, 0x2e,
 	0x49, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x07, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73,
 	0x12, 0x14, 0x0a, 0x05, 0x61, 0x6e, 0x67, 0x6c, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x01, 0x52,
-	0x05, 0x61, 0x6e, 0x67, 0x6c, 0x65, 0x22, 0x43, 0x0a, 0x0d, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79,
+	0x05, 0x61, 0x6e, 0x67, 0x6c, 0x65, 0x22, 0x43, 0x0a, 0x0d, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72,
 	0x49, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
 	0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x22, 0x0a, 0x07, 0x69, 0x6e, 0x74, 0x65, 0x6e,
 	0x74, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x08, 0x2e, 0x49, 0x6e, 0x74, 0x65, 0x6e,
 	0x74, 0x73, 0x52, 0x07, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x22, 0x49, 0x0a, 0x05, 0x53,
 	0x74, 0x61, 0x74, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x69, 0x63, 0x6b, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x03, 0x52, 0x04, 0x74, 0x69, 0x63, 0x6b, 0x12, 0x2c, 0x0a, 0x0d, 0x65, 0x6e, 0x74, 0x69,
-	0x74, 0x79, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x07, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x52, 0x0c, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79,
+	0x28, 0x03, 0x52, 0x04, 0x74, 0x69, 0x63, 0x6b, 0x12, 0x2c, 0x0a, 0x0d, 0x70, 0x6c, 0x61, 0x79,
+	0x65, 0x72, 0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32,
+	0x07, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x52, 0x0c, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72,
 	0x53, 0x74, 0x61, 0x74, 0x65, 0x73, 0x22, 0x83, 0x01, 0x0a, 0x0b, 0x53, 0x74, 0x61, 0x74, 0x65,
 	0x42, 0x75, 0x66, 0x66, 0x65, 0x72, 0x12, 0x1e, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x65, 0x73,
 	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x06, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x06,
@@ -1186,68 +1131,63 @@ var file_proto_app_proto_rawDesc = []byte{
 	0x4e, 0x4f, 0x4e, 0x45, 0x10, 0x00, 0x12, 0x08, 0x0a, 0x04, 0x4a, 0x55, 0x4d, 0x50, 0x10, 0x01,
 	0x12, 0x0d, 0x0a, 0x09, 0x4d, 0x4f, 0x56, 0x45, 0x5f, 0x4c, 0x45, 0x46, 0x54, 0x10, 0x02, 0x12,
 	0x0e, 0x0a, 0x0a, 0x4d, 0x4f, 0x56, 0x45, 0x5f, 0x52, 0x49, 0x47, 0x48, 0x54, 0x10, 0x03, 0x22,
-	0x42, 0x0a, 0x0c, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x12,
-	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12,
-	0x22, 0x0a, 0x07, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x08, 0x2e, 0x49, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x07, 0x69, 0x6e, 0x74, 0x65,
-	0x6e, 0x74, 0x73, 0x22, 0x09, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x22, 0x0e,
-	0x0a, 0x0c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x22, 0x17,
-	0x0a, 0x05, 0x53, 0x68, 0x6f, 0x6f, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x3a, 0x0a, 0x0b, 0x45, 0x6e, 0x74, 0x69, 0x74,
-	0x79, 0x53, 0x68, 0x6f, 0x6f, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
-	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x49, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x02, 0x69, 0x64, 0x22, 0x2c, 0x0a, 0x09, 0x41, 0x64, 0x64, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79,
-	0x12, 0x1f, 0x0a, 0x06, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x07, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x52, 0x06, 0x65, 0x6e, 0x74, 0x69, 0x74,
-	0x79, 0x22, 0x1e, 0x0a, 0x0c, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x45, 0x6e, 0x74, 0x69, 0x74,
-	0x79, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69,
-	0x64, 0x22, 0x1d, 0x0a, 0x05, 0x41, 0x6e, 0x67, 0x6c, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x61, 0x6e,
-	0x67, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x01, 0x52, 0x05, 0x61, 0x6e, 0x67, 0x6c, 0x65,
-	0x22, 0x33, 0x0a, 0x0b, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x41, 0x6e, 0x67, 0x6c, 0x65, 0x12,
-	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12,
-	0x14, 0x0a, 0x05, 0x61, 0x6e, 0x67, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x01, 0x52, 0x05,
-	0x61, 0x6e, 0x67, 0x6c, 0x65, 0x22, 0xfc, 0x01, 0x0a, 0x0b, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74,
-	0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x69, 0x63, 0x6b, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x03, 0x52, 0x04, 0x74, 0x69, 0x63, 0x6b, 0x12, 0x24, 0x0a, 0x07, 0x63, 0x6f, 0x6e,
-	0x6e, 0x65, 0x63, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x08, 0x2e, 0x43, 0x6f, 0x6e,
-	0x6e, 0x65, 0x63, 0x74, 0x48, 0x00, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12,
-	0x24, 0x0a, 0x07, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x08, 0x2e, 0x49, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x48, 0x00, 0x52, 0x07, 0x69, 0x6e,
-	0x74, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x34, 0x0a, 0x0d, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x5f, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x48, 0x00, 0x52, 0x0c, 0x72,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x1e, 0x0a, 0x05, 0x61,
-	0x6e, 0x67, 0x6c, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x06, 0x2e, 0x41, 0x6e, 0x67,
-	0x6c, 0x65, 0x48, 0x00, 0x52, 0x05, 0x61, 0x6e, 0x67, 0x6c, 0x65, 0x12, 0x1e, 0x0a, 0x05, 0x73,
-	0x68, 0x6f, 0x6f, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x06, 0x2e, 0x53, 0x68, 0x6f,
-	0x6f, 0x74, 0x48, 0x00, 0x52, 0x05, 0x73, 0x68, 0x6f, 0x6f, 0x74, 0x42, 0x07, 0x0a, 0x05, 0x65,
-	0x76, 0x65, 0x6e, 0x74, 0x22, 0xf0, 0x02, 0x0a, 0x0b, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x45,
-	0x76, 0x65, 0x6e, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x69, 0x63, 0x6b, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x03, 0x52, 0x04, 0x74, 0x69, 0x63, 0x6b, 0x12, 0x1f, 0x0a, 0x0b, 0x73, 0x65, 0x72, 0x76,
-	0x65, 0x72, 0x5f, 0x74, 0x69, 0x63, 0x6b, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0a, 0x73,
-	0x65, 0x72, 0x76, 0x65, 0x72, 0x54, 0x69, 0x63, 0x6b, 0x12, 0x2b, 0x0a, 0x0a, 0x61, 0x64, 0x64,
-	0x5f, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0a, 0x2e,
-	0x41, 0x64, 0x64, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x48, 0x00, 0x52, 0x09, 0x61, 0x64, 0x64,
-	0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x12, 0x34, 0x0a, 0x0d, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65,
-	0x5f, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e,
-	0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x48, 0x00, 0x52, 0x0c,
-	0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x12, 0x34, 0x0a, 0x0d,
-	0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x05, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x45, 0x76, 0x65, 0x6e,
-	0x74, 0x73, 0x48, 0x00, 0x52, 0x0c, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x45, 0x76, 0x65, 0x6e,
-	0x74, 0x73, 0x12, 0x24, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x0c, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x42, 0x75, 0x66, 0x66, 0x65, 0x72, 0x48,
-	0x00, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x12, 0x31, 0x0a, 0x0c, 0x65, 0x6e, 0x74, 0x69,
-	0x74, 0x79, 0x5f, 0x61, 0x6e, 0x67, 0x6c, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0c,
-	0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x41, 0x6e, 0x67, 0x6c, 0x65, 0x48, 0x00, 0x52, 0x0b,
-	0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x41, 0x6e, 0x67, 0x6c, 0x65, 0x12, 0x31, 0x0a, 0x0c, 0x65,
-	0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x73, 0x68, 0x6f, 0x6f, 0x74, 0x18, 0x08, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x0c, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x53, 0x68, 0x6f, 0x6f, 0x74, 0x48,
-	0x00, 0x52, 0x0b, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x53, 0x68, 0x6f, 0x6f, 0x74, 0x42, 0x07,
-	0x0a, 0x05, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x06, 0x5a, 0x04, 0x2e, 0x2f, 0x70, 0x62, 0x62,
-	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x09, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x22, 0x0e, 0x0a, 0x0c, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x22, 0x17, 0x0a, 0x05, 0x53, 0x68,
+	0x6f, 0x6f, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x02, 0x69, 0x64, 0x22, 0x3a, 0x0a, 0x0b, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x53, 0x68, 0x6f,
+	0x6f, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x64, 0x12,
+	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22,
+	0x1b, 0x0a, 0x09, 0x41, 0x64, 0x64, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x1e, 0x0a, 0x0c,
+	0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x1d, 0x0a, 0x05,
+	0x41, 0x6e, 0x67, 0x6c, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x61, 0x6e, 0x67, 0x6c, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x01, 0x52, 0x05, 0x61, 0x6e, 0x67, 0x6c, 0x65, 0x22, 0x33, 0x0a, 0x0b, 0x50,
+	0x6c, 0x61, 0x79, 0x65, 0x72, 0x41, 0x6e, 0x67, 0x6c, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x61, 0x6e,
+	0x67, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x01, 0x52, 0x05, 0x61, 0x6e, 0x67, 0x6c, 0x65,
+	0x22, 0xfc, 0x01, 0x0a, 0x0b, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x45, 0x76, 0x65, 0x6e, 0x74,
+	0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64,
+	0x12, 0x12, 0x0a, 0x04, 0x74, 0x69, 0x63, 0x6b, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04,
+	0x74, 0x69, 0x63, 0x6b, 0x12, 0x24, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x08, 0x2e, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x48,
+	0x00, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12, 0x24, 0x0a, 0x07, 0x69, 0x6e,
+	0x74, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x08, 0x2e, 0x49, 0x6e,
+	0x74, 0x65, 0x6e, 0x74, 0x73, 0x48, 0x00, 0x52, 0x07, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73,
+	0x12, 0x34, 0x0a, 0x0d, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5f, 0x73, 0x74, 0x61, 0x74,
+	0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x48, 0x00, 0x52, 0x0c, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x1e, 0x0a, 0x05, 0x61, 0x6e, 0x67, 0x6c, 0x65, 0x18,
+	0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x06, 0x2e, 0x41, 0x6e, 0x67, 0x6c, 0x65, 0x48, 0x00, 0x52,
+	0x05, 0x61, 0x6e, 0x67, 0x6c, 0x65, 0x12, 0x1e, 0x0a, 0x05, 0x73, 0x68, 0x6f, 0x6f, 0x74, 0x18,
+	0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x06, 0x2e, 0x53, 0x68, 0x6f, 0x6f, 0x74, 0x48, 0x00, 0x52,
+	0x05, 0x73, 0x68, 0x6f, 0x6f, 0x74, 0x42, 0x07, 0x0a, 0x05, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x22,
+	0xf3, 0x02, 0x0a, 0x0b, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12,
+	0x12, 0x0a, 0x04, 0x74, 0x69, 0x63, 0x6b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04, 0x74,
+	0x69, 0x63, 0x6b, 0x12, 0x1f, 0x0a, 0x0b, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x74, 0x69,
+	0x63, 0x6b, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0a, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x54, 0x69, 0x63, 0x6b, 0x12, 0x2b, 0x0a, 0x0a, 0x61, 0x64, 0x64, 0x5f, 0x70, 0x6c, 0x61, 0x79,
+	0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0a, 0x2e, 0x41, 0x64, 0x64, 0x50, 0x6c,
+	0x61, 0x79, 0x65, 0x72, 0x48, 0x00, 0x52, 0x09, 0x61, 0x64, 0x64, 0x50, 0x6c, 0x61, 0x79, 0x65,
+	0x72, 0x12, 0x34, 0x0a, 0x0d, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x5f, 0x70, 0x6c, 0x61, 0x79,
+	0x65, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x52, 0x65, 0x6d, 0x6f, 0x76,
+	0x65, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x48, 0x00, 0x52, 0x0c, 0x72, 0x65, 0x6d, 0x6f, 0x76,
+	0x65, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x12, 0x37, 0x0a, 0x0e, 0x70, 0x6c, 0x61, 0x79, 0x65,
+	0x72, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x0e, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x48,
+	0x00, 0x52, 0x0d, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73,
+	0x12, 0x24, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x0c, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x65, 0x42, 0x75, 0x66, 0x66, 0x65, 0x72, 0x48, 0x00, 0x52,
+	0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x12, 0x31, 0x0a, 0x0c, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72,
+	0x5f, 0x61, 0x6e, 0x67, 0x6c, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x50,
+	0x6c, 0x61, 0x79, 0x65, 0x72, 0x41, 0x6e, 0x67, 0x6c, 0x65, 0x48, 0x00, 0x52, 0x0b, 0x70, 0x6c,
+	0x61, 0x79, 0x65, 0x72, 0x41, 0x6e, 0x67, 0x6c, 0x65, 0x12, 0x31, 0x0a, 0x0c, 0x70, 0x6c, 0x61,
+	0x79, 0x65, 0x72, 0x5f, 0x73, 0x68, 0x6f, 0x6f, 0x74, 0x18, 0x08, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x0c, 0x2e, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x53, 0x68, 0x6f, 0x6f, 0x74, 0x48, 0x00, 0x52,
+	0x0b, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x53, 0x68, 0x6f, 0x6f, 0x74, 0x42, 0x07, 0x0a, 0x05,
+	0x65, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x06, 0x5a, 0x04, 0x2e, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1263,54 +1203,51 @@ func file_proto_app_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_app_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_app_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_proto_app_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_proto_app_proto_goTypes = []interface{}{
 	(Intents_Intent)(0),   // 0: Intents.Intent
 	(*Vector)(nil),        // 1: Vector
-	(*Entity)(nil),        // 2: Entity
-	(*EntityIntents)(nil), // 3: EntityIntents
+	(*Player)(nil),        // 2: Player
+	(*PlayerIntents)(nil), // 3: PlayerIntents
 	(*State)(nil),         // 4: State
 	(*StateBuffer)(nil),   // 5: StateBuffer
 	(*Intents)(nil),       // 6: Intents
-	(*EntityEvents)(nil),  // 7: EntityEvents
-	(*Connect)(nil),       // 8: Connect
-	(*RequestState)(nil),  // 9: RequestState
-	(*Shoot)(nil),         // 10: Shoot
-	(*EntityShoot)(nil),   // 11: EntityShoot
-	(*AddEntity)(nil),     // 12: AddEntity
-	(*RemoveEntity)(nil),  // 13: RemoveEntity
-	(*Angle)(nil),         // 14: Angle
-	(*EntityAngle)(nil),   // 15: EntityAngle
-	(*ClientEvent)(nil),   // 16: ClientEvent
-	(*ServerEvent)(nil),   // 17: ServerEvent
+	(*Connect)(nil),       // 7: Connect
+	(*RequestState)(nil),  // 8: RequestState
+	(*Shoot)(nil),         // 9: Shoot
+	(*PlayerShoot)(nil),   // 10: PlayerShoot
+	(*AddPlayer)(nil),     // 11: AddPlayer
+	(*RemovePlayer)(nil),  // 12: RemovePlayer
+	(*Angle)(nil),         // 13: Angle
+	(*PlayerAngle)(nil),   // 14: PlayerAngle
+	(*ClientEvent)(nil),   // 15: ClientEvent
+	(*ServerEvent)(nil),   // 16: ServerEvent
 }
 var file_proto_app_proto_depIdxs = []int32{
-	1,  // 0: Entity.velocity:type_name -> Vector
-	1,  // 1: Entity.position:type_name -> Vector
-	6,  // 2: Entity.intents:type_name -> Intents
-	6,  // 3: EntityIntents.intents:type_name -> Intents
-	2,  // 4: State.entity_states:type_name -> Entity
+	1,  // 0: Player.velocity:type_name -> Vector
+	1,  // 1: Player.position:type_name -> Vector
+	6,  // 2: Player.intents:type_name -> Intents
+	6,  // 3: PlayerIntents.intents:type_name -> Intents
+	2,  // 4: State.player_states:type_name -> Player
 	4,  // 5: StateBuffer.states:type_name -> State
-	17, // 6: StateBuffer.future_events:type_name -> ServerEvent
+	16, // 6: StateBuffer.future_events:type_name -> ServerEvent
 	0,  // 7: Intents.intents:type_name -> Intents.Intent
-	6,  // 8: EntityEvents.intents:type_name -> Intents
-	2,  // 9: AddEntity.entity:type_name -> Entity
-	8,  // 10: ClientEvent.connect:type_name -> Connect
-	6,  // 11: ClientEvent.intents:type_name -> Intents
-	9,  // 12: ClientEvent.request_state:type_name -> RequestState
-	14, // 13: ClientEvent.angle:type_name -> Angle
-	10, // 14: ClientEvent.shoot:type_name -> Shoot
-	12, // 15: ServerEvent.add_entity:type_name -> AddEntity
-	13, // 16: ServerEvent.remove_entity:type_name -> RemoveEntity
-	7,  // 17: ServerEvent.entity_events:type_name -> EntityEvents
-	5,  // 18: ServerEvent.state:type_name -> StateBuffer
-	15, // 19: ServerEvent.entity_angle:type_name -> EntityAngle
-	11, // 20: ServerEvent.entity_shoot:type_name -> EntityShoot
-	21, // [21:21] is the sub-list for method output_type
-	21, // [21:21] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	7,  // 8: ClientEvent.connect:type_name -> Connect
+	6,  // 9: ClientEvent.intents:type_name -> Intents
+	8,  // 10: ClientEvent.request_state:type_name -> RequestState
+	13, // 11: ClientEvent.angle:type_name -> Angle
+	9,  // 12: ClientEvent.shoot:type_name -> Shoot
+	11, // 13: ServerEvent.add_player:type_name -> AddPlayer
+	12, // 14: ServerEvent.remove_player:type_name -> RemovePlayer
+	3,  // 15: ServerEvent.player_intents:type_name -> PlayerIntents
+	5,  // 16: ServerEvent.state:type_name -> StateBuffer
+	14, // 17: ServerEvent.player_angle:type_name -> PlayerAngle
+	10, // 18: ServerEvent.player_shoot:type_name -> PlayerShoot
+	19, // [19:19] is the sub-list for method output_type
+	19, // [19:19] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_proto_app_proto_init() }
@@ -1332,7 +1269,7 @@ func file_proto_app_proto_init() {
 			}
 		}
 		file_proto_app_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Entity); i {
+			switch v := v.(*Player); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1344,7 +1281,7 @@ func file_proto_app_proto_init() {
 			}
 		}
 		file_proto_app_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EntityIntents); i {
+			switch v := v.(*PlayerIntents); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1392,18 +1329,6 @@ func file_proto_app_proto_init() {
 			}
 		}
 		file_proto_app_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EntityEvents); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_app_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Connect); i {
 			case 0:
 				return &v.state
@@ -1415,7 +1340,7 @@ func file_proto_app_proto_init() {
 				return nil
 			}
 		}
-		file_proto_app_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_app_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RequestState); i {
 			case 0:
 				return &v.state
@@ -1427,7 +1352,7 @@ func file_proto_app_proto_init() {
 				return nil
 			}
 		}
-		file_proto_app_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_app_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Shoot); i {
 			case 0:
 				return &v.state
@@ -1439,8 +1364,20 @@ func file_proto_app_proto_init() {
 				return nil
 			}
 		}
+		file_proto_app_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PlayerShoot); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 		file_proto_app_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EntityShoot); i {
+			switch v := v.(*AddPlayer); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1452,7 +1389,7 @@ func file_proto_app_proto_init() {
 			}
 		}
 		file_proto_app_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AddEntity); i {
+			switch v := v.(*RemovePlayer); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1464,18 +1401,6 @@ func file_proto_app_proto_init() {
 			}
 		}
 		file_proto_app_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RemoveEntity); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_app_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Angle); i {
 			case 0:
 				return &v.state
@@ -1487,8 +1412,8 @@ func file_proto_app_proto_init() {
 				return nil
 			}
 		}
-		file_proto_app_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EntityAngle); i {
+		file_proto_app_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PlayerAngle); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1499,7 +1424,7 @@ func file_proto_app_proto_init() {
 				return nil
 			}
 		}
-		file_proto_app_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_app_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ClientEvent); i {
 			case 0:
 				return &v.state
@@ -1511,7 +1436,7 @@ func file_proto_app_proto_init() {
 				return nil
 			}
 		}
-		file_proto_app_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_proto_app_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerEvent); i {
 			case 0:
 				return &v.state
@@ -1524,20 +1449,20 @@ func file_proto_app_proto_init() {
 			}
 		}
 	}
-	file_proto_app_proto_msgTypes[15].OneofWrappers = []interface{}{
+	file_proto_app_proto_msgTypes[14].OneofWrappers = []interface{}{
 		(*ClientEvent_Connect)(nil),
 		(*ClientEvent_Intents)(nil),
 		(*ClientEvent_RequestState)(nil),
 		(*ClientEvent_Angle)(nil),
 		(*ClientEvent_Shoot)(nil),
 	}
-	file_proto_app_proto_msgTypes[16].OneofWrappers = []interface{}{
-		(*ServerEvent_AddEntity)(nil),
-		(*ServerEvent_RemoveEntity)(nil),
-		(*ServerEvent_EntityEvents)(nil),
+	file_proto_app_proto_msgTypes[15].OneofWrappers = []interface{}{
+		(*ServerEvent_AddPlayer)(nil),
+		(*ServerEvent_RemovePlayer)(nil),
+		(*ServerEvent_PlayerIntents)(nil),
 		(*ServerEvent_State)(nil),
-		(*ServerEvent_EntityAngle)(nil),
-		(*ServerEvent_EntityShoot)(nil),
+		(*ServerEvent_PlayerAngle)(nil),
+		(*ServerEvent_PlayerShoot)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1545,7 +1470,7 @@ func file_proto_app_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_app_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   17,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

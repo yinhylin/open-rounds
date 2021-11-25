@@ -7,7 +7,7 @@ type Vector struct {
 }
 
 // TODO: This all needs a giant refactor to dedupe things. :(
-type Entity struct {
+type Player struct {
 	ID       string
 	Coords   Vector
 	Velocity Vector
@@ -54,8 +54,8 @@ func IntentsFromProto(a *pb.Intents) map[pb.Intents_Intent]struct{} {
 	return actions
 }
 
-func (e *Entity) ToProto() *pb.Entity {
-	return &pb.Entity{
+func (e *Player) ToProto() *pb.Player {
+	return &pb.Player{
 		Id:       e.ID,
 		Position: e.Coords.ToProto(),
 		Velocity: e.Velocity.ToProto(),
@@ -64,11 +64,11 @@ func (e *Entity) ToProto() *pb.Entity {
 	}
 }
 
-func EntityFromProto(e *pb.Entity) *Entity {
+func PlayerFromProto(e *pb.Player) *Player {
 	if e == nil {
 		return nil
 	}
-	return &Entity{
+	return &Player{
 		ID:       e.Id,
 		Coords:   VectorFromProto(e.Position),
 		Velocity: VectorFromProto(e.Velocity),
@@ -77,16 +77,16 @@ func EntityFromProto(e *pb.Entity) *Entity {
 	}
 }
 
-func EntitiesFromProto(p []*pb.Entity) map[string]Entity {
-	entities := make(map[string]Entity, len(p))
+func PlayersFromProto(p []*pb.Player) map[string]Player {
+	entities := make(map[string]Player, len(p))
 	for _, entity := range p {
-		entities[entity.Id] = *EntityFromProto(entity)
+		entities[entity.Id] = *PlayerFromProto(entity)
 	}
 	return entities
 }
 
-func EntitiesToProto(e map[string]Entity) []*pb.Entity {
-	p := make([]*pb.Entity, 0, len(e))
+func PlayersToProto(e map[string]Player) []*pb.Player {
+	p := make([]*pb.Player, 0, len(e))
 	for _, entity := range e {
 		p = append(p, entity.ToProto())
 	}

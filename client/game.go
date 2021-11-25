@@ -97,7 +97,7 @@ func (g *Game) handleServerEvents() error {
 					g.state.Next()
 				}
 
-			case *pb.ServerEvent_AddEntity, *pb.ServerEvent_EntityAngle, *pb.ServerEvent_RemoveEntity, *pb.ServerEvent_EntityShoot, *pb.ServerEvent_EntityEvents:
+			case *pb.ServerEvent_AddPlayer, *pb.ServerEvent_PlayerAngle, *pb.ServerEvent_RemovePlayer, *pb.ServerEvent_PlayerShoot, *pb.ServerEvent_PlayerIntents:
 				if err := g.state.OnEvent(event); err != nil {
 					log.Println(err)
 					requestState = true
@@ -184,7 +184,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(image, options)
 	})
 
-	g.state.ForEachEntity(func(ID string, e *world.Entity) {
+	g.state.ForEachPlayer(func(ID string, e *world.Player) {
 		// lol
 		image := emoji.Image("🥴")
 		if ID == g.playerID {
@@ -253,7 +253,7 @@ func (g *Game) handleInput() {
 			}
 		}
 
-		e := g.state.Current().Entities[g.playerID]
+		e := g.state.Current().Players[g.playerID]
 		cX, cY := ebiten.CursorPosition()
 		angle := math.Atan2(e.Coords.Y-float64(cY), e.Coords.X-float64(cX))
 
@@ -263,8 +263,8 @@ func (g *Game) handleInput() {
 			g.previousAngle = angle
 			g.state.OnEvent(&pb.ServerEvent{
 				Tick: delayedTick,
-				Event: &pb.ServerEvent_EntityAngle{
-					EntityAngle: &pb.EntityAngle{
+				Event: &pb.ServerEvent_PlayerAngle{
+					PlayerAngle: &pb.PlayerAngle{
 						Id:    g.playerID,
 						Angle: angle,
 					},
@@ -285,8 +285,8 @@ func (g *Game) handleInput() {
 			shotID := ksuid.New().String()
 			g.state.OnEvent(&pb.ServerEvent{
 				Tick: delayedTick,
-				Event: &pb.ServerEvent_EntityShoot{
-					EntityShoot: &pb.EntityShoot{
+				Event: &pb.ServerEvent_PlayerShoot{
+					PlayerShoot: &pb.PlayerShoot{
 						Id:       shotID,
 						SourceId: g.playerID,
 					},
@@ -312,8 +312,8 @@ func (g *Game) handleInput() {
 
 	g.state.OnEvent(&pb.ServerEvent{
 		Tick: delayedTick,
-		Event: &pb.ServerEvent_EntityEvents{
-			EntityEvents: &pb.EntityEvents{
+		Event: &pb.ServerEvent_PlayerIntents{
+			PlayerIntents: &pb.PlayerIntents{
 				Id:      g.playerID,
 				Intents: world.IntentsToProto(intents),
 			},
