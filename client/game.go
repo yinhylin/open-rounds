@@ -84,29 +84,26 @@ func (g *Game) handleServerEvents() error {
 		select {
 		case event := <-g.serverEvents:
 			g.serverTick = int64(math.Max(float64(g.serverTick), float64(event.ServerTick)))
-			switch event.Event.(type) {
-			case *pb.ServerEvent_AddEntity:
-				if g.state.Current() == nil {
+			if g.state.Current() == nil {
+				if _, ok := event.Event.(*pb.ServerEvent_State); !ok {
 					continue
 				}
+			}
+
+			switch event.Event.(type) {
+			case *pb.ServerEvent_AddEntity:
 				err = g.state.AddEntity(&world.AddEntity{
 					Tick: event.Tick,
 					ID:   event.GetAddEntity().Entity.Id,
 				})
 
 			case *pb.ServerEvent_RemoveEntity:
-				if g.state.Current() == nil {
-					continue
-				}
 				err = g.state.RemoveEntity(&world.RemoveEntity{
 					Tick: event.Tick,
 					ID:   event.GetRemoveEntity().Id,
 				})
 
 			case *pb.ServerEvent_EntityEvents:
-				if g.state.CurrentTick() == world.NilTick {
-					continue
-				}
 				msg := event.GetEntityEvents()
 				if msg.Id == g.playerID {
 					// TODO: Store a rolling buffer of input delay and ease instead of updating immediately.
@@ -133,9 +130,6 @@ func (g *Game) handleServerEvents() error {
 				}
 
 			case *pb.ServerEvent_EntityAngle:
-				if g.state.Current() == nil {
-					continue
-				}
 				msg := event.GetEntityAngle()
 				if msg.Id == g.playerID {
 					continue
@@ -147,9 +141,6 @@ func (g *Game) handleServerEvents() error {
 				})
 
 			case *pb.ServerEvent_EntityShoot:
-				if g.state.Current() == nil {
-					continue
-				}
 				msg := event.GetEntityShoot()
 				if msg.SourceId == g.playerID {
 					continue
