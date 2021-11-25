@@ -218,10 +218,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+height)
 	})
 
+	image := g.Image("bullet")
 	g.state.ForEachBullet(func(ID string, e *world.Bullet) {
-		image := emoji.Image("🔴")
 		opt := &ebiten.DrawImageOptions{}
-		opt.GeoM.Scale(0.1, 0.1)
 		opt.GeoM.Translate(32, 32)
 		opt.GeoM.Translate(e.Coords.X, e.Coords.Y)
 		screen.DrawImage(image, opt)
