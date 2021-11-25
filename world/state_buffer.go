@@ -15,24 +15,18 @@ type StateBuffer struct {
 }
 
 func (s *StateBuffer) ForEachBullet(callback func(string, *Bullet)) {
-	current := s.Current()
-	if current == nil {
-		return
-	}
-
-	for ID, bullet := range current.Bullets {
-		callback(ID, &bullet)
+	if current := s.Current(); current != nil {
+		for ID, bullet := range current.Bullets {
+			callback(ID, &bullet)
+		}
 	}
 }
 
 func (s *StateBuffer) ForEachEntity(callback func(string, *Entity)) {
-	current := s.Current()
-	if current == nil {
-		return
-	}
-
-	for ID, entity := range current.Entities {
-		callback(ID, &entity)
+	if current := s.Current(); current != nil {
+		for ID, entity := range current.Entities {
+			callback(ID, &entity)
+		}
 	}
 }
 
@@ -43,9 +37,7 @@ func (s *StateBuffer) CurrentTick() int64 {
 func newRingBuffer(maxCapacity int) []*State {
 	states := make([]*State, maxCapacity)
 	for i := range states {
-		states[i] = &State{
-			Tick: NilTick,
-		}
+		states[i] = NewState()
 	}
 	return states
 }

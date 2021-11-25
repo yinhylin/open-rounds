@@ -12,6 +12,14 @@ type State struct {
 	Tick     int64
 }
 
+func NewState() *State {
+	return &State{
+		Tick:     NilTick,
+		Entities: make(map[string]Entity),
+		Bullets:  make(map[string]Bullet),
+	}
+}
+
 func StateFromProto(p *pb.State) *State {
 	return &State{
 		Tick:     p.Tick,
