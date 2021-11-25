@@ -179,54 +179,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(image, options)
 	})
 
-	g.state.ForEachPlayer(func(ID string, e *world.Player) {
-		// lol
+	g.state.ForEachPlayer(func(ID string, p *world.Player) {
 		image := g.Image("zany")
 		if ID == g.playerID {
 			image = g.Image("cowboy")
 		}
-
-		bodyOptions := &ebiten.DrawImageOptions{}
-		bodyOptions.GeoM.Scale(0.1, 0.1)
-		bodyOptions.GeoM.Translate(e.Coords.X, e.Coords.Y)
-		bodyOptions.Filter = ebiten.FilterLinear
-		_, playerHeight := image.Size()
-		playerHeight /= 10
-
-		gun := g.Image("pistol")
-		gunOptions := &ebiten.DrawImageOptions{}
-		angle := e.Angle
-		scale := 0.1
-		x := float64(0)
-		if math.Abs(angle) > math.Pi/2 {
-			scale *= -1
-			angle *= -1
-			angle += math.Pi
-			x += 64
-		}
-
-		width, height := image.Size()
-		gunOptions.GeoM.Translate(float64(-width/2), float64(-height/2))
-		gunOptions.GeoM.Rotate(angle)
-		gunOptions.GeoM.Scale(scale, 0.1)
-		gunOptions.GeoM.Translate(e.Coords.X+x, e.Coords.Y+32)
-		gunOptions.Filter = ebiten.FilterLinear
-
-		screen.DrawImage(image, bodyOptions)
-		screen.DrawImage(gun, gunOptions)
-
-		debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", ID, e.Coords.X, e.Coords.Y)
-		ebitenutil.DebugPrintAt(screen, debugString, int(e.Coords.X), int(e.Coords.Y)+playerHeight)
+		RenderPlayer(screen, image, p)
+		RenderGun(screen, g.Assets, p.Coords, p.Angle)
 	})
 
-	image := g.Image("bullet")
-	g.state.ForEachBullet(func(ID string, e *world.Bullet) {
-		opt := &ebiten.DrawImageOptions{}
-		opt.GeoM.Translate(32, 32)
-		opt.GeoM.Translate(e.Coords.X, e.Coords.Y)
-		screen.DrawImage(image, opt)
+	g.state.ForEachBullet(func(ID string, bullet *world.Bullet) {
+		RenderBullet(screen, g.Assets, bullet)
 	})
-
 	ebitenutil.DebugPrint(screen, g.debugString())
 }
 
