@@ -75,7 +75,6 @@ func (s *StateBuffer) OnEvent(e *pb.ServerEvent) error {
 					X: -math.Cos(entity.Angle)*30 + entity.Velocity.X,
 					Y: -math.Sin(entity.Angle)*30 + entity.Velocity.Y,
 				},
-				Angle: entity.Angle,
 			}
 		})
 	}
