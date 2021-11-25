@@ -183,9 +183,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	})
 
 	g.state.ForEachPlayer(func(ID string, p *world.Player) {
-		image := g.Image("zany")
+		image := g.Image("enemy")
 		if ID == g.playerID {
-			image = g.Image("cowboy")
+			image = g.Image("player")
 		}
 		RenderPlayer(screen, image, p)
 		RenderGun(screen, g.Assets, p.Coords, p.Angle)

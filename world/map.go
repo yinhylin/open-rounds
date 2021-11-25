@@ -10,6 +10,8 @@ import (
 
 type tileIndex int
 
+const tileSize = 32
+
 const (
 	skyTile tileIndex = iota
 	platformTile

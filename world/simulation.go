@@ -32,9 +32,10 @@ func updatePlayer(e *Player, s *State, m *Map) {
 		Y: e.Coords.Y + e.Velocity.Y,
 	}
 	toCheck := []Vector{
-		{0, 32},
-		{32, 0},
-		{32, 32},
+		{0, 0},
+		{0, tileSize},
+		{tileSize, 0},
+		{tileSize, tileSize},
 	}
 	grounded := false
 	for _, d := range toCheck {
@@ -51,13 +52,20 @@ func updatePlayer(e *Player, s *State, m *Map) {
 		}
 
 		if tile.Dense {
-			if d.Y > 0 {
+			if d.Y <= 0 && e.Velocity.Y <= 0 {
+				coords = Vector{
+					X: coords.X,
+					Y: float64((y + 1) * 32),
+				}
+				e.Velocity.Y = 0
+			}
+			if d.Y > 0 && e.Velocity.Y >= 0 {
 				coords = Vector{
 					X: coords.X,
 					Y: float64((y - 1) * 32),
 				}
+				grounded = true
 			}
-			grounded = true
 			continue
 		}
 	}
