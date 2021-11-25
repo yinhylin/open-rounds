@@ -76,3 +76,32 @@ func EntityFromProto(e *pb.Entity) *Entity {
 		Angle:    e.Angle,
 	}
 }
+
+func EntitiesFromProto(p []*pb.Entity) map[string]Entity {
+	entities := make(map[string]Entity, len(p))
+	for _, entity := range p {
+		entities[entity.Id] = *EntityFromProto(entity)
+	}
+	return entities
+}
+
+func EntitiesToProto(e map[string]Entity) []*pb.Entity {
+	p := make([]*pb.Entity, 0, len(e))
+	for _, entity := range e {
+		p = append(p, entity.ToProto())
+	}
+	return p
+}
+
+func IntentsEqual(a, b map[pb.Intents_Intent]struct{}) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for k := range a {
+		if _, ok := b[k]; !ok {
+			return false
+		}
+	}
+	return true
+}
