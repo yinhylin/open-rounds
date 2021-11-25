@@ -1,6 +1,7 @@
 package world
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -24,45 +25,48 @@ func NewStateBuffer(maxCapacity int) *StateBuffer {
 }
 
 func (s *StateBuffer) OnEvent(e *pb.ServerEvent) error {
-	if e.Tick > s.currentTick {
-		s.futureEvents[e.Tick] = append(s.futureEvents[e.Tick], e)
+	if e.GetPlayer() == nil {
+		return errors.New("no player details")
+	}
+	player := e.Player
+
+	if player.Tick > s.currentTick {
+		s.futureEvents[player.Tick] = append(s.futureEvents[player.Tick], e)
 		return nil
 	}
 
 	switch e.Event.(type) {
 	case *pb.ServerEvent_AddPlayer:
-		ID := e.GetAddPlayer().Id
-		return s.applyUpdate(e.Tick, func(state *State) {
-			state.Players[ID] = Player{ID: ID}
+		return s.applyUpdate(player.Tick, func(state *State) {
+			state.Players[player.Id] = Player{ID: player.Id}
 		})
 
 	case *pb.ServerEvent_RemovePlayer:
-		ID := e.GetRemovePlayer().Id
-		return s.applyUpdate(e.Tick, func(state *State) {
-			delete(state.Players, ID)
+		return s.applyUpdate(player.Tick, func(state *State) {
+			delete(state.Players, player.Id)
 		})
 
-	case *pb.ServerEvent_PlayerIntents:
-		msg := e.GetPlayerIntents()
-		return s.applyUpdate(e.Tick, func(state *State) {
-			entity := state.Players[msg.Id]
-			entity.Intents = IntentsFromProto(msg.Intents)
-			state.Players[msg.Id] = entity
+	case *pb.ServerEvent_Intents:
+		msg := e.GetIntents()
+		return s.applyUpdate(player.Tick, func(state *State) {
+			entity := state.Players[player.Id]
+			entity.Intents = IntentsFromProtoSlice(msg.Intents)
+			state.Players[player.Id] = entity
 		})
 
-	case *pb.ServerEvent_PlayerAngle:
-		msg := e.GetPlayerAngle()
-		return s.applyUpdate(e.Tick, func(state *State) {
-			entity := state.Players[msg.Id]
+	case *pb.ServerEvent_Angle:
+		msg := e.GetAngle()
+		return s.applyUpdate(player.Tick, func(state *State) {
+			entity := state.Players[player.Id]
 			entity.Angle = msg.Angle
-			state.Players[msg.Id] = entity
+			state.Players[player.Id] = entity
 		})
 
-	case *pb.ServerEvent_PlayerShoot:
-		msg := e.GetPlayerShoot()
+	case *pb.ServerEvent_Shoot:
+		msg := e.GetShoot()
 		// TODO: Validate can shoot etc. YOLO for now.
-		return s.applyUpdate(e.Tick, func(state *State) {
-			entity := state.Players[msg.SourceId]
+		return s.applyUpdate(player.Tick, func(state *State) {
+			entity := state.Players[player.Id]
 			state.Bullets[msg.Id] = Bullet{
 				ID:     msg.Id,
 				Coords: entity.Coords,

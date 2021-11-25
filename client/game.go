@@ -59,7 +59,7 @@ func NewGame(assets *Assets) *Game {
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
 		serverTick:      world.NilTick,
 		clientEvents:    clientEvents,
-		inputDelay:      6,
+		inputDelay:      5,
 		previousIntents: make(map[pb.Intents_Intent]struct{}),
 	}
 }
@@ -82,18 +82,20 @@ func (g *Game) handleServerEvents() error {
 	for len(g.serverEvents) > 0 {
 		select {
 		case event := <-g.serverEvents:
-			g.serverTick = int64(math.Max(float64(g.serverTick), float64(event.ServerTick)))
+			g.serverTick = int64(math.Max(float64(g.serverTick), float64(event.Tick)))
+			if player := event.GetPlayer(); player != nil {
+				if err := g.state.OnEvent(event); err != nil {
+					log.Println(err)
+					requestState = true
+				}
+				continue
+			}
+
 			switch event.Event.(type) {
 			case *pb.ServerEvent_State:
 				g.state = world.StateBufferFromProto(event.GetState())
 				for i := 0; i <= futureStates; i++ {
 					g.state.Next()
-				}
-
-			case *pb.ServerEvent_AddPlayer, *pb.ServerEvent_PlayerAngle, *pb.ServerEvent_RemovePlayer, *pb.ServerEvent_PlayerShoot, *pb.ServerEvent_PlayerIntents:
-				if err := g.state.OnEvent(event); err != nil {
-					log.Println(err)
-					requestState = true
 				}
 			}
 

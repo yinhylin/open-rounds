@@ -59,7 +59,7 @@ func NewServer() *Server {
 			case <-sync.C:
 				// Send all the clients the current tick the server is on.
 				s.publish(&pb.ServerEvent{
-					ServerTick: s.state.CurrentTick(),
+					Tick: s.state.CurrentTick(),
 				})
 
 			case <-tick.C:
@@ -85,19 +85,17 @@ func (s *Server) onEvent(e *event) *pb.ServerEvent {
 	case *pb.ClientEvent_Connect:
 		e.subscriber.PlayerID = e.Id
 		return &pb.ServerEvent{
-			Tick:       s.state.CurrentTick(),
-			ServerTick: s.state.CurrentTick(),
-			Event: &pb.ServerEvent_AddPlayer{
-				AddPlayer: &pb.AddPlayer{
-					Id: e.Id,
-				},
+			Tick: s.state.CurrentTick(),
+			Player: &pb.PlayerDetails{
+				Id:   e.Id,
+				Tick: s.state.CurrentTick(),
 			},
+			Event: &pb.ServerEvent_AddPlayer{},
 		}
 
 	case *pb.ClientEvent_RequestState:
 		e.subscriber.Messages <- &pb.ServerEvent{
-			Tick:       s.state.CurrentTick(),
-			ServerTick: s.state.CurrentTick(),
+			Tick: s.state.CurrentTick(),
 			Event: &pb.ServerEvent_State{
 				State: s.state.ToProto(),
 			},
@@ -179,12 +177,13 @@ func (s *Server) handleConnection(ctx context.Context, c *websocket.Conn) error 
 			}
 			s.removeSubscriber(sub)
 			event := &pb.ServerEvent{
-				Tick:       s.state.CurrentTick(),
-				ServerTick: s.state.CurrentTick(),
+				Tick: s.state.CurrentTick(),
+				Player: &pb.PlayerDetails{
+					Tick: s.state.CurrentTick(),
+					Id:   sub.PlayerID,
+				},
 				Event: &pb.ServerEvent_RemovePlayer{
-					RemovePlayer: &pb.RemovePlayer{
-						Id: sub.PlayerID,
-					},
+					RemovePlayer: &pb.RemovePlayer{},
 				},
 			}
 			if err := s.state.OnEvent(event); err != nil {

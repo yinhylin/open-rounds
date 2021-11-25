@@ -21,6 +21,22 @@ func IntentsToProto(actions map[pb.Intents_Intent]struct{}) *pb.Intents {
 	}
 }
 
+func IntentsFromProtoSlice(intents []pb.Intents_Intent) map[pb.Intents_Intent]struct{} {
+	actions := make(map[pb.Intents_Intent]struct{})
+	for _, action := range intents {
+		actions[action] = struct{}{}
+	}
+	return actions
+}
+
+func IntentsToProtoSlice(actions map[pb.Intents_Intent]struct{}) []pb.Intents_Intent {
+	var events []pb.Intents_Intent
+	for action := range actions {
+		events = append(events, action)
+	}
+	return events
+}
+
 func IntentsFromProto(a *pb.Intents) map[pb.Intents_Intent]struct{} {
 	actions := make(map[pb.Intents_Intent]struct{})
 	for _, action := range a.Intents {
