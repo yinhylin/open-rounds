@@ -90,15 +90,6 @@ func (g *Game) handleServerEvents() error {
 		select {
 		case event := <-g.serverEvents:
 			g.serverTick = int64(math.Max(float64(g.serverTick), float64(event.ServerTick)))
-			if _, ok := event.Event.(*pb.ServerEvent_State); ok {
-				g.state = world.StateBufferFromProto(event.GetState())
-				// Simulate next N states.
-				for i := 0; i <= futureStates; i++ {
-					g.state.Next()
-				}
-				continue
-			}
-
 			switch event.Event.(type) {
 			case *pb.ServerEvent_State:
 				g.state = world.StateBufferFromProto(event.GetState())
