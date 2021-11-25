@@ -59,9 +59,11 @@ func Simulate(s *State, u *UpdateBuffer) *State {
 		u = emptyUpdateBuffer
 	}
 
-	next := *s
-	next.Entities = make(map[string]Entity, len(s.Entities))
-	next.Bullets = make(map[string]Bullet, len(s.Bullets))
+	next := &State{
+		Entities: make(map[string]Entity, len(s.Entities)),
+		Bullets:  make(map[string]Bullet, len(s.Bullets)),
+		Tick:     s.Tick + 1,
+	}
 
 	// Add
 	for ID := range u.Add {
@@ -105,7 +107,5 @@ func Simulate(s *State, u *UpdateBuffer) *State {
 		}
 		next.Entities[ID] = entity
 	}
-
-	next.Tick++
-	return &next
+	return next
 }

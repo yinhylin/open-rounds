@@ -58,22 +58,6 @@ func IntentsEqual(a, b map[pb.Intents_Intent]struct{}) bool {
 	return true
 }
 
-func entityEqual(a, b Entity) bool {
-	return a.Coords == b.Coords && a.Velocity == b.Velocity && IntentsEqual(a.Intents, b.Intents)
-}
-
-func entitiesEqual(a, b map[string]Entity) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for ID, entity := range a {
-		if !entityEqual(entity, b[ID]) {
-			return false
-		}
-	}
-	return true
-}
-
 type StateBuffer struct {
 	states       []*State
 	updateBuffer map[int64]*UpdateBuffer
