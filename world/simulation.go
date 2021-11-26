@@ -30,15 +30,17 @@ func updatePlayer(e *Player, s *State, m *Map) {
 	e.Velocity = velocity
 
 	grounded := false
+	const size = tileSize - 1
 	// horizontal scan
-	{
-		toCheck := e.Coords
-		toCheck.X += e.Velocity.X
-		if e.Velocity.X > 0 {
-			toCheck.X += tileSize
-		}
-		for _, dy := range []float64{0, tileSize} {
-			toCheck.Y += dy
+	if e.Velocity.X != 0 {
+		for _, dy := range []float64{0, size} {
+			toCheck := Vector{
+				X: e.Coords.X + e.Velocity.X,
+				Y: e.Coords.Y + dy,
+			}
+			if e.Velocity.X > 0 {
+				toCheck.X += size
+			}
 			x, y := toCheck.ToTileCoordinates()
 			tile, err := m.At(x, y)
 			if err != nil {
@@ -46,24 +48,26 @@ func updatePlayer(e *Player, s *State, m *Map) {
 			}
 			if tile.Dense {
 				if e.Velocity.X > 0 {
-					e.Coords.X += float64(32-int64(e.Coords.X)%32) - 1
+					e.Coords.X = float64((x - 1) * 32)
 				} else if e.Velocity.X < 0 {
-					e.Coords.X -= float64(int64(e.Coords.X)%32) - 1
+					e.Coords.X = float64((x + 1) * 32)
 				}
 				e.Velocity.X = 0
+				break
 			}
 		}
 	}
 
 	// vertical scan
-	{
-		toCheck := e.Coords
-		toCheck.Y += e.Velocity.Y
-		if e.Velocity.Y > 0 {
-			toCheck.Y += tileSize
-		}
-		for _, dx := range []float64{0, tileSize} {
-			toCheck.X += dx
+	if e.Velocity.Y != 0 {
+		for _, dx := range []float64{0, size} {
+			toCheck := Vector{
+				X: e.Coords.X + dx,
+				Y: e.Coords.Y + e.Velocity.Y,
+			}
+			if e.Velocity.Y > 0 {
+				toCheck.Y += size
+			}
 			x, y := toCheck.ToTileCoordinates()
 			tile, err := m.At(x, y)
 			if err != nil {
@@ -71,15 +75,16 @@ func updatePlayer(e *Player, s *State, m *Map) {
 			}
 			if tile.Dense {
 				if e.Velocity.Y > 0 {
+					e.Coords.Y = float64((y - 1) * 32)
 					grounded = true
-					e.Coords.Y += float64(32-int64(e.Coords.Y)%32) - 1
 				} else if e.Velocity.Y < 0 {
-					e.Coords.Y -= float64(int64(e.Coords.Y)%32) - 1
+					e.Coords.Y = float64((y + 1) * 32)
 				}
 				e.Velocity.Y = 0
 			}
 		}
 	}
+
 	e.Coords.X += e.Velocity.X
 	e.Coords.Y += e.Velocity.Y
 
