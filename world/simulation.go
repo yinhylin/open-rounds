@@ -45,6 +45,11 @@ func updatePlayer(e *Player, s *State, m *Map) {
 				continue
 			}
 			if tile.Dense {
+				if e.Velocity.X > 0 {
+					e.Coords.X += float64(32-int64(e.Coords.X)%32) - 1
+				} else if e.Velocity.X < 0 {
+					e.Coords.X -= float64(int64(e.Coords.X)%32) - 1
+				}
 				e.Velocity.X = 0
 			}
 		}
@@ -68,7 +73,8 @@ func updatePlayer(e *Player, s *State, m *Map) {
 				if e.Velocity.Y > 0 {
 					grounded = true
 					e.Coords.Y += float64(32-int64(e.Coords.Y)%32) - 1
-				} else {
+				} else if e.Velocity.Y < 0 {
+					e.Coords.Y -= float64(int64(e.Coords.Y)%32) - 1
 				}
 				e.Velocity.Y = 0
 			}
