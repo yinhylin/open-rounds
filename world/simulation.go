@@ -28,49 +28,54 @@ func updatePlayer(e *Player, s *State, m *Map) {
 	// gravity
 	velocity.Y = math.Min(e.Velocity.Y+2, 16)
 	e.Velocity = velocity
-	coords := Vector{
-		X: e.Coords.X + e.Velocity.X,
-		Y: e.Coords.Y + e.Velocity.Y,
-	}
-	toCheck := []Vector{
-		{0, 0},
-		{0, tileSize},
-		{tileSize, 0},
-		{tileSize, tileSize},
-	}
+
 	grounded := false
-	for _, d := range toCheck {
-		c := Vector{
-			X: coords.X + d.X,
-			Y: coords.Y + d.Y,
+	// horizontal scan
+	{
+		toCheck := e.Coords
+		toCheck.X += e.Velocity.X
+		if e.Velocity.X > 0 {
+			toCheck.X += tileSize
 		}
-		x := int64(c.X / 32)
-		y := int64(c.Y / 32)
-
-		tile, err := m.At(x, y)
-		if err != nil {
-			continue
+		for _, dy := range []float64{0, tileSize} {
+			toCheck.Y += dy
+			x, y := toCheck.ToTileCoordinates()
+			tile, err := m.At(x, y)
+			if err != nil {
+				continue
+			}
+			if tile.Dense {
+				e.Velocity.X = 0
+			}
 		}
+	}
 
-		if tile.Dense {
-			if d.Y <= 0 && e.Velocity.Y <= 0 {
-				coords = Vector{
-					X: coords.X,
-					Y: float64((y + 1) * 32),
+	// vertical scan
+	{
+		toCheck := e.Coords
+		toCheck.Y += e.Velocity.Y
+		if e.Velocity.Y > 0 {
+			toCheck.Y += tileSize
+		}
+		for _, dx := range []float64{0, tileSize} {
+			toCheck.X += dx
+			x, y := toCheck.ToTileCoordinates()
+			tile, err := m.At(x, y)
+			if err != nil {
+				continue
+			}
+			if tile.Dense {
+				if e.Velocity.Y > 0 {
+					grounded = true
+					e.Coords.Y += float64(32-int64(e.Coords.Y)%32) - 1
+				} else {
 				}
 				e.Velocity.Y = 0
 			}
-			if d.Y > 0 && e.Velocity.Y >= 0 {
-				coords = Vector{
-					X: coords.X,
-					Y: float64((y - 1) * 32),
-				}
-				grounded = true
-			}
-			continue
 		}
 	}
-	e.Coords = coords
+	e.Coords.X += e.Velocity.X
+	e.Coords.Y += e.Velocity.Y
 
 	// TODO: This needs to be proper collision detection but yolo prototyping.
 	// TODO: Finish Map.
