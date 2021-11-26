@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/sailormoon/open-rounds/world"
 
@@ -10,17 +11,53 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-func RenderPlayer(screen *ebiten.Image, image *ebiten.Image, p *world.Player) {
+type RenderData struct {
+	lastPlayerDrawCoords world.Vector
+	lastGunDrawCoords	 world.Vector
+	prevAngle            float64
+	targetAngle    		 float64
+}
+
+type Renderer struct {
+	renderData 		map[string]*RenderData
+	lastDrawTime	time.Time
+	lerpFactor		float64
+}
+
+func NewRenderer(lerpFactor float64) *Renderer {
+	return &Renderer{
+		renderData: make(map[string]*RenderData),
+		lerpFactor: lerpFactor,
+	}
+}
+
+func (r *Renderer) RenderPlayer(screen *ebiten.Image, playerImage *ebiten.Image, gunImage *ebiten.Image, p *world.Player) {
 	opt := &ebiten.DrawImageOptions{}
-	opt.GeoM.Translate(p.Coords.X, p.Coords.Y)
+	x, y := p.Coords.X, p.Coords.Y
+	if renderData, ok := r.renderData[p.ID]; ok {
+		if time.Since(r.lastDrawTime).Seconds() <= r.lerpFactor {
+			lerpDelta := time.Since(r.lastDrawTime).Seconds() / r.lerpFactor
+			x = Lerp(renderData.lastPlayerDrawCoords.X, x, lerpDelta)
+			y = Lerp(renderData.lastPlayerDrawCoords.Y, y, lerpDelta)
+		}
+	} else {
+		r.renderData[p.ID] = &RenderData{
+			lastPlayerDrawCoords: world.Vector{X: x, Y: y},
+			prevAngle:            p.Angle,
+		}
+	}
+	opt.GeoM.Translate(x, y)
 	opt.Filter = ebiten.FilterLinear
-	_, playerHeight := image.Size()
-	screen.DrawImage(image, opt)
+	_, playerHeight := playerImage.Size()
+	playerHeight /= 10
+	r.renderData[p.ID].lastPlayerDrawCoords = world.Vector{X: x, Y: y}
+	screen.DrawImage(playerImage, opt)
+	RenderGun(screen, gunImage, r.renderData[p.ID].lastPlayerDrawCoords, p.Angle)
 	debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", p.ID, p.Coords.X, p.Coords.Y)
 	ebitenutil.DebugPrintAt(screen, debugString, int(p.Coords.X), int(p.Coords.Y)+playerHeight)
 }
 
-func RenderBullet(screen *ebiten.Image, a *Assets, b *world.Bullet) {
+func (r *Renderer) RenderBullet(screen *ebiten.Image, a *Assets, b *world.Bullet) {
 	image := a.Image("bullet")
 	opt := &ebiten.DrawImageOptions{}
 	opt.GeoM.Translate(16, 16)
@@ -29,8 +66,7 @@ func RenderBullet(screen *ebiten.Image, a *Assets, b *world.Bullet) {
 	screen.DrawImage(image, opt)
 }
 
-func RenderGun(screen *ebiten.Image, a *Assets, coords world.Vector, angle float64) {
-	image := a.Image("pistol")
+func RenderGun(screen *ebiten.Image, image *ebiten.Image, coords world.Vector, angle float64) {
 	opt := &ebiten.DrawImageOptions{}
 	scale := 0.1
 	x := float64(0)
@@ -47,4 +83,8 @@ func RenderGun(screen *ebiten.Image, a *Assets, coords world.Vector, angle float
 	opt.GeoM.Translate(coords.X+x, coords.Y+16)
 	opt.Filter = ebiten.FilterLinear
 	screen.DrawImage(image, opt)
+}
+
+func Lerp(start, end, t float64) float64 {
+	return start * (1.0 - t) + end * t
 }

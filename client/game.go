@@ -33,6 +33,7 @@ type Game struct {
 	clientEvents    chan *pb.ClientEvent
 	serverTick      int64
 	inputDelay      int64
+	renderer		*Renderer
 	previousAngle   float64
 	previousIntents map[pb.Intents_Intent]struct{}
 }
@@ -60,6 +61,7 @@ func NewGame(assets *Assets) *Game {
 		clientEvents:    clientEvents,
 		inputDelay:      6, // TODO: max this flexible
 		previousIntents: make(map[pb.Intents_Intent]struct{}),
+		renderer:		 NewRenderer(0.05),
 	}
 }
 
@@ -184,17 +186,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	})
 
 	g.state.ForEachPlayer(func(ID string, p *world.Player) {
-		image := g.Image("enemy")
+		playerImage := g.Image("enemy")
+		gunImage := g.Assets.Image("pistol")
 		if ID == g.playerID {
-			image = g.Image("player")
+			playerImage = g.Image("player")
 		}
-		RenderPlayer(screen, image, p)
-		RenderGun(screen, g.Assets, p.Coords, p.Angle)
+		g.renderer.RenderPlayer(screen, playerImage, gunImage, p)
 	})
 
 	g.state.ForEachBullet(func(bullet *world.Bullet) {
-		RenderBullet(screen, g.Assets, bullet)
+		g.renderer.RenderBullet(screen, g.Assets, bullet)
 	})
+	g.renderer.lastDrawTime = time.Now()
 	ebitenutil.DebugPrint(screen, g.debugString())
 }
 
