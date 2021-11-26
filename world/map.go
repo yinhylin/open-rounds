@@ -3,9 +3,10 @@ package world
 import (
 	"bufio"
 	"errors"
-	"rounds/pb"
 	"strconv"
 	"strings"
+
+	"github.com/sailormoon/open-rounds/pb"
 )
 
 type tileIndex int

@@ -12,11 +12,12 @@ import (
 	"net/http/pprof"
 	"os"
 	"os/signal"
-	"rounds/pb"
-	"rounds/world"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/sailormoon/open-rounds/pb"
+	"github.com/sailormoon/open-rounds/world"
 
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wspb"

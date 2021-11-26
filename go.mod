@@ -1,4 +1,4 @@
-module rounds
+module github.com/sailormoon/open-rounds
 
 go 1.16
 

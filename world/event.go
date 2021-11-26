@@ -1,6 +1,6 @@
 package world
 
-import "rounds/pb"
+import "github.com/sailormoon/open-rounds/pb"
 
 func ClientEventToServerEvent(serverTick int64, e *pb.ClientEvent) *pb.ServerEvent {
 	switch e.Event.(type) {

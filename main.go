@@ -6,9 +6,10 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"rounds/client"
-	"rounds/server"
 	"time"
+
+	"github.com/sailormoon/open-rounds/client"
+	"github.com/sailormoon/open-rounds/server"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"nhooyr.io/websocket"

@@ -3,7 +3,8 @@ package main
 import (
 	"log"
 	"os"
-	"rounds/server"
+
+	"github.com/sailormoon/open-rounds/server"
 )
 
 func main() {

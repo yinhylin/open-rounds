@@ -1,7 +1,7 @@
 package world
 
 import (
-	"rounds/pb"
+	"github.com/sailormoon/open-rounds/pb"
 )
 
 const NilTick int64 = -1

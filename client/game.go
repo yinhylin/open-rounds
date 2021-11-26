@@ -7,10 +7,11 @@ import (
 	"image/color"
 	"log"
 	"math"
-	"rounds/pb"
-	"rounds/world"
 	"strings"
 	"time"
+
+	"github.com/sailormoon/open-rounds/pb"
+	"github.com/sailormoon/open-rounds/world"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"

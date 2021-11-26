@@ -2,7 +2,8 @@ package world
 
 import (
 	"math"
-	"rounds/pb"
+
+	"github.com/sailormoon/open-rounds/pb"
 )
 
 func updatePlayer(e *Player, s *State, m *Map) {

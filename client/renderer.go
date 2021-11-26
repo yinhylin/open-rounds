@@ -3,7 +3,8 @@ package client
 import (
 	"fmt"
 	"math"
-	"rounds/world"
+
+	"github.com/sailormoon/open-rounds/world"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"

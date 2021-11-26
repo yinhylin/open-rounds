@@ -1,6 +1,6 @@
 package world
 
-import "rounds/pb"
+import "github.com/sailormoon/open-rounds/pb"
 
 type Bullet struct {
 	Coords   Vector

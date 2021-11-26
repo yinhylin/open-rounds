@@ -1,6 +1,6 @@
 package world
 
-import "rounds/pb"
+import "github.com/sailormoon/open-rounds/pb"
 
 type Vector struct {
 	X, Y float64

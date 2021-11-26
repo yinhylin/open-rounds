@@ -1,6 +1,6 @@
 package world
 
-import "rounds/pb"
+import "github.com/sailormoon/open-rounds/pb"
 
 // TODO: This all needs a giant refactor to dedupe things. :(
 type Player struct {

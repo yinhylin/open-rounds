@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"rounds/pb"
 	"sort"
+
+	"github.com/sailormoon/open-rounds/pb"
 )
 
 type StateBuffer struct {
