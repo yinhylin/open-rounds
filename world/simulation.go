@@ -88,12 +88,6 @@ func updatePlayer(e *Player, s *State, m *Map) {
 	e.Coords.X += e.Velocity.X
 	e.Coords.Y += e.Velocity.Y
 
-	// TODO: This needs to be proper collision detection but yolo prototyping.
-	// TODO: Finish Map.
-	if grounded {
-		e.Velocity.Y = 0
-	}
-
 	if grounded && jump {
 		e.Velocity.Y -= 32
 	}

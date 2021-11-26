@@ -115,7 +115,7 @@ func (g *Game) handleServerEvents() error {
 func (g *Game) Update() error {
 	now := time.Now()
 	defer func() {
-		if time.Since(now) > time.Millisecond {
+		if time.Since(now) > 10*time.Millisecond {
 			log.Println("long update", time.Now().Sub(now))
 		}
 	}()

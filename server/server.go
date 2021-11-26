@@ -83,7 +83,6 @@ type Server struct {
 
 func NewServer() *Server {
 	maps, err := loadMaps()
-	log.Printf("%+v\n", maps)
 	if err != nil {
 		log.Fatal(err)
 	}
