@@ -13,6 +13,12 @@ message Player {
   Vector position = 3;
   Intents intents = 4;
   double angle = 5;
+  PlayerState state = 6;
+}
+
+message PlayerState {
+  int64 last_grounded = 1;
+  int64 last_jumped = 2;
 }
 
 message Bullet {

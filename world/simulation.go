@@ -6,13 +6,13 @@ import (
 	"github.com/sailormoon/open-rounds/pb"
 )
 
-func updatePlayer(e *Player, s *State, m *Map) {
+func updatePlayer(p *Player, s *State, m *Map) {
 	const speed = 10
 	// TODO: Don't overwrite velocity.
 	jump := false
 	shoot := false
 	var velocity Vector
-	for action := range e.Intents {
+	for action := range p.Intents {
 		switch action {
 		case pb.Intents_JUMP:
 			jump = true
@@ -25,80 +25,74 @@ func updatePlayer(e *Player, s *State, m *Map) {
 		}
 	}
 
-	// gravity
-	velocity.Y = math.Min(e.Velocity.Y+2, 16)
-	e.Velocity = velocity
+	velocity.Y = math.Min(p.Velocity.Y+2, 16)
+	p.Velocity = velocity
 
-	grounded := false
 	const size = tileSize - 1
 	// horizontal scan
-	if e.Velocity.X != 0 {
+	if p.Velocity.X != 0 {
 		for _, dy := range []float64{0, size} {
 			toCheck := Vector{
-				X: e.Coords.X + e.Velocity.X,
-				Y: e.Coords.Y + dy,
+				X: p.Coords.X + p.Velocity.X,
+				Y: p.Coords.Y + dy,
 			}
-			if e.Velocity.X > 0 {
+			if p.Velocity.X > 0 {
 				toCheck.X += size
 			}
 			x, y := toCheck.ToTileCoordinates()
 			tile, err := m.At(x, y)
-			if err != nil {
-				continue
-			}
-			if tile.Dense {
-				if e.Velocity.X > 0 {
-					e.Coords.X = float64((x - 1) * 32)
-				} else if e.Velocity.X < 0 {
-					e.Coords.X = float64((x + 1) * 32)
+			dense := err != nil || tile.Dense
+			if dense {
+				if p.Velocity.X > 0 {
+					p.Coords.X = float64((x - 1) * 32)
+				} else if p.Velocity.X < 0 {
+					p.Coords.X = float64((x + 1) * 32)
 				}
-				e.Velocity.X = 0
+				p.Velocity.X = 0
 				break
 			}
 		}
 	}
 
 	// vertical scan
-	if e.Velocity.Y != 0 {
+	if p.Velocity.Y != 0 {
 		for _, dx := range []float64{0, size} {
 			toCheck := Vector{
-				X: e.Coords.X + dx,
-				Y: e.Coords.Y + e.Velocity.Y,
+				X: p.Coords.X + dx,
+				Y: p.Coords.Y + p.Velocity.Y,
 			}
-			if e.Velocity.Y > 0 {
+			if p.Velocity.Y > 0 {
 				toCheck.Y += size
 			}
 			x, y := toCheck.ToTileCoordinates()
 			tile, err := m.At(x, y)
-			if err != nil {
-				continue
-			}
-			if tile.Dense {
-				if e.Velocity.Y > 0 {
-					e.Coords.Y = float64((y - 1) * 32)
-					grounded = true
-				} else if e.Velocity.Y < 0 {
-					e.Coords.Y = float64((y + 1) * 32)
+			dense := err != nil || tile.Dense
+			if dense {
+				if p.Velocity.Y > 0 {
+					p.Coords.Y = float64((y - 1) * 32)
+					p.LastGrounded = s.Tick
+				} else if p.Velocity.Y < 0 {
+					p.Coords.Y = float64((y + 1) * 32)
 				}
-				e.Velocity.Y = 0
+				p.Velocity.Y = 0
 			}
 		}
 	}
 
-	e.Coords.X += e.Velocity.X
-	e.Coords.Y += e.Velocity.Y
+	p.Coords.X += p.Velocity.X
+	p.Coords.Y += p.Velocity.Y
 
-	if grounded && jump {
-		e.Velocity.Y -= 32
+	if jump && p.LastGrounded == s.Tick {
+		p.Velocity.Y = -32
 	}
 
 	if shoot {
 		s.Bullets = append(s.Bullets, Bullet{
-			Coords: e.Coords,
+			Coords: p.Coords,
 			Velocity: Vector{
 				// TODO: Use gun constants and stuff.
-				X: -math.Cos(e.Angle) * 30,
-				Y: -math.Sin(e.Angle) * 30,
+				X: -math.Cos(p.Angle) * 30,
+				Y: -math.Sin(p.Angle) * 30,
 			},
 		})
 	}

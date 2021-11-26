@@ -9,6 +9,12 @@ type Player struct {
 	Velocity Vector
 	Intents  map[pb.Intents_Intent]struct{}
 	Angle    float64
+	PlayerState
+}
+
+type PlayerState struct {
+	LastGrounded int64
+	LastJumped   int64
 }
 
 func IntentsToProto(actions map[pb.Intents_Intent]struct{}) *pb.Intents {
@@ -45,6 +51,20 @@ func IntentsFromProto(a *pb.Intents) map[pb.Intents_Intent]struct{} {
 	return actions
 }
 
+func (p *PlayerState) ToProto() *pb.PlayerState {
+	return &pb.PlayerState{
+		LastGrounded: p.LastGrounded,
+		LastJumped:   p.LastJumped,
+	}
+}
+
+func PlayerStateFromProto(p *pb.PlayerState) PlayerState {
+	return PlayerState{
+		LastGrounded: p.LastGrounded,
+		LastJumped:   p.LastJumped,
+	}
+}
+
 func (e *Player) ToProto() *pb.Player {
 	return &pb.Player{
 		Id:       e.ID,
@@ -52,6 +72,7 @@ func (e *Player) ToProto() *pb.Player {
 		Velocity: e.Velocity.ToProto(),
 		Intents:  IntentsToProto(e.Intents),
 		Angle:    e.Angle,
+		State:    e.PlayerState.ToProto(),
 	}
 }
 
@@ -60,11 +81,12 @@ func PlayerFromProto(e *pb.Player) *Player {
 		return nil
 	}
 	return &Player{
-		ID:       e.Id,
-		Coords:   VectorFromProto(e.Position),
-		Velocity: VectorFromProto(e.Velocity),
-		Intents:  IntentsFromProto(e.Intents),
-		Angle:    e.Angle,
+		ID:          e.Id,
+		Coords:      VectorFromProto(e.Position),
+		Velocity:    VectorFromProto(e.Velocity),
+		Intents:     IntentsFromProto(e.Intents),
+		Angle:       e.Angle,
+		PlayerState: PlayerStateFromProto(e.State),
 	}
 }
 
