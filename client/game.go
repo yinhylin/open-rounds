@@ -33,7 +33,7 @@ type Game struct {
 	clientEvents    chan *pb.ClientEvent
 	serverTick      int64
 	inputDelay      int64
-	renderer		*Renderer
+	renderer        *Renderer
 	previousAngle   float64
 	previousIntents map[pb.Intents_Intent]struct{}
 }
@@ -59,9 +59,9 @@ func NewGame(assets *Assets) *Game {
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
 		serverTick:      world.NilTick,
 		clientEvents:    clientEvents,
-		inputDelay:      6, // TODO: max this flexible
+		inputDelay:      3, // TODO: max this flexible
 		previousIntents: make(map[pb.Intents_Intent]struct{}),
-		renderer:		 NewRenderer(0.05),
+		renderer:        NewRenderer(0.05),
 	}
 }
 

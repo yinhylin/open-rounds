@@ -13,15 +13,15 @@ import (
 
 type RenderData struct {
 	lastPlayerDrawCoords world.Vector
-	lastGunDrawCoords	 world.Vector
+	lastGunDrawCoords    world.Vector
 	prevAngle            float64
-	targetAngle    		 float64
+	targetAngle          float64
 }
 
 type Renderer struct {
-	renderData 		map[string]*RenderData
-	lastDrawTime	time.Time
-	lerpFactor		float64
+	renderData   map[string]*RenderData
+	lastDrawTime time.Time
+	lerpFactor   float64
 }
 
 func NewRenderer(lerpFactor float64) *Renderer {
@@ -49,12 +49,11 @@ func (r *Renderer) RenderPlayer(screen *ebiten.Image, playerImage *ebiten.Image,
 	opt.GeoM.Translate(x, y)
 	opt.Filter = ebiten.FilterLinear
 	_, playerHeight := playerImage.Size()
-	playerHeight /= 10
 	r.renderData[p.ID].lastPlayerDrawCoords = world.Vector{X: x, Y: y}
 	screen.DrawImage(playerImage, opt)
 	RenderGun(screen, gunImage, r.renderData[p.ID].lastPlayerDrawCoords, p.Angle)
 	debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", p.ID, p.Coords.X, p.Coords.Y)
-	ebitenutil.DebugPrintAt(screen, debugString, int(p.Coords.X), int(p.Coords.Y)+playerHeight)
+	ebitenutil.DebugPrintAt(screen, debugString, int(x), int(y)+playerHeight)
 }
 
 func (r *Renderer) RenderBullet(screen *ebiten.Image, a *Assets, b *world.Bullet) {
@@ -86,5 +85,5 @@ func RenderGun(screen *ebiten.Image, image *ebiten.Image, coords world.Vector, a
 }
 
 func Lerp(start, end, t float64) float64 {
-	return start * (1.0 - t) + end * t
+	return start*(1.0-t) + end*t
 }
