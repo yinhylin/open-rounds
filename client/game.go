@@ -210,6 +210,8 @@ func (g *Game) handleInput() {
 	if ebiten.IsFocused() {
 		for _, key := range inpututil.AppendPressedKeys(nil) {
 			switch key {
+			case ebiten.KeyEscape:
+				log.Fatal("exit")
 			case ebiten.KeyA:
 				intents[pb.Intents_MOVE_LEFT] = struct{}{}
 			case ebiten.KeyD:
