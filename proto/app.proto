@@ -23,6 +23,7 @@ message PlayerState {
   int64 health = 4;
   int64 ammo = 5;
   bool jumping = 6;
+  int64 jump_released_tick = 7;
 }
 
 message Bullet {

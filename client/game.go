@@ -59,7 +59,7 @@ func NewGame(assets *Assets) *Game {
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
 		serverTick:      world.NilTick,
 		clientEvents:    clientEvents,
-		inputDelay:      3, // TODO: max this flexible
+		inputDelay:      5, // TODO: max this flexible
 		previousIntents: make(map[pb.Intents_Intent]struct{}),
 		renderer:        NewRenderer(0.05),
 	}

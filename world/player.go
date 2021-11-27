@@ -13,12 +13,13 @@ type Player struct {
 }
 
 type PlayerState struct {
-	GroundedTick int64
-	JumpTick     int64
-	ReloadTick   int64
-	Health       int64
-	Ammo         int64
-	Jumping      bool
+	GroundedTick     int64
+	JumpTick         int64
+	JumpReleasedTick int64
+	ReloadTick       int64
+	Health           int64
+	Ammo             int64
+	Jumping          bool
 }
 
 func IntentsToProto(actions map[pb.Intents_Intent]struct{}) *pb.Intents {
@@ -57,23 +58,25 @@ func IntentsFromProto(a *pb.Intents) map[pb.Intents_Intent]struct{} {
 
 func (p *PlayerState) ToProto() *pb.PlayerState {
 	return &pb.PlayerState{
-		GroundedTick: p.GroundedTick,
-		JumpTick:     p.JumpTick,
-		ReloadTick:   p.ReloadTick,
-		Health:       p.Health,
-		Ammo:         p.Ammo,
-		Jumping:      p.Jumping,
+		GroundedTick:     p.GroundedTick,
+		JumpTick:         p.JumpTick,
+		ReloadTick:       p.ReloadTick,
+		Health:           p.Health,
+		Ammo:             p.Ammo,
+		Jumping:          p.Jumping,
+		JumpReleasedTick: p.JumpReleasedTick,
 	}
 }
 
 func PlayerStateFromProto(p *pb.PlayerState) PlayerState {
 	return PlayerState{
-		GroundedTick: p.GroundedTick,
-		JumpTick:     p.JumpTick,
-		ReloadTick:   p.ReloadTick,
-		Health:       p.Health,
-		Ammo:         p.Ammo,
-		Jumping:      p.Jumping,
+		GroundedTick:     p.GroundedTick,
+		JumpTick:         p.JumpTick,
+		ReloadTick:       p.ReloadTick,
+		Health:           p.Health,
+		Ammo:             p.Ammo,
+		Jumping:          p.Jumping,
+		JumpReleasedTick: p.JumpReleasedTick,
 	}
 }
 

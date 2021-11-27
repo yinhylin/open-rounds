@@ -9,13 +9,16 @@ import (
 func updatePlayer(p *Player, s *State, m *Map) {
 	const speed = 10
 	// TODO: Don't overwrite velocity.
-	jump := false
 	shoot := false
+	jump := false
 	var velocity Vector
 	for action := range p.Intents {
 		switch action {
 		case pb.Intents_JUMP:
 			jump = true
+			if p.JumpReleasedTick >= p.JumpTick {
+				p.JumpTick = s.Tick
+			}
 		case pb.Intents_SHOOT:
 			shoot = true
 		case pb.Intents_MOVE_LEFT:
@@ -23,6 +26,10 @@ func updatePlayer(p *Player, s *State, m *Map) {
 		case pb.Intents_MOVE_RIGHT:
 			velocity.X += speed
 		}
+	}
+
+	if !jump && p.JumpReleasedTick < p.JumpTick {
+		p.JumpReleasedTick = s.Tick
 	}
 
 	velocity.Y = math.Min(p.Velocity.Y+2, 16)
@@ -83,12 +90,13 @@ func updatePlayer(p *Player, s *State, m *Map) {
 	p.Coords.X += p.Velocity.X
 	p.Coords.Y += p.Velocity.Y
 
-	if jump && math.Abs(float64(p.GroundedTick-s.Tick)) < 5 && !p.Jumping {
+	wantJump := s.Tick-p.JumpTick < 5
+	if wantJump && math.Abs(float64(p.GroundedTick-s.Tick)) < 5 && !p.Jumping {
 		p.Velocity.Y = -32
 		p.Jumping = true
 	}
 
-	if !jump && p.Jumping && p.Velocity.Y < -8 {
+	if p.JumpReleasedTick > p.JumpTick && p.Jumping && p.Velocity.Y < -8 {
 		p.Velocity.Y = -8
 	}
 
