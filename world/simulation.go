@@ -55,6 +55,9 @@ func updatePlayer(p *Player, s *State, m *Map) {
 				} else if p.Velocity.X < 0 {
 					p.Coords.X = float64((x + 1) * 32)
 				}
+				if p.Velocity.Y > 0 {
+					p.Velocity.Y = 2
+				}
 				p.Velocity.X = 0
 				break
 			}
@@ -87,9 +90,6 @@ func updatePlayer(p *Player, s *State, m *Map) {
 		}
 	}
 
-	p.Coords.X += p.Velocity.X
-	p.Coords.Y += p.Velocity.Y
-
 	wantJump := s.Tick-p.JumpTick < 5
 	if wantJump && math.Abs(float64(p.GroundedTick-s.Tick)) < 5 && !p.Jumping {
 		p.Velocity.Y = -32
@@ -99,6 +99,9 @@ func updatePlayer(p *Player, s *State, m *Map) {
 	if p.JumpReleasedTick > p.JumpTick && p.Jumping && p.Velocity.Y < -8 {
 		p.Velocity.Y = -8
 	}
+
+	p.Coords.X += p.Velocity.X
+	p.Coords.Y += p.Velocity.Y
 
 	if shoot {
 		s.Bullets = append(s.Bullets, Bullet{
