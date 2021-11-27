@@ -18,6 +18,7 @@ type PlayerState struct {
 	ReloadTick   int64
 	Health       int64
 	Ammo         int64
+	Jumping      bool
 }
 
 func IntentsToProto(actions map[pb.Intents_Intent]struct{}) *pb.Intents {
@@ -61,6 +62,7 @@ func (p *PlayerState) ToProto() *pb.PlayerState {
 		ReloadTick:   p.ReloadTick,
 		Health:       p.Health,
 		Ammo:         p.Ammo,
+		Jumping:      p.Jumping,
 	}
 }
 
@@ -71,6 +73,7 @@ func PlayerStateFromProto(p *pb.PlayerState) PlayerState {
 		ReloadTick:   p.ReloadTick,
 		Health:       p.Health,
 		Ammo:         p.Ammo,
+		Jumping:      p.Jumping,
 	}
 }
 
