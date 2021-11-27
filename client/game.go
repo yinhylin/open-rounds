@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	futureStates = 5
+	futureStates = 8
 )
 
 type Game struct {

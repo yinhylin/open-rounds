@@ -99,18 +99,16 @@ func NewServer() *Server {
 	})
 
 	go func() {
-		sync := time.NewTicker(25 * time.Millisecond)
-		tick := time.NewTicker(17 * time.Millisecond)
+		tick := time.NewTicker(time.Second / 60)
 		for {
 			select {
-			case <-sync.C:
-				// Send all the clients the current tick the server is on.
-				s.publish(&pb.ServerEvent{
-					Tick: s.state.CurrentTick(),
-				})
-
 			case <-tick.C:
-				s.onTick()
+				if s.onTick() == 0 {
+					// Send all the clients the current tick the server is on.
+					s.publish(&pb.ServerEvent{
+						Tick: s.state.CurrentTick(),
+					})
+				}
 			}
 		}
 	}()
@@ -153,10 +151,9 @@ func (s *Server) onEvent(e *event) *pb.ServerEvent {
 	return nil
 }
 
-func (s *Server) onTick() {
+func (s *Server) onTick() int {
 	s.state.Next()
 	var serverEvents []*pb.ServerEvent
-
 	for len(s.events) > 0 {
 		event := <-s.events
 		if serverEvent := s.onEvent(event); serverEvent != nil {
@@ -164,10 +161,10 @@ func (s *Server) onTick() {
 			serverEvents = append(serverEvents, serverEvent)
 		}
 	}
-
 	for _, event := range serverEvents {
 		s.publish(event)
 	}
+	return len(serverEvents)
 }
 
 func (s *Server) addSubscriber(sub *subscriber) {
