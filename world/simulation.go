@@ -70,7 +70,7 @@ func updatePlayer(p *Player, s *State, m *Map) {
 			if dense {
 				if p.Velocity.Y > 0 {
 					p.Coords.Y = float64((y - 1) * 32)
-					p.LastGrounded = s.Tick
+					p.GroundedTick = s.Tick
 				} else if p.Velocity.Y < 0 {
 					p.Coords.Y = float64((y + 1) * 32)
 				}
@@ -82,7 +82,7 @@ func updatePlayer(p *Player, s *State, m *Map) {
 	p.Coords.X += p.Velocity.X
 	p.Coords.Y += p.Velocity.Y
 
-	if jump && p.LastGrounded == s.Tick {
+	if jump && p.GroundedTick == s.Tick {
 		p.Velocity.Y = -32
 	}
 

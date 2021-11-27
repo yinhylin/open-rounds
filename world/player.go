@@ -13,8 +13,11 @@ type Player struct {
 }
 
 type PlayerState struct {
-	LastGrounded int64
-	LastJumped   int64
+	GroundedTick int64
+	JumpTick     int64
+	ReloadTick   int64
+	Health       int64
+	Ammo         int64
 }
 
 func IntentsToProto(actions map[pb.Intents_Intent]struct{}) *pb.Intents {
@@ -53,15 +56,21 @@ func IntentsFromProto(a *pb.Intents) map[pb.Intents_Intent]struct{} {
 
 func (p *PlayerState) ToProto() *pb.PlayerState {
 	return &pb.PlayerState{
-		LastGrounded: p.LastGrounded,
-		LastJumped:   p.LastJumped,
+		GroundedTick: p.GroundedTick,
+		JumpTick:     p.JumpTick,
+		ReloadTick:   p.ReloadTick,
+		Health:       p.Health,
+		Ammo:         p.Ammo,
 	}
 }
 
 func PlayerStateFromProto(p *pb.PlayerState) PlayerState {
 	return PlayerState{
-		LastGrounded: p.LastGrounded,
-		LastJumped:   p.LastJumped,
+		GroundedTick: p.GroundedTick,
+		JumpTick:     p.JumpTick,
+		ReloadTick:   p.ReloadTick,
+		Health:       p.Health,
+		Ammo:         p.Ammo,
 	}
 }
 

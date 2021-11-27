@@ -17,8 +17,11 @@ message Player {
 }
 
 message PlayerState {
-  int64 last_grounded = 1;
-  int64 last_jumped = 2;
+  int64 grounded_tick = 1;
+  int64 jump_tick = 2;
+  int64 reload_tick = 3;
+  int64 health = 4;
+  int64 ammo = 5;
 }
 
 message Bullet {

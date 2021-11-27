@@ -177,7 +177,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrint(screen, "connecting...")
 		return
 	}
-
 	g.state.Map().ForEach(func(x, y int64, tile world.Tile) {
 		image := g.Image(tile.Image)
 		options := &ebiten.DrawImageOptions{}

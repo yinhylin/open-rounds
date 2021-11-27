@@ -52,7 +52,7 @@ func (r *Renderer) RenderPlayer(screen *ebiten.Image, playerImage *ebiten.Image,
 	r.renderData[p.ID].lastPlayerDrawCoords = world.Vector{X: x, Y: y}
 	screen.DrawImage(playerImage, opt)
 	RenderGun(screen, gunImage, r.renderData[p.ID].lastPlayerDrawCoords, p.Angle)
-	debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)", p.ID, p.Coords.X, p.Coords.Y)
+	debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)\n%d :: %d", p.ID, p.Coords.X, p.Coords.Y, p.Health, p.Ammo)
 	ebitenutil.DebugPrintAt(screen, debugString, int(x), int(y)+playerHeight)
 }
 
