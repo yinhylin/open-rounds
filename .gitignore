@@ -1,5 +1,5 @@
 # Binaries for programs and plugins
-rounds
+open_rounds
 run_server/run_server
 *.exe
 *.exe~
@@ -19,3 +19,4 @@ run_server/run_server
 # Dependency directories (remove the comment below to include it)
 # vendor/
 .idea
+.DS_Store
