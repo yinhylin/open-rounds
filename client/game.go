@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	futureStates = 8
+	futureStates = 5
 )
 
 type Game struct {
@@ -59,7 +59,7 @@ func NewGame(assets *Assets) *Game {
 		serverEvents:    make(chan *pb.ServerEvent, 1024),
 		serverTick:      world.NilTick,
 		clientEvents:    clientEvents,
-		inputDelay:      5, // TODO: max this flexible
+		inputDelay:      6, // TODO: max this flexible
 		previousIntents: make(map[pb.Intents_Intent]struct{}),
 		renderer:        NewRenderer(0.05),
 	}
@@ -84,8 +84,20 @@ func (g *Game) handleServerEvents() error {
 		select {
 		case event := <-g.serverEvents:
 			g.serverTick = int64(math.Max(float64(g.serverTick), float64(event.Tick)))
+			if g.state != nil {
+				for g.serverTick-g.state.CurrentTick() > -futureStates {
+					g.state.Next()
+				}
+			}
+
 			if player := event.GetPlayer(); player != nil {
-				if g.state == nil || player.Id == g.playerID {
+				if g.state == nil {
+					continue
+				}
+				if g.playerID == player.Id {
+					if event.Tick-player.Tick > futureStates {
+						requestState = true
+					}
 					continue
 				}
 				if err := g.state.OnEvent(event); err != nil {
@@ -98,6 +110,7 @@ func (g *Game) handleServerEvents() error {
 			switch event.Event.(type) {
 			case *pb.ServerEvent_State:
 				g.state = world.StateBufferFromProto(event.GetState())
+				log.Println(event)
 				for i := 0; i <= futureStates; i++ {
 					g.state.Next()
 				}
@@ -126,31 +139,15 @@ func (g *Game) Update() error {
 		return err
 	}
 
-	if g.state == nil || g.serverTick == world.NilTick {
+	if g.state == nil {
 		return nil
 	}
 
-	// Drop a frame if we're too far ahead.
-	if g.state.CurrentTick()-g.serverTick > futureStates {
-		// TODO: Disconnect if this happens too many times in a row without a
-		// real frame. Server is dead.
+	if g.serverTick-g.state.CurrentTick() < -futureStates*2 {
+		// Drop frame :(
 		return nil
 	}
 
-	if g.state.CurrentTick() < g.serverTick && g.state.CurrentTick() != world.NilTick {
-		// 10 frames behind? Re-request entire server state.
-		if g.serverTick-g.state.CurrentTick() > 20 {
-			log.Println("requesting server state. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
-			g.requestState()
-			return nil
-
-		}
-
-		for g.serverTick-g.state.CurrentTick() > futureStates {
-			log.Println("skipping frame. current tick", g.state.CurrentTick(), "server tick", g.serverTick, "difference:", g.serverTick-g.state.CurrentTick())
-			g.state.Next()
-		}
-	}
 	g.handleInput()
 	g.state.Next()
 	return nil

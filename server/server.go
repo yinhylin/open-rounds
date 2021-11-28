@@ -104,7 +104,14 @@ func NewServer() *Server {
 			select {
 			case <-tick.C:
 				if s.onTick() == 0 {
+					now := time.Now()
+					defer func() {
+						if time.Since(now) > 10*time.Millisecond {
+							log.Println("long update", time.Since(now))
+						}
+					}()
 					// Send all the clients the current tick the server is on.
+					// TODO: Sync less often.
 					s.publish(&pb.ServerEvent{
 						Tick: s.state.CurrentTick(),
 					})
