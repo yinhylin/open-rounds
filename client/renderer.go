@@ -21,44 +21,52 @@ type RenderData struct {
 type Renderer struct {
 	renderData   map[string]*RenderData
 	lastDrawTime time.Time
-	lerpFactor   float64
 }
 
-func NewRenderer(lerpFactor float64) *Renderer {
+func NewRenderer() *Renderer {
 	return &Renderer{
-		renderData: make(map[string]*RenderData), lerpFactor: lerpFactor}
+		renderData: make(map[string]*RenderData),
+	}
 }
 
-func (r *Renderer) RenderPlayer(screen *ebiten.Image, playerImage *ebiten.Image, gunImage *ebiten.Image, p *world.Player) {
+func (r *Renderer) RenderPlayer(screen *ebiten.Image, image *ebiten.Image, gunImage *ebiten.Image, p *world.Player) {
 	opt := &ebiten.DrawImageOptions{}
 	drawCoords := p.Coords
-	/*
-		if renderData, ok := r.renderData[p.ID]; ok {
-			distance := math.Sqrt(math.Pow(renderData.lastPlayerDrawCoords.X-drawCoords.X, 2) + math.Pow(renderData.lastPlayerDrawCoords.Y-drawCoords.Y, 2))
-			lerpFactor := r.lerpFactor
-			if distance < 8 {
-				lerpFactor /= 2
-			}
-			if time.Since(r.lastDrawTime).Seconds() <= r.lerpFactor && distance > 1 {
-				lerpDelta := time.Since(r.lastDrawTime).Seconds() / lerpFactor
-				drawCoords = world.Vector{
-					X: Lerp(renderData.lastPlayerDrawCoords.X, drawCoords.X, lerpDelta),
-					Y: Lerp(renderData.lastPlayerDrawCoords.Y, drawCoords.Y, lerpDelta),
-				}
-			}
-		} else {
-			r.renderData[p.ID] = &RenderData{
-				lastPlayerDrawCoords: drawCoords,
-				prevAngle:            p.Angle,
+	if renderData, ok := r.renderData[p.ID]; ok {
+		// TODO: Adjust this based on velocity?
+		correctionRate := float64(10)
+		movement := math.Min(time.Since(r.lastDrawTime).Seconds()*correctionRate*60, correctionRate)
+		if math.Abs(renderData.lastPlayerDrawCoords.X-drawCoords.X) > correctionRate {
+			if drawCoords.X > renderData.lastPlayerDrawCoords.X {
+				drawCoords.X = renderData.lastPlayerDrawCoords.X + movement
+			} else {
+				drawCoords.X = renderData.lastPlayerDrawCoords.X - movement
 			}
 		}
-	*/
+
+		if p.Jumping {
+			correctionRate = 20
+			movement = math.Min(time.Since(r.lastDrawTime).Seconds()*correctionRate*60, correctionRate)
+		}
+		if math.Abs(renderData.lastPlayerDrawCoords.Y-drawCoords.Y) > correctionRate {
+			if drawCoords.Y > renderData.lastPlayerDrawCoords.Y {
+				drawCoords.Y = renderData.lastPlayerDrawCoords.Y + movement
+			} else {
+				drawCoords.Y = renderData.lastPlayerDrawCoords.Y - movement
+			}
+		}
+	} else {
+		r.renderData[p.ID] = &RenderData{
+			lastPlayerDrawCoords: drawCoords,
+			prevAngle:            p.Angle,
+		}
+	}
 
 	opt.GeoM.Translate(drawCoords.X, drawCoords.Y)
 	opt.Filter = ebiten.FilterLinear
-	_, playerHeight := playerImage.Size()
-	// r.renderData[p.ID].lastPlayerDrawCoords = drawCoords
-	screen.DrawImage(playerImage, opt)
+	_, playerHeight := image.Size()
+	r.renderData[p.ID].lastPlayerDrawCoords = drawCoords
+	screen.DrawImage(image, opt)
 	RenderGun(screen, gunImage, drawCoords, p.Angle)
 	debugString := fmt.Sprintf("%s\n(%0.0f,%0.0f)\n%d :: %d", p.ID, p.Coords.X, p.Coords.Y, p.Health, p.Ammo)
 	ebitenutil.DebugPrintAt(screen, debugString, int(drawCoords.X), int(drawCoords.Y)+playerHeight)
