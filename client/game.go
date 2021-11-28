@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	futureStates = 5
+	futureStates = 10
 )
 
 type Game struct {
@@ -95,9 +95,6 @@ func (g *Game) handleServerEvents() error {
 					continue
 				}
 				if g.playerID == player.Id {
-					if event.Tick-player.Tick > futureStates {
-						requestState = true
-					}
 					continue
 				}
 				if err := g.state.OnEvent(event); err != nil {
