@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sailormoon/open-rounds/pb"
@@ -79,6 +80,9 @@ type Server struct {
 	events      chan *event
 	state       *world.StateBuffer
 	maps        map[string]*world.Map
+
+	done   atomic.Value
+	doneMu sync.Mutex
 }
 
 func NewServer() *Server {
@@ -281,7 +285,7 @@ func (s *Server) publish(event *pb.ServerEvent) {
 	}
 }
 
-func Run(args []string) error {
+func (s *Server) Run(args []string) error {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 	address := "localhost:4242"
 	if len(args) > 1 {
@@ -292,16 +296,27 @@ func Run(args []string) error {
 		return err
 	}
 	log.Printf("Listening on http://%v", l.Addr())
-	server := NewServer()
-	s := &http.Server{
-		Handler:      server,
+
+	s.doneMu.Lock()
+	d, _ := s.done.Load().(chan struct{})
+	if d == nil {
+		closedChan := make(chan struct{})
+		close(closedChan)
+		s.done.Store(closedChan)
+	} else {
+		close(d)
+	}
+	s.doneMu.Unlock()
+
+	hs := &http.Server{
+		Handler:      s,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
 	errc := make(chan error, 1)
 	go func() {
-		errc <- s.Serve(l)
+		errc <- hs.Serve(l)
 	}()
 
 	sigs := make(chan os.Signal, 1)
@@ -314,8 +329,25 @@ func Run(args []string) error {
 	}
 
 	ctx := context.Background()
-	if err := s.Shutdown(ctx); err != nil {
+	if err := hs.Shutdown(ctx); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (s *Server) Done() <-chan struct{} {
+	d := s.done.Load()
+	if d != nil {
+		return d.(chan struct{})
+	}
+
+	s.doneMu.Lock()
+	defer s.doneMu.Unlock()
+
+	if d == nil {
+		d = make(chan struct{})
+		s.done.Store(d)
+	}
+
+	return d.(chan struct{})
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	if err := server.Run(os.Args); err != nil {
+	if err := server.NewServer().Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
 }

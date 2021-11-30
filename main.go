@@ -6,7 +6,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"time"
 
 	"github.com/sailormoon/open-rounds/client"
 	"github.com/sailormoon/open-rounds/server"
@@ -17,6 +16,8 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
+
+	server := server.NewServer()
 	if len(os.Args) > 1 && os.Args[1] == "server" {
 		if err := server.Run(os.Args[1:]); err != nil {
 			log.Fatal(err)
@@ -54,8 +55,7 @@ func main() {
 				log.Fatal("server shutdown")
 			}()
 
-			// TODO: Should have a good way of testing if the server is up.
-			time.Sleep(50 * time.Millisecond)
+			<-server.Done()
 			c, _, err = websocket.Dial(ctx, "ws://localhost:4242", nil)
 			if err != nil {
 				log.Fatal(err)
