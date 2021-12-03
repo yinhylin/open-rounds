@@ -14,7 +14,6 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/sailormoon/open-rounds/pb"
@@ -81,8 +80,7 @@ type Server struct {
 	state       *world.StateBuffer
 	maps        map[string]*world.Map
 
-	done   atomic.Value
-	doneMu sync.Mutex
+	waitForRunning sync.WaitGroup
 }
 
 func NewServer() *Server {
@@ -91,11 +89,13 @@ func NewServer() *Server {
 		log.Fatal(err)
 	}
 	s := &Server{
-		subscribers: make(map[*subscriber]struct{}),
-		events:      make(chan *event, 1024),
-		state:       world.NewStateBuffer(32, maps["basic"]),
-		maps:        maps,
+		subscribers:    make(map[*subscriber]struct{}),
+		events:         make(chan *event, 1024),
+		state:          world.NewStateBuffer(32, maps["basic"]),
+		maps:           maps,
+		waitForRunning: sync.WaitGroup{},
 	}
+	s.waitForRunning.Add(1)
 
 	s.state.Add(&world.State{
 		Players: make(map[string]world.Player),
@@ -296,17 +296,8 @@ func (s *Server) Run(args []string) error {
 		return err
 	}
 	log.Printf("Listening on http://%v", l.Addr())
-
-	s.doneMu.Lock()
-	d, _ := s.done.Load().(chan struct{})
-	if d == nil {
-		closedChan := make(chan struct{})
-		close(closedChan)
-		s.done.Store(closedChan)
-	} else {
-		close(d)
-	}
-	s.doneMu.Unlock()
+	time.Sleep(time.Second * 5)
+	s.waitForRunning.Done()
 
 	hs := &http.Server{
 		Handler:      s,
@@ -335,19 +326,6 @@ func (s *Server) Run(args []string) error {
 	return nil
 }
 
-func (s *Server) Done() <-chan struct{} {
-	d := s.done.Load()
-	if d != nil {
-		return d.(chan struct{})
-	}
-
-	s.doneMu.Lock()
-	defer s.doneMu.Unlock()
-
-	if d == nil {
-		d = make(chan struct{})
-		s.done.Store(d)
-	}
-
-	return d.(chan struct{})
+func (s *Server) WaitForRunning() {
+	s.waitForRunning.Wait()
 }

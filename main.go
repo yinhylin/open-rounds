@@ -17,9 +17,8 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags | log.Llongfile)
 
-	server := server.NewServer()
 	if len(os.Args) > 1 && os.Args[1] == "server" {
-		if err := server.Run(os.Args[1:]); err != nil {
+		if err := server.NewServer().Run(os.Args[1:]); err != nil {
 			log.Fatal(err)
 		}
 		return
@@ -47,6 +46,7 @@ func main() {
 		if err != nil {
 			log.Printf("Encountered err: %v. Trying to spin up server manually\n", err)
 
+			server := server.NewServer()
 			// Try to spin up the server if we fail to connect.
 			go func() {
 				if err := server.Run([]string{}); err != nil {
@@ -55,7 +55,7 @@ func main() {
 				log.Fatal("server shutdown")
 			}()
 
-			<-server.Done()
+			server.WaitForRunning()
 			c, _, err = websocket.Dial(ctx, "ws://localhost:4242", nil)
 			if err != nil {
 				log.Fatal(err)
