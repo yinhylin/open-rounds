@@ -296,7 +296,6 @@ func (s *Server) Run(args []string) error {
 		return err
 	}
 	log.Printf("Listening on http://%v", l.Addr())
-	time.Sleep(time.Second * 5)
 	s.waitForRunning.Done()
 
 	hs := &http.Server{
